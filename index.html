@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¿CUÁNTA CALLE TENÉS?</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        #map {
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+        .ui-panel {
+            z-index: 10;
+        }
+        #guess-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-in-out;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        #guess-panel.visible {
+            transform: translateY(0);
+        }
+        .tab-button.active {
+            border-color: #4f46e5;
+            background-color: #eef2ff;
+            color: #4338ca;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            pointer-events: none;
+        }
+        .overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Contenedor del Mapa -->
+    <div id="map"></div>
+
+    <!-- Panel de Información del Juego -->
+    <div class="ui-panel absolute top-4 left-4 bg-white p-4 rounded-lg shadow-lg max-w-sm w-full">
+        <h1 class="text-xl font-bold text-gray-800">¿CUÁNTA CALLE TENÉS?</h1>
+        <p class="text-sm text-gray-500 mb-4">Adivina las calles de Resistencia</p>
+
+        <!-- Puntuaciones -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div id="player1-card" class="p-3 rounded-lg border-4 border-blue-500">
+                <h2 class="font-bold text-gray-700">Jugador 1</h2>
+                <p class="text-3xl font-bold text-blue-600" id="player1-score">0</p>
+            </div>
+            <div id="player2-card" class="p-3 rounded-lg border-2 border-gray-300">
+                <h2 class="font-bold text-gray-700">Jugador 2</h2>
+                <p class="text-3xl font-bold text-red-600" id="player2-score">0</p>
+            </div>
+        </div>
+
+        <!-- Controles del Juego -->
+        <div id="controls">
+            <div class="mb-2">
+                <p class="font-semibold text-gray-700">Turno de: <span id="current-player-turn" class="text-blue-600 font-bold">Jugador 1</span></p>
+                <p id="info-text" class="text-sm text-gray-600 h-5">¡Tira el dado para empezar!</p>
+            </div>
+            <button id="roll-dice-btn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow">
+                Tirar Dado
+            </button>
+            <div id="direction-controls" class="hidden grid-cols-2 gap-2 mt-2">
+                <button data-direction="N" class="direction-btn bg-gray-200 hover:bg-gray-300 font-semibold py-2 rounded-lg">Norte</button>
+                <button data-direction="S" class="direction-btn bg-gray-200 hover:bg-gray-300 font-semibold py-2 rounded-lg">Sur</button>
+                <button data-direction="E" class="direction-btn bg-gray-200 hover:bg-gray-300 font-semibold py-2 rounded-lg">Este</button>
+                <button data-direction="O" class="direction-btn bg-gray-200 hover:bg-gray-300 font-semibold py-2 rounded-lg">Oeste</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Panel para Adivinar -->
+    <div id="guess-panel" class="bg-white rounded-t-lg shadow-2xl w-full">
+        <div class="flex justify-between items-center p-3 border-b border-gray-200 bg-gray-50 rounded-t-lg">
+            <h3 id="modal-title" class="text-lg font-bold">¡Adivina!</h3>
+            <button id="toggle-panel-btn" title="Ocultar Panel">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 hover:text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+            </button>
+        </div>
+        <div class="p-4">
+            <p id="modal-prompt" class="text-gray-600 mb-4">¿Cuáles son las dos calles de esta intersección?</p>
+            <div class="border-b border-gray-200 mb-4">
+                <nav class="-mb-px flex space-x-4" aria-label="Tabs"><button id="tab-write" class="tab-button active whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm">Escribir Nombre (x2)</button><button id="tab-mc" class="tab-button whitespace-nowrap py-2 px-4 border-b-2 font-medium text-sm">Ver Opciones</button></nav>
+            </div>
+            <div id="write-mode">
+                <div class="space-y-3"><input type="text" id="street1-input" placeholder="Nombre de la calle" class="w-full p-2 border border-gray-300 rounded-md"><input type="text" id="street2-input" placeholder="Nombre de la segunda calle" class="w-full p-2 border border-gray-300 rounded-md"></div>
+            </div>
+            <div id="mc-mode" class="hidden">
+                <p id="mc-prompt" class="text-sm text-gray-500 mb-2">Selecciona las 2 calles correctas:</p>
+                <div id="mc-options" class="grid grid-cols-2 gap-2"></div>
+            </div>
+            <button id="submit-guess-btn" class="mt-6 w-full bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-300">Confirmar</button>
+        </div>
+    </div>
+
+    <!-- Botón para mostrar el panel cuando está oculto -->
+    <button id="show-panel-btn" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-10 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 shadow-lg">Mostrar Panel para Adivinar</button>
+
+    <!-- Overlay para feedback de resultado -->
+    <div id="feedback-overlay" class="overlay">
+        <div id="feedback-box" class="text-center text-white p-8 rounded-2xl shadow-xl transform scale-90 transition-transform duration-200 ease-out">
+            <div id="feedback-icon" class="mx-auto mb-4"></div>
+            <h2 id="feedback-title" class="text-4xl font-black">¡Correcto!</h2>
+            <p id="feedback-subtitle" class="mt-2 text-lg opacity-80">Las calles eran Av. 9 de Julio y Av. Sarmiento</p>
+            <p id="feedback-double" class="hidden mt-4 text-4xl font-black text-yellow-300 animate-pulse">¡PUNTOS DOBLES!</p>
+        </div>
+    </div>
+
+    <!-- Modal de Ganador -->
+    <div id="winner-modal" class="overlay">
+        <div class="bg-white text-center p-8 rounded-2xl shadow-xl transform scale-90 transition-transform duration-200 ease-out">
+            <h2 class="text-5xl font-black text-yellow-500">¡GANADOR!</h2>
+            <p id="winner-name" class="mt-4 text-3xl font-bold text-gray-800">Jugador 1</p>
+            <p class="mt-2 text-lg text-gray-600">Ha alcanzado 10 puntos.</p>
+            <button id="restart-game-btn" class="mt-8 w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700">Jugar de Nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN Y ESTADO DEL JUEGO ---
+        const API_KEY = "AIzaSyBCzzU1vat9rQc4fNNHDZvD1B7KAYsM0NI";
+        let map, marker, geocoder;
+        let currentPlayer = 1;
+        let player1Score = 0;
+        let player2Score = 0;
+        let currentDiceRoll = 0;
+        let correctStreets = [];
+        let gameState = 'ROLL_DICE';
+        const WINNING_SCORE = 10;
+        const RESISTENCIA_BOUNDS = { north: -27.42, south: -27.50, west: -59.02, east: -58.92 };
+        const RESISTENCIA_CENTER = { lat: -27.455, lng: -58.98 };
+        const mapStyles = [ { elementType: "labels", stylers: [{ visibility: "off" }] }, { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] }, { featureType: "administrative.neighborhood", stylers: [{ visibility: "off" }] }, { featureType: "poi", stylers: [{ visibility: "off" }] }, { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] }, { featureType: "transit", stylers: [{ visibility: "off" }] } ];
+        const STREET_NAMES_CHACO = [ "avenida 9 de julio", "avenida sarmiento", "avenida alberdi", "avenida castelli", "avenida ávalos", "avenida las heras", "avenida alvear", "avenida 25 de mayo", "arturo illia", "juan b justo", "josé maría paz", "güemes", "santa maría de oro", "frondizi", "marcelo t de alvear", "mitre", "brown", "roca", "pellegrini", "saavedra", "don bosco", "avenida san martín", "avenida belgrano", "avenida italia", "avenida paraguay", "avenida uruguay", "lópez y planes", "french", "ameghino", "lisandro de la torre" ];
+
+        // --- INICIALIZACIÓN ---
+        function initMap() {
+            if (API_KEY === "TU_API_KEY_AQUI") {
+                document.body.innerHTML = `<div class="w-screen h-screen flex items-center justify-center bg-red-100 text-red-800 p-8"><h1 class="text-2xl font-bold text-center">Error de Configuración: Por favor, reemplaza "TU_API_KEY_AQUI" en el código con tu clave de API de Google Maps.</h1></div>`;
+                return;
+            }
+            geocoder = new google.maps.Geocoder();
+            map = new google.maps.Map(document.getElementById("map"), { center: RESISTENCIA_CENTER, zoom: 15, styles: mapStyles, disableDefaultUI: true, draggableCursor: 'default', draggingCursor: 'default' });
+            marker = new google.maps.Marker({ map: map, position: RESISTENCIA_CENTER, draggable: false, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#4f46e5", fillOpacity: 1, strokeColor: "white", strokeWeight: 3 } });
+            findRandomIntersection(null, 1);
+        }
+        
+        // --- LÓGICA DEL JUEGO ---
+        function rollDice() {
+            if (gameState !== 'ROLL_DICE') return;
+            currentDiceRoll = Math.floor(Math.random() * 6) + 1;
+            updateInfoText(`Sacaste un ${currentDiceRoll}. Elige una dirección.`);
+            document.getElementById('roll-dice-btn').classList.add('hidden');
+            document.getElementById('direction-controls').classList.remove('hidden');
+            gameState = 'CHOOSE_DIRECTION';
+        }
+
+        function selectDirection(direction) {
+            if (gameState !== 'CHOOSE_DIRECTION') return;
+            updateInfoText('Buscando una nueva esquina...');
+            document.getElementById('direction-controls').classList.add('hidden');
+            findRandomIntersection(direction, 1);
+        }
+
+        function findRandomIntersection(direction = null, attempt = 1) {
+            if (attempt > 5) { 
+                updateInfoText('No se encontró esquina. ¡Tira de nuevo!');
+                gameState = 'ROLL_DICE';
+                document.getElementById('roll-dice-btn').classList.remove('hidden');
+                return;
+            }
+            let lat, lng;
+            if (!direction) {
+                 lat = RESISTENCIA_BOUNDS.south + Math.random() * (RESISTENCIA_BOUNDS.north - RESISTENCIA_BOUNDS.south);
+                 lng = RESISTENCIA_BOUNDS.west + Math.random() * (RESISTENCIA_BOUNDS.east - RESISTENCIA_BOUNDS.west);
+            } else {
+                const currentPos = marker.getPosition();
+                const distance = 0.001 + (currentDiceRoll / 6) * 0.015;
+                let latOffset = 0, lngOffset = 0;
+                switch(direction) {
+                    case 'N': latOffset = distance; break;
+                    case 'S': latOffset = -distance; break;
+                    case 'E': lngOffset = distance; break;
+                    case 'O': lngOffset = -distance; break;
+                }
+                lat = currentPos.lat() + latOffset;
+                lng = currentPos.lng() + lngOffset;
+                lat = Math.max(RESISTENCIA_BOUNDS.south, Math.min(RESISTENCIA_BOUNDS.north, lat));
+                lng = Math.max(RESISTENCIA_BOUNDS.west, Math.min(RESISTENCIA_BOUNDS.east, lng));
+            }
+            const newPoint = new google.maps.LatLng(lat, lng);
+            geocoder.geocode({ 'location': newPoint, 'region': 'AR' }, (results, status) => {
+                if (status === 'OK' && results && results.length > 0) {
+                    const intersectionResult = results.find(r => r.types.includes('intersection'));
+                    let finalResult = intersectionResult || results[0];
+                    let foundStreets = getStreetsFromGeocode(finalResult);
+                    if (foundStreets.length >= 1) {
+                        correctStreets = foundStreets;
+                        marker.setPosition(finalResult.geometry.location);
+                        map.panTo(finalResult.geometry.location);
+                        setTimeout(showGuessPanel, 1000);
+                    } else {
+                        findRandomIntersection(direction, attempt + 1);
+                    }
+                } else {
+                    if (status === 'REQUEST_DENIED') {
+                        updateInfoText('Error: Habilita la "Geocoding API" para tu clave.');
+                        gameState = 'ROLL_DICE';
+                        document.getElementById('roll-dice-btn').classList.remove('hidden');
+                        return;
+                    }
+                    setTimeout(() => findRandomIntersection(direction, attempt + 1), 500);
+                }
+            });
+        }
+        
+        function getStreetsFromGeocode(result) {
+            const streets = new Set();
+            result.address_components.forEach(component => { if (component.types.includes('route')) streets.add(component.long_name.toLowerCase()); });
+            if (streets.size < 2 && result.formatted_address) {
+                const intersectionMatch = result.formatted_address.match(/(.*?) & (.*?),(.*)/);
+                if (intersectionMatch) { streets.add(intersectionMatch[1].toLowerCase().trim()); streets.add(intersectionMatch[2].toLowerCase().trim()); }
+            }
+            return Array.from(streets).slice(0, 2);
+        }
+
+        function showGuessPanel() {
+            gameState = 'GUESSING';
+            document.getElementById('street1-input').value = '';
+            document.getElementById('street2-input').value = '';
+            
+            // Re-habilita la pestaña de escribir al inicio de cada turno
+            document.getElementById('tab-write').classList.remove('opacity-50', 'pointer-events-none');
+            switchTab('tab-write'); // Vuelve a la pestaña de escribir por defecto
+
+            if (correctStreets.length === 1) {
+                updateInfoText('¡Adivina la calle!');
+                document.getElementById('modal-title').textContent = '¡Adivina la Calle!';
+                document.getElementById('modal-prompt').textContent = '¿Cuál es el nombre de esta calle?';
+                document.getElementById('street2-input').style.display = 'none';
+                document.getElementById('mc-prompt').textContent = 'Selecciona la calle correcta:';
+            } else {
+                updateInfoText('¡Adivina las calles!');
+                document.getElementById('modal-title').textContent = '¡Nueva Esquina!';
+                document.getElementById('modal-prompt').textContent = '¿Cuáles son las dos calles de esta intersección?';
+                document.getElementById('street2-input').style.display = 'block';
+                document.getElementById('mc-prompt').textContent = 'Selecciona las 2 calles correctas:';
+            }
+            const mcOptionsContainer = document.getElementById('mc-options');
+            mcOptionsContainer.innerHTML = '';
+            let options = [...correctStreets];
+            while (options.length < 6) {
+                const randomStreet = STREET_NAMES_CHACO[Math.floor(Math.random() * STREET_NAMES_CHACO.length)];
+                if (!options.includes(randomStreet)) options.push(randomStreet);
+            }
+            options.sort(() => Math.random() - 0.5);
+            options.forEach(opt => { 
+                const inputType = correctStreets.length === 1 ? 'radio' : 'checkbox';
+                const inputClass = correctStreets.length === 1 ? 'mc-radio' : 'mc-checkbox';
+                mcOptionsContainer.innerHTML += `<label class="flex items-center space-x-2 p-2 rounded-lg border border-gray-300 hover:bg-gray-100 cursor-pointer"><input type="${inputType}" name="mc-option" class="${inputClass} h-4 w-4 rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500"><span class="text-sm font-medium text-gray-700">${opt}</span></label>`; 
+            });
+            document.getElementById('guess-panel').classList.add('visible');
+            document.getElementById('show-panel-btn').classList.add('hidden');
+        }
+
+        function hideGuessPanel() {
+            document.getElementById('guess-panel').classList.remove('visible');
+            if (gameState === 'GUESSING') document.getElementById('show-panel-btn').classList.remove('hidden');
+        }
+
+        function checkAnswer() {
+            if (gameState !== 'GUESSING') return;
+            let userGuesses = [];
+            const isWriteMode = document.querySelector('.tab-button.active').id === 'tab-write';
+            if (isWriteMode) {
+                const guess1 = document.getElementById('street1-input').value.trim().toLowerCase();
+                if (guess1) userGuesses.push(guess1);
+                if (correctStreets.length > 1) {
+                    const guess2 = document.getElementById('street2-input').value.trim().toLowerCase();
+                    if (guess2) userGuesses.push(guess2);
+                }
+            } else {
+                if (correctStreets.length === 1) {
+                    const selectedRadio = document.querySelector('.mc-radio:checked');
+                    if (selectedRadio) userGuesses.push(selectedRadio.nextElementSibling.textContent.toLowerCase());
+                } else {
+                    document.querySelectorAll('.mc-checkbox:checked').forEach(box => userGuesses.push(box.nextElementSibling.textContent.toLowerCase()));
+                }
+            }
+            const normalize = (str) => str.replace(/^(avenida|av\.|calle|pje\.) /,'').trim();
+            const normalizedCorrectStreets = correctStreets.map(normalize);
+            const normalizedUserGuesses = userGuesses.map(normalize);
+            let scoreChange = 0;
+            let isCorrect = false;
+            let isDouble = false;
+
+            if (correctStreets.length === 1) {
+                const basePoints = 1, basePenalty = -1;
+                if (normalizedUserGuesses.length > 0 && normalizedCorrectStreets.includes(normalizedUserGuesses[0])) {
+                    scoreChange = isWriteMode ? basePoints * 2 : basePoints;
+                    isDouble = isWriteMode;
+                    isCorrect = true;
+                } else {
+                    scoreChange = basePenalty;
+                }
+            } else {
+                const basePoints = 2, basePenalty = -4;
+                let correctCount = 0;
+                normalizedUserGuesses.forEach(guess => { if (normalizedCorrectStreets.includes(guess)) correctCount++; });
+                if (correctCount === 2) {
+                    scoreChange = isWriteMode ? basePoints * 2 : basePoints;
+                    isDouble = isWriteMode;
+                    isCorrect = true;
+                } else {
+                    scoreChange = basePenalty;
+                }
+            }
+            
+            let feedbackSubtitle = correctStreets.length === 1 ? `La calle era: ${correctStreets[0]}` : `Las calles eran: ${correctStreets.join(' y ')}`;
+            showFeedback(isCorrect, feedbackSubtitle, isDouble);
+            
+            if (currentPlayer === 1) player1Score = Math.max(0, player1Score + scoreChange);
+            else player2Score = Math.max(0, player2Score + scoreChange);
+            updateScores();
+
+            hideGuessPanel();
+            document.getElementById('show-panel-btn').classList.add('hidden');
+            
+            setTimeout(checkForWinner, 2500);
+        }
+
+        function checkForWinner() {
+            if (player1Score >= WINNING_SCORE) {
+                showWinnerModal(1);
+            } else if (player2Score >= WINNING_SCORE) {
+                showWinnerModal(2);
+            } else {
+                switchPlayer();
+            }
+        }
+
+        function switchPlayer() {
+            currentPlayer = (currentPlayer === 1) ? 2 : 1;
+            gameState = 'ROLL_DICE';
+            updateUIForNewTurn();
+        }
+
+        function resetGame() {
+            player1Score = 0;
+            player2Score = 0;
+            currentPlayer = 1;
+            gameState = 'ROLL_DICE';
+            updateScores();
+            updateUIForNewTurn();
+            document.getElementById('winner-modal').classList.remove('visible');
+            findRandomIntersection(null, 1);
+        }
+
+        // --- ACTUALIZACIONES DE UI ---
+        function showWinnerModal(winner) {
+            const modal = document.getElementById('winner-modal');
+            document.getElementById('winner-name').textContent = `Jugador ${winner}`;
+            modal.classList.add('visible');
+            setTimeout(() => { modal.querySelector('div').style.transform = 'scale(1)'; }, 10);
+        }
+
+        function showFeedback(isCorrect, subtitle, isDouble = false) {
+            const overlay = document.getElementById('feedback-overlay');
+            const box = document.getElementById('feedback-box');
+            const icon = document.getElementById('feedback-icon');
+            const title = document.getElementById('feedback-title');
+            const sub = document.getElementById('feedback-subtitle');
+            const double = document.getElementById('feedback-double');
+
+            box.classList.remove('bg-green-600', 'bg-red-600');
+            double.classList.add('hidden');
+
+            if (isCorrect) {
+                box.classList.add('bg-green-600');
+                title.textContent = '¡Correcto!';
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+                if (isDouble) double.classList.remove('hidden');
+            } else {
+                box.classList.add('bg-red-600');
+                title.textContent = '¡Incorrecto!';
+                icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>`;
+            }
+            sub.textContent = subtitle;
+            overlay.classList.add('visible');
+            setTimeout(() => { box.style.transform = 'scale(1)'; }, 10);
+            setTimeout(() => {
+                box.style.transform = 'scale(0.9)';
+                overlay.classList.remove('visible');
+            }, 2300);
+        }
+
+        function updateUIForNewTurn() {
+            updateInfoText('¡Tu turno! Tira el dado para definir la distancia.');
+            document.getElementById('roll-dice-btn').classList.remove('hidden');
+            document.getElementById('direction-controls').classList.add('hidden');
+            const p1Card = document.getElementById('player1-card'), p2Card = document.getElementById('player2-card');
+            const turnIndicator = document.getElementById('current-player-turn');
+            if (currentPlayer === 1) {
+                p1Card.classList.replace('border-gray-300', 'border-blue-500'); p1Card.classList.replace('border-2', 'border-4');
+                p2Card.classList.replace('border-red-500', 'border-gray-300'); p2Card.classList.replace('border-4', 'border-2');
+                turnIndicator.textContent = 'Jugador 1'; turnIndicator.className = 'text-blue-600 font-bold';
+            } else {
+                p2Card.classList.replace('border-gray-300', 'border-red-500'); p2Card.classList.replace('border-2', 'border-4');
+                p1Card.classList.replace('border-blue-500', 'border-gray-300'); p1Card.classList.replace('border-4', 'border-2');
+                turnIndicator.textContent = 'Jugador 2'; turnIndicator.className = 'text-red-600 font-bold';
+            }
+        }
+        function updateScores() { document.getElementById('player1-score').textContent = player1Score; document.getElementById('player2-score').textContent = player2Score; }
+        function updateInfoText(text) { document.getElementById('info-text').textContent = text; }
+        function switchTab(tabId) {
+            const writeMode = document.getElementById('write-mode'), mcMode = document.getElementById('mc-mode');
+            const tabWrite = document.getElementById('tab-write'), tabMc = document.getElementById('tab-mc');
+            if (tabId === 'tab-write') {
+                writeMode.classList.remove('hidden'); mcMode.classList.add('hidden');
+                tabWrite.classList.add('active'); tabMc.classList.remove('active');
+            } else {
+                writeMode.classList.add('hidden'); mcMode.classList.remove('hidden');
+                tabWrite.classList.remove('active'); tabMc.classList.add('active');
+                // Bloquear la vuelta a la pestaña de escribir
+                tabWrite.classList.add('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        // --- EVENT LISTENERS ---
+        document.getElementById('roll-dice-btn').addEventListener('click', rollDice);
+        document.querySelectorAll('.direction-btn').forEach(btn => btn.addEventListener('click', () => selectDirection(btn.dataset.direction)));
+        document.getElementById('submit-guess-btn').addEventListener('click', checkAnswer);
+        document.getElementById('tab-write').addEventListener('click', () => switchTab('tab-write'));
+        document.getElementById('tab-mc').addEventListener('click', () => switchTab('tab-mc'));
+        document.getElementById('toggle-panel-btn').addEventListener('click', hideGuessPanel);
+        document.getElementById('show-panel-btn').addEventListener('click', () => { document.getElementById('guess-panel').classList.add('visible'); document.getElementById('show-panel-btn').classList.add('hidden'); });
+        document.getElementById('restart-game-btn').addEventListener('click', resetGame);
+        
+        const handleEnterKey = (event) => { if (event.key === 'Enter') { event.preventDefault(); document.getElementById('submit-guess-btn').click(); } };
+        document.getElementById('street1-input').addEventListener('keydown', handleEnterKey);
+        document.getElementById('street2-input').addEventListener('keydown', handleEnterKey);
+
+        // --- CARGADOR DEL SCRIPT DE GOOGLE MAPS ---
+        function loadGoogleMapsScript() {
+            if (API_KEY === "TU_API_KEY_AQUI") { initMap(); return; }
+            const script = document.createElement('script');
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=initMap&libraries=geometry&language=es`;
+            script.async = true; script.defer = true;
+            document.body.appendChild(script);
+        }
+        loadGoogleMapsScript();
+    </script>
+</body>
+</html>
