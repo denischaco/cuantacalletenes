@@ -112,27 +112,43 @@
 
     <!-- Splash Screen -->
     <div id="splash-screen" class="overlay visible flex-col text-center" style="z-index: 100; backdrop-filter: blur(10px); background-color: rgba(50, 20, 1, 0.85);">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-[90vw] relative overflow-hidden flex flex-col">
-            <div class="h-40 sm:h-48 w-full bg-gray-200 relative overflow-hidden border-b-4 border-brand-green">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-[90vw] max-h-[90vh] relative overflow-hidden flex flex-col">
+            <div class="h-36 sm:h-44 w-full bg-gray-200 relative shrink-0 overflow-hidden border-b-4 border-brand-green">
                 <img src="portada.jpg" alt="Portada de la ciudad" class="object-cover w-full h-full opacity-95 hover:opacity-100 transition-opacity">
             </div>
-            <div class="p-8 md:p-10 relative">
+            <div class="p-6 md:p-8 relative overflow-y-auto">
                 <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-green/20 rounded-full blur-2xl"></div>
                 <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-brand-orange/20 rounded-full blur-2xl"></div>
                 
-                <h1 class="text-4xl font-black text-brand-brown tracking-tight mb-4 relative z-10">¡Bienvenido a <br><span class="text-brand-green">Cuánta Calle Tenés!</span></h1>
-                <p class="text-brand-brown/80 font-medium mb-6 relative z-10 text-lg">
+                <h1 class="text-3xl sm:text-4xl font-black text-brand-brown tracking-tight mb-3 relative z-10">¡Bienvenido a <br><span class="text-brand-green">Cuánta Calle Tenés!</span></h1>
+                <p class="text-brand-brown/80 font-medium mb-5 relative z-10 text-base sm:text-lg">
                     Compite contra un amigo para demostrar quién conoce más las calles de Resistencia, Chaco.
                 </p>
-                <div class="bg-gray-50 p-5 rounded-2xl mb-8 border border-gray-100 text-left relative z-10">
-                    <h3 class="font-bold text-brand-brown mb-2 text-lg">Cómo jugar:</h3>
-                    <ul class="list-disc pl-5 text-brand-brown/70 space-y-2 font-medium">
+
+                <!-- Input de Nombres de Jugadores -->
+                <div class="bg-gray-50 p-4 sm:p-5 rounded-2xl mb-5 border border-gray-100 text-left relative z-10 shadow-inner">
+                    <h3 class="font-bold text-brand-brown mb-3 text-base sm:text-lg">Nombres de los Jugadores:</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label for="player1-name-input" class="block text-xs font-bold text-brand-green uppercase mb-1">Jugador 1 (Verde)</label>
+                            <input type="text" id="player1-name-input" placeholder="Jugador 1" value="Jugador 1" class="w-full p-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-green focus:border-brand-green outline-none text-brand-brown font-semibold text-sm transition-all shadow-sm">
+                        </div>
+                        <div>
+                            <label for="player2-name-input" class="block text-xs font-bold text-brand-orange uppercase mb-1">Jugador 2 (Naranja)</label>
+                            <input type="text" id="player2-name-input" placeholder="Jugador 2" value="Jugador 2" class="w-full p-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-orange focus:border-brand-orange outline-none text-brand-brown font-semibold text-sm transition-all shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 sm:p-5 rounded-2xl mb-6 border border-gray-100 text-left relative z-10">
+                    <h3 class="font-bold text-brand-brown mb-2 text-base sm:text-lg">Cómo jugar:</h3>
+                    <ul class="list-disc pl-5 text-brand-brown/70 space-y-1.5 font-medium text-sm sm:text-base">
                         <li>En cada turno, <strong class="text-brand-brown">tira el dado</strong> y elige una dirección cardinal (Norte, Sur, Este u Oeste).</li>
                         <li>El mapa buscará una esquina en esa dirección para que la adivines.</li>
-                        <li>¡El primer jugador en alcanzar <strong class="text-brand-green text-xl">10 puntos</strong> gana la partida!</li>
+                        <li>¡El primer jugador en alcanzar <strong class="text-brand-green text-lg">10 puntos</strong> gana la partida!</li>
                     </ul>
                 </div>
-                <button id="start-game-btn" class="w-full bg-brand-green text-white font-bold text-xl py-4 px-6 rounded-2xl hover:bg-brand-green/90 active:scale-95 transition-all shadow-xl relative z-10">
+                <button id="start-game-btn" class="w-full bg-brand-green text-white font-bold text-xl py-3.5 px-6 rounded-2xl hover:bg-brand-green/90 active:scale-95 transition-all shadow-xl relative z-10">
                     ¡Empezar a Jugar!
                 </button>
             </div>
@@ -150,11 +166,11 @@
         <!-- Puntuaciones -->
         <div class="grid grid-cols-2 gap-4 mb-5">
             <div id="player1-card" class="p-4 rounded-xl border-4 border-brand-green bg-brand-green text-white transition-all duration-300 shadow-lg shadow-brand-green/30">
-                <h2 class="text-sm font-bold text-white/90 uppercase tracking-wide">Jugador 1</h2>
+                <h2 id="player1-card-name" class="text-sm font-bold text-white/90 uppercase tracking-wide truncate">Jugador 1</h2>
                 <p class="text-4xl font-black text-white" id="player1-score">0</p>
             </div>
             <div id="player2-card" class="p-4 rounded-xl border-2 border-gray-200 bg-white/50 transition-all duration-300">
-                <h2 class="text-sm font-bold text-brand-brown/80 uppercase tracking-wide">Jugador 2</h2>
+                <h2 id="player2-card-name" class="text-sm font-bold text-brand-brown/80 uppercase tracking-wide truncate">Jugador 2</h2>
                 <p class="text-4xl font-black text-brand-orange opacity-50" id="player2-score">0</p>
             </div>
         </div>
@@ -162,8 +178,8 @@
         <!-- Controles del Juego -->
         <div id="controls" class="bg-white/60 p-4 rounded-xl border border-white/50">
             <div class="mb-3 text-center">
-                <p class="font-bold text-brand-brown">Turno de: <span id="current-player-turn" class="text-brand-green font-black">Jugador 1</span></p>
-                <p id="info-text" class="text-sm text-brand-brown/80 h-5 mt-1 font-medium">¡Tu turno! Tira el dado para definir la distancia.</p>
+                <p class="font-bold text-brand-brown truncate">Turno de: <span id="current-player-turn" class="text-brand-green font-black">Jugador 1</span></p>
+                <p id="info-text" class="text-sm text-brand-brown/80 min-h-[1.5rem] mt-1 font-medium leading-snug">¡Tira el dado para definir la distancia!</p>
             </div>
             <button id="roll-dice-btn" class="w-full flex items-center justify-center gap-3 bg-brand-green text-white font-bold text-lg py-3 px-4 rounded-xl hover:bg-brand-green/90 active:scale-95 transition-all duration-200 shadow-lg shadow-brand-green/30">
                 <svg id="dice-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -259,7 +275,7 @@
             
             <h2 class="text-5xl font-black text-brand-orange drop-shadow-sm relative z-10">¡GANADOR!</h2>
             <p id="winner-name" class="mt-6 text-4xl font-black text-brand-brown relative z-10">Jugador 1</p>
-            <p class="mt-3 text-lg font-medium text-brand-brown/70 relative z-10">Ha alcanzado 10 puntos.</p>
+            <p id="winner-subtext" class="mt-3 text-lg font-medium text-brand-brown/70 relative z-10">Ha alcanzado 10 puntos.</p>
             <button id="restart-game-btn" class="mt-10 w-full bg-brand-brown text-white font-bold text-xl py-4 px-6 rounded-2xl hover:bg-brand-brown/90 active:scale-95 transition-all shadow-xl relative z-10">Jugar de Nuevo</button>
         </div>
     </div>
@@ -269,6 +285,8 @@
         const API_KEY = "AIzaSyBCzzU1vat9rQc4fNNHDZvD1B7KAYsM0NI";
         let map, marker, geocoder;
         let currentPlayer = 1;
+        let player1Name = "Jugador 1";
+        let player2Name = "Jugador 2";
         let player1Score = 0;
         let player2Score = 0;
         let currentDiceRoll = 0;
@@ -279,6 +297,10 @@
         const RESISTENCIA_CENTER = { lat: -27.455, lng: -58.98 };
         const mapStyles = [ { elementType: "labels", stylers: [{ visibility: "off" }] }, { featureType: "administrative.land_parcel", stylers: [{ visibility: "off" }] }, { featureType: "administrative.neighborhood", stylers: [{ visibility: "off" }] }, { featureType: "poi", stylers: [{ visibility: "off" }] }, { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] }, { featureType: "transit", stylers: [{ visibility: "off" }] } ];
         const STREET_NAMES_CHACO = [ "avenida 9 de julio", "avenida sarmiento", "avenida alberdi", "avenida castelli", "avenida ávalos", "avenida las heras", "avenida alvear", "avenida 25 de mayo", "arturo illia", "juan b justo", "josé maría paz", "güemes", "santa maría de oro", "frondizi", "marcelo t de alvear", "mitre", "brown", "roca", "pellegrini", "saavedra", "don bosco", "avenida san martín", "avenida belgrano", "avenida italia", "avenida paraguay", "avenida uruguay", "lópez y planes", "french", "ameghino", "lisandro de la torre" ];
+
+        function getPlayerName(playerNum) {
+            return playerNum === 1 ? player1Name : player2Name;
+        }
 
         // --- INICIALIZACIÓN ---
         function initMap() {
@@ -398,13 +420,13 @@
             switchTab('tab-write'); 
 
             if (correctStreets.length === 1) {
-                updateInfoText('¡Adivina la calle!');
+                updateInfoText(`¡${getPlayerName(currentPlayer)}, adivina la calle!`);
                 document.getElementById('modal-title').textContent = '¡Adivina la Calle!';
                 document.getElementById('modal-prompt').textContent = '¿Cuál es el nombre de esta calle?';
                 document.getElementById('street2-input').style.display = 'none';
                 document.getElementById('mc-prompt').textContent = 'Selecciona la calle correcta:';
             } else {
-                updateInfoText('¡Adivina las calles!');
+                updateInfoText(`¡${getPlayerName(currentPlayer)}, adivina las calles!`);
                 document.getElementById('modal-title').textContent = '¡Nueva Esquina!';
                 document.getElementById('modal-prompt').textContent = '¿Cuáles son las dos calles de esta intersección?';
                 document.getElementById('street2-input').style.display = 'block';
@@ -530,14 +552,17 @@
         // --- ACTUALIZACIONES DE UI ---
         function showWinnerModal(winner) {
             const modal = document.getElementById('winner-modal');
-            document.getElementById('winner-name').textContent = `Jugador ${winner}`;
+            const winnerNameStr = getPlayerName(winner);
+            const winnerNameEl = document.getElementById('winner-name');
+            winnerNameEl.textContent = winnerNameStr;
             
-            const winnerName = document.getElementById('winner-name');
             if(winner === 1) {
-                winnerName.className = "mt-6 text-4xl font-black text-brand-green relative z-10";
+                winnerNameEl.className = "mt-6 text-4xl font-black text-brand-green relative z-10";
             } else {
-                winnerName.className = "mt-6 text-4xl font-black text-brand-orange relative z-10";
+                winnerNameEl.className = "mt-6 text-4xl font-black text-brand-orange relative z-10";
             }
+
+            document.getElementById('winner-subtext').textContent = `¡Alcanzó ${WINNING_SCORE} puntos y demostró quién tiene más calle en Resistencia!`;
 
             modal.classList.add('visible');
             setTimeout(() => { modal.querySelector('div').style.transform = 'scale(1)'; }, 10);
@@ -574,7 +599,7 @@
         }
 
         function updateUIForNewTurn() {
-            updateInfoText('¡Tu turno! Tira el dado para definir la distancia.');
+            updateInfoText('¡Tira el dado para definir la distancia!');
             
             const rollBtn = document.getElementById('roll-dice-btn');
             rollBtn.disabled = false;
@@ -587,24 +612,24 @@
             
             if (currentPlayer === 1) {
                 p1Card.className = 'p-4 rounded-xl border-4 border-brand-green bg-brand-green text-white transition-all duration-300 shadow-lg shadow-brand-green/30';
-                p1Card.querySelector('h2').className = 'text-sm font-bold text-white/90 uppercase tracking-wide';
+                p1Card.querySelector('h2').className = 'text-sm font-bold text-white/90 uppercase tracking-wide truncate';
                 p1Card.querySelector('p').className = 'text-4xl font-black text-white';
                 
                 p2Card.className = 'p-4 rounded-xl border-2 border-gray-200 bg-white/50 transition-all duration-300';
-                p2Card.querySelector('h2').className = 'text-sm font-bold text-brand-brown/80 uppercase tracking-wide';
+                p2Card.querySelector('h2').className = 'text-sm font-bold text-brand-brown/80 uppercase tracking-wide truncate';
                 p2Card.querySelector('p').className = 'text-4xl font-black text-brand-orange opacity-50';
                 
-                turnIndicator.textContent = 'Jugador 1'; turnIndicator.className = 'text-brand-green font-black';
+                turnIndicator.textContent = player1Name; turnIndicator.className = 'text-brand-green font-black';
             } else {
                 p2Card.className = 'p-4 rounded-xl border-4 border-brand-orange bg-brand-orange text-white transition-all duration-300 shadow-lg shadow-brand-orange/30';
-                p2Card.querySelector('h2').className = 'text-sm font-bold text-white/90 uppercase tracking-wide';
+                p2Card.querySelector('h2').className = 'text-sm font-bold text-white/90 uppercase tracking-wide truncate';
                 p2Card.querySelector('p').className = 'text-4xl font-black text-white';
                 
                 p1Card.className = 'p-4 rounded-xl border-2 border-gray-200 bg-white/50 transition-all duration-300';
-                p1Card.querySelector('h2').className = 'text-sm font-bold text-brand-brown/80 uppercase tracking-wide';
+                p1Card.querySelector('h2').className = 'text-sm font-bold text-brand-brown/80 uppercase tracking-wide truncate';
                 p1Card.querySelector('p').className = 'text-4xl font-black text-brand-green opacity-50';
                 
-                turnIndicator.textContent = 'Jugador 2'; turnIndicator.className = 'text-brand-orange font-black';
+                turnIndicator.textContent = player2Name; turnIndicator.className = 'text-brand-orange font-black';
             }
         }
 
@@ -624,7 +649,18 @@
         }
 
         // --- EVENT LISTENERS ---
-        document.getElementById('start-game-btn').addEventListener('click', () => { document.getElementById('splash-screen').classList.remove('visible'); });
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            const p1Input = document.getElementById('player1-name-input').value.trim();
+            const p2Input = document.getElementById('player2-name-input').value.trim();
+            player1Name = p1Input || "Jugador 1";
+            player2Name = p2Input || "Jugador 2";
+
+            document.getElementById('player1-card-name').textContent = player1Name;
+            document.getElementById('player2-card-name').textContent = player2Name;
+
+            updateUIForNewTurn();
+            document.getElementById('splash-screen').classList.remove('visible');
+        });
         document.getElementById('roll-dice-btn').addEventListener('click', rollDice);
         document.querySelectorAll('.direction-btn').forEach(btn => btn.addEventListener('click', () => selectDirection(btn.dataset.direction)));
         document.getElementById('submit-guess-btn').addEventListener('click', checkAnswer);
