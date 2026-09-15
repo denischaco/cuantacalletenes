@@ -1,0 +1,684 @@
+[
+  {
+    "id": "julio-a-roca",
+    "name": "Calle Julio A. Roca",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4528, -58.9890],
+    "path": [
+      [-27.4520, -58.9866],
+      [-27.4528, -58.9890],
+      [-27.4536, -58.9920],
+      [-27.4544, -58.9950]
+    ],
+    "trivia": "Paralela a Av. 25 de Mayo hacia el sur. Pasa por el lateral de Casa de Gobierno y la emblemática esquina del Banco del Chaco.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "guemes",
+    "name": "Calle Güemes",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4502, -58.9840],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4502, -58.9840],
+      [-27.4490, -58.9814],
+      [-27.4478, -58.9788]
+    ],
+    "trivia": "Eje comercial neurálgico del microcentro. Nace en la esquina noreste de la plaza central frente al Correo Argentino.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "marcelo-t-alvear",
+    "name": "Calle Marcelo T. de Alvear",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4502, -58.9892],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4502, -58.9892],
+      [-27.4490, -58.9918],
+      [-27.4478, -58.9944]
+    ],
+    "trivia": "Pasa frente a Casa de Gobierno de la Provincia del Chaco. Es la continuación de Güemes al cruzar hacia el sector noroeste.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "juan-d-peron",
+    "name": "Peatonal / Calle Juan D. Perón",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4526, -58.9842],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4526, -58.9842],
+      [-27.4538, -58.9818],
+      [-27.4550, -58.9794]
+    ],
+    "trivia": "La histórica Peatonal de Resistencia. Corazón del paseo de compras y esculturas urbanas al aire libre.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "santa-maria-de-oro",
+    "name": "Calle Santa María de Oro",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4538, -58.9892],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4538, -58.9892],
+      [-27.4550, -58.9918],
+      [-27.4562, -58.9944]
+    ],
+    "trivia": "Nace en la Catedral San Fernando y la esquina suroeste de la plaza central. Eje comercial con confiterías tradicionales.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "hipolito-yrigoyen",
+    "name": "Calle Hipólito Yrigoyen",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4498, -58.9866],
+    "path": [
+      [-27.4498, -58.9892],
+      [-27.4498, -58.9866],
+      [-27.4498, -58.9840],
+      [-27.4498, -58.9814]
+    ],
+    "trivia": "Paralela norte a la Plaza 25 de Mayo. Alberga edificios bancarios, galerías y hoteles clásicos de Resistencia.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "pellegrini",
+    "name": "Calle Pellegrini",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4486, -58.9866],
+    "path": [
+      [-27.4486, -58.9892],
+      [-27.4486, -58.9866],
+      [-27.4486, -58.9840],
+      [-27.4486, -58.9814]
+    ],
+    "trivia": "Ubicada a dos cuadras al norte de la plaza central. Conecta el centro comercial con la zona universitaria y de residencias.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "don-bosco",
+    "name": "Calle Don Bosco",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4462, -58.9866],
+    "path": [
+      [-27.4462, -58.9892],
+      [-27.4462, -58.9866],
+      [-27.4462, -58.9840],
+      [-27.4462, -58.9814]
+    ],
+    "trivia": "Hogar del histórico Colegio Don Bosco y la Obra Salesiana en Resistencia.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "arturo-illia",
+    "name": "Calle Arturo Illia",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4542, -58.9840],
+    "path": [
+      [-27.4542, -58.9866],
+      [-27.4542, -58.9840],
+      [-27.4542, -58.9814],
+      [-27.4542, -58.9788]
+    ],
+    "trivia": "Cuna del mítico bar San José y el Fogón de los Arrieros a pocas cuadras. Paralela sur a la peatonal.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "lopez-y-planes",
+    "name": "Calle López y Planes",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -58.9824],
+    "path": [
+      [-27.4486, -58.9824],
+      [-27.4514, -58.9824],
+      [-27.4542, -58.9824],
+      [-27.4570, -58.9824]
+    ],
+    "trivia": "Corta perpendicular a Av. 9 de Julio a dos cuadras de la plaza. Zona de farmacias, estudios jurídicos y comercios.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "jose-maria-paz",
+    "name": "Calle José María Paz",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -58.9804],
+    "path": [
+      [-27.4486, -58.9804],
+      [-27.4514, -58.9804],
+      [-27.4542, -58.9804],
+      [-27.4570, -58.9804]
+    ],
+    "trivia": "A tres cuadras de la plaza hacia el este. Cruza frente a varias plazas satélite del trazado cuadrangular.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "vedia",
+    "name": "Calle Vedia",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -58.9908],
+    "path": [
+      [-27.4486, -58.9908],
+      [-27.4514, -58.9908],
+      [-27.4542, -58.9908],
+      [-27.4570, -58.9908]
+    ],
+    "trivia": "A dos cuadras al oeste de la plaza central. Tradicional calle con clínicas de salud y centros médicos históricos.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "necochea",
+    "name": "Calle Necochea",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -58.9928],
+    "path": [
+      [-27.4486, -58.9928],
+      [-27.4514, -58.9928],
+      [-27.4542, -58.9928],
+      [-27.4570, -58.9928]
+    ],
+    "trivia": "Cruza perpendicular a Av. 25 de Mayo. Conecta hacia el Parque 2 de Febrero en su extremo norte.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "mitre",
+    "name": "Calle Mitre",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4474, -58.9866],
+    "path": [
+      [-27.4474, -58.9892],
+      [-27.4474, -58.9866],
+      [-27.4474, -58.9840],
+      [-27.4474, -58.9814]
+    ],
+    "trivia": "Pasa frente a la emblemática Escuela Benjamín Zorrilla y la Casa de las Culturas en la esquina de Marcelo T. de Alvear.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "juan-b-justo",
+    "name": "Calle Juan B. Justo",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4554, -58.9866],
+    "path": [
+      [-27.4554, -58.9892],
+      [-27.4554, -58.9866],
+      [-27.4554, -58.9840],
+      [-27.4554, -58.9814]
+    ],
+    "trivia": "Zona del Hospital Pediátrico viejo y tradicionales casas de familia chaqueñas del primer anillo céntrico.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "obligado",
+    "name": "Calle Obligado",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4566, -58.9866],
+    "path": [
+      [-27.4566, -58.9892],
+      [-27.4566, -58.9866],
+      [-27.4566, -58.9840],
+      [-27.4566, -58.9814]
+    ],
+    "trivia": "Une Plaza 12 de Octubre con Plaza 9 de Julio a través del eje centro-sur.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "ameghino",
+    "name": "Calle Ameghino",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4578, -58.9866],
+    "path": [
+      [-27.4578, -58.9892],
+      [-27.4578, -58.9866],
+      [-27.4578, -58.9840],
+      [-27.4578, -58.9814]
+    ],
+    "trivia": "Cercana a Plaza España y el Club Chaco For Ever. Gran tradición deportiva y vecinal.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "brown",
+    "name": "Calle Brown",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4470, -58.9840],
+    "path": [
+      [-27.4470, -58.9866],
+      [-27.4470, -58.9840],
+      [-27.4470, -58.9814],
+      [-27.4470, -58.9788]
+    ],
+    "trivia": "Conocida calle del sector noreste, famosa por el Fogón de los Arrieros en el número 350, templo de la bohemia chaqueña.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "french",
+    "name": "Calle French",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4450, -58.9840],
+    "path": [
+      [-27.4450, -58.9866],
+      [-27.4450, -58.9840],
+      [-27.4450, -58.9814],
+      [-27.4450, -58.9788]
+    ],
+    "trivia": "Cruza hacia la Laguna Argüello y la zona universitaria UNNE.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "salta",
+    "name": "Calle Salta",
+    "type": "calle",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -58.9948],
+    "path": [
+      [-27.4486, -58.9948],
+      [-27.4514, -58.9948],
+      [-27.4542, -58.9948],
+      [-27.4570, -58.9948]
+    ],
+    "trivia": "A cuatro cuadras de la plaza hacia el oeste. Calle residencial arbolada con imponentes chivatos y lapachos.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "av-9-de-julio",
+    "name": "Avenida 9 de Julio",
+    "type": "avenida",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -58.9750],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4514, -58.9800],
+      [-27.4514, -58.9700],
+      [-27.4514, -58.9550]
+    ],
+    "trivia": "Una de las cuatro avenidas madre. Se extiende hacia el este conectando directamente Resistencia con Barranqueras y el Puerto.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-25-de-mayo",
+    "name": "Avenida 25 de Mayo",
+    "type": "avenida",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -58.9980],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4514, -58.9950],
+      [-27.4514, -59.0050],
+      [-27.4514, -59.0200]
+    ],
+    "trivia": "Avenida fundacional hacia el oeste. Conecta el centro con la ciudad hermana de Fontana.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-alberdi",
+    "name": "Avenida Alberdi",
+    "type": "avenida",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4600, -58.9866],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4570, -58.9866],
+      [-27.4650, -58.9866],
+      [-27.4750, -58.9866]
+    ],
+    "trivia": "Gran eje sur de la ciudad. Pasa por el Hospital Perrando y la terminal de ómnibus antigua.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-san-martin",
+    "name": "Avenida San Martín",
+    "type": "avenida",
+    "category": "centro",
+    "zoneIds": ["centro", "macrocentro", "toda_ciudad"],
+    "center": [-27.4440, -58.9866],
+    "path": [
+      [-27.4514, -58.9866],
+      [-27.4450, -58.9866],
+      [-27.4380, -58.9866],
+      [-27.4320, -58.9866]
+    ],
+    "trivia": "Eje norte que desemboca en el Río Negro y el puente hacia el Parque 2 de Febrero.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-sarmiento",
+    "name": "Avenida Sarmiento",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["centro", "democracia", "macrocentro", "toda_ciudad"],
+    "center": [-27.4380, -58.9720],
+    "path": [
+      [-27.4480, -58.9820],
+      [-27.4420, -58.9760],
+      [-27.4350, -58.9680],
+      [-27.4260, -58.9550]
+    ],
+    "trivia": "Avenida diagonal más famosa de Resistencia. Conecta la plaza central con el Parque de la Democracia y la Ruta 16.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-lavalle",
+    "name": "Avenida Lavalle",
+    "type": "avenida",
+    "category": "norte",
+    "zoneIds": ["domo", "macrocentro", "toda_ciudad"],
+    "center": [-27.4370, -58.9830],
+    "path": [
+      [-27.4430, -58.9830],
+      [-27.4370, -58.9830],
+      [-27.4300, -58.9830],
+      [-27.4230, -58.9830]
+    ],
+    "trivia": "Pasa junto al Parque 2 de Febrero y el circuito del Domo del Centenario. Gran polo deportivo y recreativo.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-avalos",
+    "name": "Avenida Ávalos",
+    "type": "avenida",
+    "category": "norte",
+    "zoneIds": ["domo", "macrocentro", "toda_ciudad"],
+    "center": [-27.4410, -58.9880],
+    "path": [
+      [-27.4450, -58.9950],
+      [-27.4410, -58.9880],
+      [-27.4370, -58.9800],
+      [-27.4340, -58.9750]
+    ],
+    "trivia": "Avenida de circunvalación noroeste frente al Parque 2 de Febrero. Tradicional punto de encuentro de jóvenes y ciclistas.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-italia",
+    "name": "Avenida Italia",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "democracia", "toda_ciudad"],
+    "center": [-27.4450, -58.9710],
+    "path": [
+      [-27.4514, -58.9710],
+      [-27.4450, -58.9710],
+      [-27.4380, -58.9710],
+      [-27.4300, -58.9710]
+    ],
+    "trivia": "Bordea la Laguna Argüello y el campus universitario de la UNNE (Arquitectura, Ingeniería, Humanidades).",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-las-heras",
+    "name": "Avenida Las Heras",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4580, -58.9710],
+    "path": [
+      [-27.4514, -58.9710],
+      [-27.4580, -58.9710],
+      [-27.4650, -58.9710],
+      [-27.4720, -58.9710]
+    ],
+    "trivia": "Continúa a Av. Italia hacia el sur cruzando Av. 9 de Julio. Pasa frente al Campus Resistencia de la UNNE.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-castelli",
+    "name": "Avenida Castelli",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4640, -58.9760],
+    "path": [
+      [-27.4640, -58.9866],
+      [-27.4640, -58.9760],
+      [-27.4640, -58.9660],
+      [-27.4640, -58.9550]
+    ],
+    "trivia": "Límite del macrocentro sur. Conecta con Barranqueras y la Universidad Tecnológica Nacional (UTN).",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-alvear",
+    "name": "Avenida Alvear",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4640, -58.9980],
+    "path": [
+      [-27.4640, -58.9866],
+      [-27.4640, -58.9980],
+      [-27.4640, -59.0100],
+      [-27.4640, -59.0250]
+    ],
+    "trivia": "Continúa a Av. Castelli hacia el oeste cruzando Av. Alberdi. Pasa por el estadio de Chaco For Ever.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-hernandarias",
+    "name": "Avenida Hernandarias",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4580, -59.0020],
+    "path": [
+      [-27.4514, -59.0020],
+      [-27.4580, -59.0020],
+      [-27.4650, -59.0020],
+      [-27.4720, -59.0020]
+    ],
+    "trivia": "Avenida del suroeste chaqueño. Conecta hacia el Aeropuerto Internacional de Resistencia y la Ruta 11.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "av-wilde",
+    "name": "Avenida Wilde",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "domo", "toda_ciudad"],
+    "center": [-27.4450, -58.9980],
+    "path": [
+      [-27.4514, -58.9980],
+      [-27.4450, -58.9980],
+      [-27.4400, -58.9980],
+      [-27.4350, -58.9980]
+    ],
+    "trivia": "Continúa a Av. Belgrano hacia el norte. Zona de bares, cervecerías artesanales y heladerías clásicas.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-belgrano",
+    "name": "Avenida Belgrano",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4580, -58.9980],
+    "path": [
+      [-27.4514, -58.9980],
+      [-27.4580, -58.9980],
+      [-27.4650, -58.9980],
+      [-27.4720, -58.9980]
+    ],
+    "trivia": "Cruza hacia el sur conectando con el barrio Santa Inés y la terminal de micros de larga distancia.",
+    "difficulty": "fácil"
+  },
+  {
+    "id": "av-laprida",
+    "name": "Avenida Laprida",
+    "type": "avenida",
+    "category": "macrocentro",
+    "zoneIds": ["democracia", "macrocentro", "toda_ciudad"],
+    "center": [-27.4420, -58.9760],
+    "path": [
+      [-27.4480, -58.9760],
+      [-27.4420, -58.9760],
+      [-27.4360, -58.9760],
+      [-27.4300, -58.9760]
+    ],
+    "trivia": "Paralela a Av. Italia en Villa San Martín. Zona con frondosa vegetación y pintorescas casonas familiares.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "av-de-los-inmigrantes",
+    "name": "Avenida de los Inmigrantes",
+    "type": "avenida",
+    "category": "norte",
+    "zoneIds": ["domo", "toda_ciudad"],
+    "center": [-27.4330, -58.9830],
+    "path": [
+      [-27.4360, -58.9800],
+      [-27.4330, -58.9830],
+      [-27.4300, -58.9860],
+      [-27.4270, -58.9900]
+    ],
+    "trivia": "Acceso principal al predio del Domo del Centenario y la Bienal Internacional de Esculturas.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "calle-french-norte",
+    "name": "Calle French (Laguna Argüello)",
+    "type": "calle",
+    "category": "macrocentro",
+    "zoneIds": ["macrocentro", "democracia", "toda_ciudad"],
+    "center": [-27.4420, -58.9810],
+    "path": [
+      [-27.4450, -58.9810],
+      [-27.4420, -58.9810],
+      [-27.4390, -58.9810]
+    ],
+    "trivia": "Costea el Parque Laguna Argüello, donde familias y deportistas se juntan a tomar tereré los fines de semana.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "calle-guemes-norte",
+    "name": "Calle Güemes (Barrio Los Troncos)",
+    "type": "calle",
+    "category": "norte",
+    "zoneIds": ["domo", "toda_ciudad"],
+    "center": [-27.4410, -58.9800],
+    "path": [
+      [-27.4440, -58.9800],
+      [-27.4410, -58.9800],
+      [-27.4380, -58.9800]
+    ],
+    "trivia": "Tramo norte de Güemes acercándose a la costanera del Río Negro y el Club Regatas Resistencia.",
+    "difficulty": "difícil"
+  },
+  {
+    "id": "av-soberania-nacional",
+    "name": "Avenida Soberanía Nacional",
+    "type": "avenida",
+    "category": "sur",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4780, -58.9866],
+    "path": [
+      [-27.4780, -59.0100],
+      [-27.4780, -58.9866],
+      [-27.4780, -58.9600]
+    ],
+    "trivia": "Gran canal y arteria vial sur que divide Resistencia del canal derivador hacia el Río Paraná.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "av-malvinas-argentinas",
+    "name": "Avenida Malvinas Argentinas",
+    "type": "avenida",
+    "category": "oeste",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4600, -59.0150],
+    "path": [
+      [-27.4550, -59.0150],
+      [-27.4600, -59.0150],
+      [-27.4650, -59.0150],
+      [-27.4700, -59.0150]
+    ],
+    "trivia": "Acceso directo a la Estación Terminal de Ómnibus de Resistencia (ETOR).",
+    "difficulty": "medio"
+  },
+  {
+    "id": "av-marconi",
+    "name": "Avenida Marconi",
+    "type": "avenida",
+    "category": "oeste",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4514, -59.0150],
+    "path": [
+      [-27.4450, -59.0150],
+      [-27.4514, -59.0150],
+      [-27.4580, -59.0150]
+    ],
+    "trivia": "Arteria neurálgica de la zona oeste conectando Villa Barberán y el Parque Tiro Federal.",
+    "difficulty": "medio"
+  },
+  {
+    "id": "calle-combate-san-lorenzo",
+    "name": "Calle Combate de San Lorenzo",
+    "type": "calle",
+    "category": "este",
+    "zoneIds": ["democracia", "toda_ciudad"],
+    "center": [-27.4370, -58.9650],
+    "path": [
+      [-27.4400, -58.9650],
+      [-27.4370, -58.9650],
+      [-27.4340, -58.9650]
+    ],
+    "trivia": "Situada en el corazón del Barrio Santa Inés y cercanías de la Laguna Francia.",
+    "difficulty": "difícil"
+  },
+  {
+    "id": "calle-fortin-rivadavia",
+    "name": "Calle Fortín Rivadavia",
+    "type": "calle",
+    "category": "sur",
+    "zoneIds": ["macrocentro", "toda_ciudad"],
+    "center": [-27.4720, -58.9866],
+    "path": [
+      [-27.4720, -58.9950],
+      [-27.4720, -58.9866],
+      [-27.4720, -58.9750]
+    ],
+    "trivia": "Importante calle residencial del sector sur que recuerda los fortines históricos de la Conquista del Chaco.",
+    "difficulty": "difícil"
+  }
+]

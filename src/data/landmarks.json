@@ -1,0 +1,57 @@
+[
+  {
+    "id": "centro",
+    "name": "Casco Céntrico (4 Avenidas)",
+    "shortName": "4 Avenidas",
+    "badge": "🏛️",
+    "center": [-27.4514, -58.9866],
+    "zoom": 15,
+    "radiusKm": 1.2,
+    "difficulty": "Accesible",
+    "description": "El corazón de la ciudad: Plaza 25 de Mayo, Casa de Gobierno, Peatonal y las cuatro avenidas fundacionales."
+  },
+  {
+    "id": "domo",
+    "name": "Domo y Río Negro",
+    "shortName": "Domo / Parque 2 de Feb",
+    "badge": "🎭",
+    "center": [-27.4385, -58.9790],
+    "zoom": 15,
+    "radiusKm": 1.5,
+    "difficulty": "Intermedio",
+    "description": "Zona de las bienales, Parque 2 de Febrero, Av. Lavalle, Av. Ávalos y la costanera del Río Negro."
+  },
+  {
+    "id": "democracia",
+    "name": "Parque de la Democracia",
+    "shortName": "Sarmiento / Democracia",
+    "badge": "🌳",
+    "center": [-27.4348, -58.9660],
+    "zoom": 14,
+    "radiusKm": 1.8,
+    "difficulty": "Intermedio",
+    "description": "Av. Sarmiento, Laguna Francia, el gran pulmón verde este y accesos rápidos."
+  },
+  {
+    "id": "macrocentro",
+    "name": "Macrocentro Chaqueño",
+    "shortName": "Macrocentro",
+    "badge": "🏙️",
+    "center": [-27.4514, -58.9866],
+    "zoom": 14,
+    "radiusKm": 2.8,
+    "difficulty": "Avanzado",
+    "description": "Se expande hasta Av. Castelli, Av. Alvear, Av. Italia y Av. Hernandarias."
+  },
+  {
+    "id": "toda_ciudad",
+    "name": "Toda Resistencia (Libre)",
+    "shortName": "Toda la Ciudad",
+    "badge": "🔥",
+    "center": [-27.4514, -58.9866],
+    "zoom": 13,
+    "radiusKm": 6.0,
+    "difficulty": "Experto",
+    "description": "Sin límites: calles, avenidas y diagonales de toda la capital chaqueña."
+  }
+]

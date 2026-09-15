@@ -1,0 +1,52 @@
+[
+  {
+    "id": "perdido",
+    "minScore": 0,
+    "maxScore": 1000,
+    "title": "Desorientado en las zanjas",
+    "badge": "🚴‍♂️",
+    "color": "text-rose-400",
+    "bgColor": "bg-rose-500/10 border-rose-500/30",
+    "description": "¿Te tomaste el bondi para el lado contrario? Tranqui, ¡a pedalear y seguir descubriendo la ciudad!"
+  },
+  {
+    "id": "bondi",
+    "minScore": 1001,
+    "maxScore": 2200,
+    "title": "Recién bajado del 106",
+    "badge": "🚌",
+    "color": "text-amber-400",
+    "bgColor": "bg-amber-500/10 border-amber-500/30",
+    "description": "Conocés las avenidas y las paradas clave, pero si te meten dos cuadras adentro te agarra la duda."
+  },
+  {
+    "id": "peatonal",
+    "minScore": 2201,
+    "maxScore": 3400,
+    "title": "Caminante de la Peatonal",
+    "badge": "🚶‍♂️",
+    "color": "text-sky-400",
+    "bgColor": "bg-sky-500/10 border-sky-500/30",
+    "description": "El microcentro te lo sabés al dedillo. Tomaste café en la Illia y compraste chipá caliente en la plaza."
+  },
+  {
+    "id": "baquiano",
+    "minScore": 3401,
+    "maxScore": 4400,
+    "title": "Baquiano de las 4 Avenidas",
+    "badge": "🧭",
+    "color": "text-emerald-400",
+    "bgColor": "bg-emerald-500/10 border-emerald-500/30",
+    "description": "¡Impresionante sentido de orientación! Te movés como pez en el agua entre Alberdi, San Martín, 9 de Julio y 25 de Mayo."
+  },
+  {
+    "id": "remisero",
+    "minScore": 4401,
+    "maxScore": 5000,
+    "title": "Remisero Legendario de Resistencia",
+    "badge": "👑",
+    "color": "text-purple-400",
+    "bgColor": "bg-purple-500/10 border-purple-500/30",
+    "description": "¡Nivel Dios de la calle! Ni Waze ni Google Maps te hacen sombra. Te sabés hasta el sentido de las cortadas más escondidas."
+  }
+]

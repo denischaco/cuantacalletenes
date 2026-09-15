@@ -1,0 +1,21 @@
+{
+  "projectName": "¿Cuánta Calle Tenés?",
+  "category": "MVP / Single-Player Browser Game",
+  "targetPersona": "Para todo público (16 a 80 años): Vecinos, jóvenes y adultos mayores de Resistencia, Chaco, que buscan poner a prueba o aprender los nombres y el trazado de las calles de la ciudad mediante una interfaz accesible, clara y de alta legibilidad.",
+  "objectives": [
+    "Desafiar el conocimiento urbano de Resistencia proponiendo nombres de calles aleatorias sobre un mapa sin nombres de calles (no-labels) para forzar la orientación por trazado, avenidas y espacios verdes.",
+    "Garantizar máxima accesibilidad para todas las edades (16-80 años) con controles claros, botones grandes, tipografía legible y microinteracciones de alta fidelidad.",
+    "Implementar un sistema de rangos chaqueños ('Street Cred Ranks') y base de calles fácilmente editables mediante archivos JSON independientes.",
+    "Incorporar un leaderboard global asíncrono y modo de juego ágil de 5 rondas para fomentar la rejugabilidad."
+  ],
+  "currentPhase": "MVP",
+  "techStack": [
+    "Vite",
+    "React",
+    "Tailwind CSS",
+    "Leaflet (CartoDB Dark No-Labels)",
+    "Lucide React",
+    "Canvas Confetti"
+  ],
+  "repository": "https://github.com/denischaco/cuanta-calle-tenes"
+}
