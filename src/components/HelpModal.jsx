@@ -23,13 +23,13 @@ export default function HelpModal({ onClose }) {
         {/* Step-by-step instructions */}
         <div className="space-y-3 text-xs sm:text-sm text-slate-300">
           <div className="flex gap-3 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80">
-            <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 shrink-0 h-fit">
+            <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0 h-fit">
               <Compass className="w-5 h-5" />
             </span>
             <div>
-              <h4 className="font-bold text-white text-xs sm:text-sm">1. Leé el nombre de la calle</h4>
+              <h4 className="font-bold text-white text-xs sm:text-sm">1. Mirá el punto verde en el mapa</h4>
               <p className="text-slate-400 text-xs mt-0.5">
-                En cada ronda se te pide ubicar una calle o avenida de Resistencia (ej: *"Calle Julio A. Roca"*).
+                En cada ronda se marca un punto sobre una calle en plena cuadra (lejos de esquinas e intersecciones).
               </p>
             </div>
           </div>
@@ -41,19 +41,20 @@ export default function HelpModal({ onClose }) {
             <div>
               <h4 className="font-bold text-white text-xs sm:text-sm">2. El mapa no tiene nombres</h4>
               <p className="text-slate-400 text-xs mt-0.5">
-                ¡Es el desafío! Orientate usando la <span className="text-slate-200 font-semibold">Plaza 25 de Mayo</span> en el centro, las diagonales (Sarmiento) y las lagunas (Argüello, Francia).
+                Hacé zoom y desplazate libremente. Orientate por la <span className="text-slate-200 font-semibold">Plaza 25 de Mayo</span>, avenidas diagonales y lagunas. Podés minimizar el panel con el botón "Ver mapa".
               </p>
             </div>
           </div>
 
           <div className="flex gap-3 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80">
-            <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 shrink-0 h-fit">
+            <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 shrink-0 h-fit">
               <ZoomIn className="w-5 h-5" />
             </span>
             <div>
-              <h4 className="font-bold text-white text-xs sm:text-sm">3. Hacé zoom y tocá el mapa</h4>
+              <h4 className="font-bold text-white text-xs sm:text-sm">3. Dos formas de adivinar</h4>
               <p className="text-slate-400 text-xs mt-0.5">
-                Acercate para ver las manzanas con detalle. Tocá donde creés que pasa la calle y presioná <span className="text-emerald-400 font-bold">¡Confirmar Ubicación!</span>.
+                • <strong className="text-emerald-400">Escribir nombre (+2 pts):</strong> nombre exacto respetando tildes y diéresis (ej: <em>Güemes</em>, <em>Julio A. Roca</em>).<br/>
+                • <strong className="text-amber-400">4 Opciones (+1 pt / -1 pt):</strong> elegí entre 4 alternativas (+1 pt si acertás, -1 pt si errás).
               </p>
             </div>
           </div>
@@ -63,9 +64,9 @@ export default function HelpModal({ onClose }) {
               <Award className="w-5 h-5" />
             </span>
             <div>
-              <h4 className="font-bold text-white text-xs sm:text-sm">4. Sumá puntos y ganá tu Rango</h4>
+              <h4 className="font-bold text-white text-xs sm:text-sm">4. Sumá hasta 10 puntos y ganá tu Rango</h4>
               <p className="text-slate-400 text-xs mt-0.5">
-                Hasta 1.000 puntos por calle según la cercanía. Al completar las 5 rondas recibirás tu <span className="text-purple-300 font-semibold">Rango Chaqueño</span> oficial.
+                Completá las 5 rondas para obtener tu <span className="text-purple-300 font-semibold">Rango Chaqueño</span> oficial y guardar tu récord en la tabla.
               </p>
             </div>
           </div>

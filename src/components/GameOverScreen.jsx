@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Trophy, RotateCcw, Share2, Check, UserCheck } from 'lucide-react';
-import { formatDistance } from '../utils/geoUtils';
+import { Trophy, RotateCcw, Share2, Check, UserCheck, CheckCircle2, XCircle, MapPin } from 'lucide-react';
 
 export default function GameOverScreen({
   totalScore,
   roundHistory,
   rank,
   zoneName,
+  zoneSponsor = null,
   onPlayAgain,
-  onSaveScore
+  onSaveScore,
+  onOpenAdvertise
 }) {
   const [playerName, setPlayerName] = useState('');
   const [saved, setSaved] = useState(false);
@@ -32,7 +33,7 @@ export default function GameOverScreen({
   };
 
   const handleShare = async () => {
-    const text = `¡Hice ${totalScore.toLocaleString('es-AR')} puntos en "¿Cuánta Calle Tenés?" (Resistencia, Chaco)! Rango: ${rank.title} ${rank.badge}. ¿Te animás a superarme?`;
+    const text = `¡Hice ${totalScore} de 10 puntos en "¿Cuánta Calle Tenés?" (Resistencia, Chaco)! Rango: ${rank.title} ${rank.badge}. ¿Te animás a superarme?`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -40,7 +41,7 @@ export default function GameOverScreen({
           text,
           url: 'https://denischaco.com.ar'
         });
-      } catch (err) {
+      } catch {
         // user cancelled or share failed
       }
     } else {
@@ -51,8 +52,8 @@ export default function GameOverScreen({
   };
 
   return (
-    <div className="absolute inset-0 z-40 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto pointer-events-auto">
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-700/90 rounded-3xl p-5 sm:p-7 shadow-2xl my-auto space-y-5 animate-scale-up">
+    <div className="absolute inset-0 z-40 flex items-center justify-center p-3 sm:p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] bg-slate-950/80 backdrop-blur-md overflow-y-auto pointer-events-auto">
+      <div className="w-full max-w-lg bg-slate-900 border border-slate-700/90 rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl my-auto space-y-4 sm:space-y-5 max-h-[calc(100dvh-2rem)] overflow-y-auto animate-scale-up">
         {/* Header Title */}
         <div className="text-center space-y-1">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 text-slate-950 text-2xl shadow-lg shadow-amber-500/20 mb-2">
@@ -80,12 +81,12 @@ export default function GameOverScreen({
           </p>
         </div>
 
-        {/* Total Score Badge */}
+        {/* Total Score Badge (0 to 10 scale) */}
         <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl text-center">
-          <p className="text-xs text-slate-400 uppercase font-semibold">Puntaje Total</p>
+          <p className="text-xs text-slate-400 uppercase font-semibold">Puntaje Final</p>
           <div className="text-4xl sm:text-5xl font-heading font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 mt-1">
-            {totalScore.toLocaleString('es-AR')}
-            <span className="text-lg text-slate-500 font-normal"> / 5.000</span>
+            {totalScore}
+            <span className="text-lg text-slate-500 font-normal"> / 10 pts</span>
           </div>
         </div>
 
@@ -98,22 +99,32 @@ export default function GameOverScreen({
             {roundHistory.map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-2 rounded-xl bg-slate-900/80 border border-slate-800/70"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900/80 border border-slate-800/70"
               >
                 <div className="flex items-center gap-2 truncate">
                   <span className="w-5 h-5 rounded-md bg-slate-800 text-slate-300 flex items-center justify-center font-bold text-[10px]">
                     {idx + 1}
                   </span>
-                  <span className="font-semibold text-slate-200 truncate">
-                    {item.street.name}
-                  </span>
+                  <div className="truncate">
+                    <span className="font-semibold text-slate-200 truncate block">
+                      {item.street.name}
+                    </span>
+                    <span className="text-[10px] text-slate-500 flex items-center gap-1">
+                      {item.mode === 'write' ? '✍️ Escrita' : '💡 4 Opciones'} • {item.isCorrect ? 'Acierto' : 'Falló'}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0 text-right">
-                  <span className="text-slate-400 text-[11px]">
-                    {formatDistance(item.distance)}
-                  </span>
-                  <span className="font-bold text-emerald-400 w-16">
-                    +{item.points} pts
+
+                <div className="flex items-center gap-2 shrink-0 text-right">
+                  {item.isCorrect ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <XCircle className="w-4 h-4 text-rose-400" />
+                  )}
+                  <span className={`font-bold w-14 ${
+                    item.scoreDelta > 0 ? 'text-emerald-400' : item.scoreDelta < 0 ? 'text-rose-400' : 'text-slate-400'
+                  }`}>
+                    {item.scoreDelta > 0 ? `+${item.scoreDelta}` : item.scoreDelta} {Math.abs(item.scoreDelta) === 1 ? 'pt' : 'pts'}
                   </span>
                 </div>
               </div>
@@ -135,7 +146,7 @@ export default function GameOverScreen({
             <button
               type="submit"
               disabled={!playerName.trim()}
-              className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
+              className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <UserCheck className="w-4 h-4" />
               <span>Guardar</span>
@@ -148,23 +159,88 @@ export default function GameOverScreen({
           </div>
         )}
 
+        {/* Official Zone Sponsor Feature Card (Tier: sponsor_zona) */}
+        {zoneSponsor && (
+          <div className="bg-gradient-to-br from-[#241105] via-slate-900 to-[#180a02] border-2 border-[#F48138]/80 rounded-2xl p-3.5 sm:p-4 shadow-xl text-left flex items-center justify-between gap-3 relative overflow-hidden animate-scale-up">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                style={{ backgroundColor: zoneSponsor.logoBg || '#FFFFFF' }}
+                className="w-12 h-12 rounded-xl p-1 border border-[#F48138]/60 shadow-md flex items-center justify-center shrink-0 overflow-hidden"
+              >
+                {zoneSponsor.badge ? (
+                  <img
+                    src={zoneSponsor.badge}
+                    alt={zoneSponsor.name}
+                    className="w-full h-full object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <span className="text-2xl">⭐</span>
+                )}
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] uppercase font-bold text-[#FFA559] tracking-wider flex items-center gap-1">
+                  <span>⭐ Auspiciante Oficial de Zona</span>
+                </span>
+                <h4 className="font-heading font-black text-base text-white leading-tight truncate">
+                  {zoneSponsor.name}
+                </h4>
+                {zoneSponsor.address && (
+                  <p className="text-[11px] text-slate-400 truncate">
+                    {zoneSponsor.address} • {zoneSponsor.rubro || 'Comercio Destacado'}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {(zoneSponsor.coupon?.googleMapsUrl || zoneSponsor.googleMapsUrl) && (
+              <a
+                href={zoneSponsor.coupon?.googleMapsUrl || zoneSponsor.googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#F48138]" />
+                <span className="hidden sm:inline">Cómo llegar</span>
+                <span className="sm:hidden">Visitar</span>
+              </a>
+            )}
+          </div>
+        )}
+
         {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-1">
           <button
             onClick={handleShare}
-            className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
+            className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Share2 className="w-4 h-4 text-cyan-400" />
             <span>{copied ? '¡Copiado!' : 'Compartir'}</span>
           </button>
           <button
             onClick={onPlayAgain}
-            className="py-3 px-4 rounded-xl bg-gradient-to-r from-[#339136] to-emerald-600 hover:from-emerald-600 hover:to-teal-500 text-white font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-transform active:scale-98"
+            className="py-3 px-4 rounded-xl bg-gradient-to-r from-[#339136] to-emerald-600 hover:from-emerald-600 hover:to-teal-500 text-white font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-transform active:scale-98 cursor-pointer"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Jugar de Nuevo</span>
           </button>
         </div>
+
+        {/* Merchant invitation button in GameOver screen */}
+        {onOpenAdvertise && (
+          <div className="pt-2 text-center border-t border-slate-800">
+            <button
+              type="button"
+              onClick={onOpenAdvertise}
+              className="text-[11px] text-slate-400 hover:text-[#FFA559] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>📢</span>
+              <span>¿Tenés un comercio en Resistencia? <u className="underline decoration-[#F48138]">Sumá tu local y cupones al juego</u></span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

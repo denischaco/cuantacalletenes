@@ -12,7 +12,12 @@ dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# IDE & Editor files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +27,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Antigravity internal artifacts
+.antigravity/

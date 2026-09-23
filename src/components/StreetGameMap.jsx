@@ -1,205 +1,338 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Target, Landmark, Layers, Moon, Sun } from 'lucide-react';
+
+import defaultReferencePoints from '../data/referencePoints.json';
+
+// Helper to check if an icon value represents an image URL or path
+function isImageIcon(iconStr, iconImage) {
+  if (iconImage) return true;
+  if (!iconStr || typeof iconStr !== 'string') return false;
+  return (
+    iconStr.startsWith('http://') ||
+    iconStr.startsWith('https://') ||
+    iconStr.startsWith('/') ||
+    iconStr.startsWith('./') ||
+    iconStr.startsWith('data:image') ||
+    /\.(png|jpe?g|svg|webp|gif|ico)(\?.*)?$/i.test(iconStr)
+  );
+}
 
 export default function StreetGameMap({
-  userPin,
-  onPinChange,
+  targetPoint,
   isRevealed,
   currentStreet,
-  closestPoint,
   zoneCenter = [-27.4514, -58.9866],
-  zoneZoom = 15
+  zoneZoom = 15,
+  referencePoints = defaultReferencePoints
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
-  const userMarkerRef = useRef(null);
-  const targetStreetLayerRef = useRef(null);
-  const connectorLineRef = useRef(null);
-  const onPinChangeRef = useRef(onPinChange);
-  useEffect(() => {
-    onPinChangeRef.current = onPinChange;
-  }, [onPinChange]);
+  const targetMarkerRef = useRef(null);
+  const tileLayerRef = useRef(null);
+  const landmarksLayerRef = useRef(null);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const [mapMode, setMapMode] = useState('dark'); // 'dark' | 'satellite'
 
-  // Initialize Map
+  // Helper to attach appropriate tile layer based on mapMode
+  const setTileLayer = (map, mode) => {
+    if (tileLayerRef.current) {
+      tileLayerRef.current.remove();
+      tileLayerRef.current = null;
+    }
+
+    if (mode === 'satellite') {
+      // High-resolution satellite tiles: zero labels, zero watermarks
+      tileLayerRef.current = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+          attribution: 'Esri World Imagery',
+          maxZoom: 19,
+          className: 'clean-sat-tiles'
+        }
+      ).addTo(map);
+    } else {
+      // Dark mute roadmap: all labels disabled (s.e:l|p.v:off), zero street names, zero watermarks
+      tileLayerRef.current = L.tileLayer(
+        'https://mt{s}.google.com/vt/lyrs=m&apistyle=s.e:l|p.v:off&x={x}&y={y}&z={z}',
+        {
+          attribution: 'Google Maps (Mudo)',
+          subdomains: ['0', '1', '2', '3'],
+          maxZoom: 19,
+          className: 'clean-dark-tiles'
+        }
+      ).addTo(map);
+    }
+  };
+
+  // 1. Initialize Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
-    // Resistencia center (Plaza 25 de Mayo)
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+      setIsMapReady(false);
+    }
+
+    const initialCenter = targetPoint || zoneCenter;
+    const initialZoom = targetPoint ? 16 : zoneZoom;
+
     const map = L.map(mapContainerRef.current, {
-      center: zoneCenter,
-      zoom: zoneZoom,
+      center: initialCenter,
+      zoom: initialZoom,
       zoomControl: false,
       attributionControl: true,
       minZoom: 12,
-      maxZoom: 18,
+      maxZoom: 19,
       tap: false,
       bounceAtZoomLimits: true
     });
 
     // Touch-friendly zoom control on bottom right
-    L.control.zoom({
-      position: 'bottomright'
-    }).addTo(map);
+    L.control
+      .zoom({
+        position: 'bottomright'
+      })
+      .addTo(map);
 
-    // CartoDB Dark No-Labels Tile Layer (Zero street names!)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://openstreetmap.org">OSM</a>',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
-
-    // Map click handler to drop/move pin
-    map.on('click', (e) => {
-      if (onPinChangeRef.current) {
-        onPinChangeRef.current([e.latlng.lat, e.latlng.lng]);
-      }
-    });
+    // Initial tile layer
+    setTileLayer(map, mapMode);
 
     mapInstanceRef.current = map;
+    setIsMapReady(true);
+
+    setTimeout(() => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
+    }, 150);
 
     return () => {
       map.remove();
+      mapInstanceRef.current = null;
+      setIsMapReady(false);
     };
   }, []);
 
-  // Update map view when zone changes
+  // 2. Render and dynamically update reference landmarks from JSON
   useEffect(() => {
-    if (mapInstanceRef.current && zoneCenter) {
-      mapInstanceRef.current.setView(zoneCenter, zoneZoom, { animate: true });
-    }
-  }, [zoneCenter, zoneZoom]);
+    const map = mapInstanceRef.current;
+    if (!map || !isMapReady) return;
 
-  // Update User Marker
+    // Clear previous landmarks layer if it exists
+    if (landmarksLayerRef.current) {
+      landmarksLayerRef.current.remove();
+      landmarksLayerRef.current = null;
+    }
+
+    if (!Array.isArray(referencePoints) || referencePoints.length === 0) {
+      return;
+    }
+
+    const landmarksGroup = L.layerGroup();
+
+    referencePoints.forEach((lm) => {
+      // Ignore if explicitly disabled
+      if (lm.enabled === false) return;
+
+      const coords = lm.pos || lm.coordinates;
+      if (!coords || !Array.isArray(coords) || coords.length < 2) return;
+
+      const isMain = lm.type === 'main_plaza';
+      const isCommercial = lm.type === 'commercial' || lm.isSponsored;
+      const isImg = isImageIcon(lm.icon, lm.iconImage);
+      const iconSrc = lm.iconImage || lm.icon;
+      const logoBg = lm.logoBg || '#FFFFFF';
+
+      const borderColor = lm.color || (isMain || isCommercial ? '#F48138' : '#334155');
+      const textColor = isCommercial ? '#FED7AA' : isMain ? '#FDBA74' : '#E2E8F0';
+
+      let innerHtml = '';
+
+      if (isCommercial) {
+        if (isRevealed) {
+          // Adivinado / Revelado: LOGO SOLO SIN NOMBRE
+          const logoContent = isImg
+            ? `<div class="landmark-logo-wrapper" style="background-color: ${logoBg};"><img src="${iconSrc}" alt="${lm.name}" /></div>`
+            : `<span style="font-size: 18px; line-height: 1;">${lm.icon || '🍔'}</span>`;
+
+          innerHtml = `
+            <div class="landmark-ref-badge landmark-commercial-badge landmark-logo-only" title="${lm.name}">
+              ${logoContent}
+            </div>
+          `;
+        } else {
+          // Antes de adivinar / En juego: ⭐ + Logo con fondo limpio + Nombre (sin caja SPONSOR invasiva)
+          const logoContent = isImg
+            ? `<div class="landmark-logo-wrapper" style="background-color: ${logoBg};"><img src="${iconSrc}" alt="" /></div>`
+            : `<span>${lm.icon || '🍔'}</span>`;
+
+          innerHtml = `
+            <div class="landmark-ref-badge landmark-commercial-badge" title="Comercio Destacado">
+              <span class="commercial-star">★</span>
+              ${logoContent}
+              <span style="font-weight: 700;">${lm.name}</span>
+            </div>
+          `;
+        }
+      } else {
+        // Hitos habituales (plazas, parques)
+        const iconHtml = isImg
+          ? `<img src="${iconSrc}" class="landmark-img-icon" alt="" />`
+          : `<span>${lm.icon || '📍'}</span>`;
+
+        innerHtml = `
+          <div class="landmark-ref-badge" style="
+            background: rgba(15, 23, 42, 0.94);
+            border: 1px solid ${borderColor};
+            color: ${textColor};
+          ">
+            ${iconHtml}
+            <span>${lm.name}</span>
+          </div>
+        `;
+      }
+
+      const landmarkIcon = L.divIcon({
+        className: 'landmark-ref-marker',
+        html: innerHtml,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0]
+      });
+
+      L.marker(coords, {
+        icon: landmarkIcon,
+        interactive: false
+      }).addTo(landmarksGroup);
+    });
+
+    landmarksGroup.addTo(map);
+    landmarksLayerRef.current = landmarksGroup;
+
+    return () => {
+      if (landmarksLayerRef.current) {
+        landmarksLayerRef.current.remove();
+        landmarksLayerRef.current = null;
+      }
+    };
+  }, [isMapReady, referencePoints, isRevealed]);
+
+  // 2. Switch tile layer when mapMode changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    setTileLayer(map, mapMode);
+  }, [mapMode]);
+
+  // 3. Pan/zoom to targetPoint whenever targetPoint changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !targetPoint) return;
+
+    map.setView(targetPoint, 16, { animate: true, duration: 0.8 });
+  }, [targetPoint]);
+
+  // 4. Render or update Target Marker at targetPoint
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    if (userPin) {
-      const pinIcon = L.divIcon({
-        className: 'custom-pin-marker',
+    if (targetPoint) {
+      const targetIcon = L.divIcon({
+        className: 'target-beacon-marker',
         html: `
-          <div class="pin-pulse"></div>
-          <div class="pin-circle"></div>
+          <div class="beacon-pulse"></div>
+          <div class="beacon-core">
+            <span style="font-size: 13px; line-height: 1;">📍</span>
+          </div>
         `,
         iconSize: [28, 28],
         iconAnchor: [14, 14]
       });
 
-      if (!userMarkerRef.current) {
-        userMarkerRef.current = L.marker(userPin, { icon: pinIcon }).addTo(map);
-      } else {
-        userMarkerRef.current.setLatLng(userPin);
-      }
-    } else if (userMarkerRef.current) {
-      userMarkerRef.current.remove();
-      userMarkerRef.current = null;
-    }
-  }, [userPin]);
-
-  // Handle Reveal Animation and Vectors
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-
-    // Clear previous vector layers
-    if (targetStreetLayerRef.current) {
-      targetStreetLayerRef.current.remove();
-      targetStreetLayerRef.current = null;
-    }
-    if (connectorLineRef.current) {
-      connectorLineRef.current.remove();
-      connectorLineRef.current = null;
-    }
-
-    if (isRevealed && currentStreet) {
-      // 1. Draw Target Street Line or Polyline
-      const pathPoints = currentStreet.path || [currentStreet.center];
-      
-      // Glow polyline (background thick neon line)
-      const glowLine = L.polyline(pathPoints, {
-        color: '#10B981',
-        weight: 12,
-        opacity: 0.35,
-        lineCap: 'round',
-        lineJoin: 'round'
-      });
-
-      // Core street polyline
-      const coreLine = L.polyline(pathPoints, {
-        color: '#34D399',
-        weight: 5,
-        opacity: 0.95,
-        lineCap: 'round',
-        lineJoin: 'round'
-      });
-
-      // Target marker at the closest point
-      const targetPoint = closestPoint || currentStreet.center;
-      const targetIcon = L.divIcon({
-        className: 'target-pin-marker',
-        html: `
-          <div style="width: 22px; height: 22px; background: #10B981; border: 3px solid #FFFFFF; border-radius: 50%; box-shadow: 0 0 14px #10B981; display:flex; align-items:center; justify-content:center; color:white; font-size:11px; font-weight:bold;">
-            ✓
-          </div>
-        `,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11]
-      });
-      const targetMarker = L.marker(targetPoint, { icon: targetIcon });
-
-      const group = L.featureGroup([glowLine, coreLine, targetMarker]).addTo(map);
-      targetStreetLayerRef.current = group;
-
-      // 2. Draw Connector Line if user dropped a pin
-      if (userPin && targetPoint) {
-        const line = L.polyline([userPin, targetPoint], {
-          color: '#F48138',
-          weight: 3,
-          dashArray: '6, 8',
-          opacity: 0.9
+      if (!targetMarkerRef.current) {
+        targetMarkerRef.current = L.marker(targetPoint, {
+          icon: targetIcon,
+          interactive: false
         }).addTo(map);
-
-        connectorLineRef.current = line;
-
-        // Auto-fit bounds so user sees both their guess and the street
-        const bounds = L.latLngBounds([userPin, ...pathPoints]);
-        map.fitBounds(bounds, {
-          padding: [70, 70],
-          maxZoom: 16,
-          animate: true
-        });
       } else {
-        map.setView(currentStreet.center, 15, { animate: true });
+        targetMarkerRef.current.setLatLng(targetPoint);
       }
+    } else if (targetMarkerRef.current) {
+      targetMarkerRef.current.remove();
+      targetMarkerRef.current = null;
     }
-  }, [isRevealed, currentStreet, closestPoint, userPin]);
+  }, [targetPoint]);
 
-  // Center button handler
-  const handleRecenter = () => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setView(zoneCenter, zoneZoom, { animate: true });
+  // Center on Target Point button
+  const handleRecenterTarget = () => {
+    const map = mapInstanceRef.current;
+    if (map && targetPoint) {
+      map.setView(targetPoint, 16, { animate: true });
+    }
+  };
+
+  // Center on Plaza 25 de Mayo
+  const handleRecenterPlaza = () => {
+    const map = mapInstanceRef.current;
+    if (map) {
+      map.setView(zoneCenter, zoneZoom, { animate: true });
     }
   };
 
   return (
     <div className="relative w-full h-full">
-      {/* Map Container */}
-      <div ref={mapContainerRef} className="w-full h-full z-0 cursor-crosshair" />
+      {/* Leaflet Map Container */}
+      <div ref={mapContainerRef} className="w-full h-full z-0 cursor-grab active:cursor-grabbing" />
 
-      {/* Recenter / Orientation Button for accessibility */}
-      <button
-        onClick={handleRecenter}
-        className="absolute top-3 right-3 z-10 bg-slate-900/90 hover:bg-slate-800 text-slate-200 border border-slate-700/80 shadow-lg px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 backdrop-blur transition-transform active:scale-95"
-        title="Centrar mapa en la plaza principal"
-      >
-        <span>🏛️</span>
-        <span className="hidden sm:inline">Centrar Plaza 25 de Mayo</span>
-      </button>
+      {/* Action Buttons (Top Right) */}
+      <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2 items-end">
+        {targetPoint && (
+          <button
+            onClick={handleRecenterTarget}
+            className="bg-emerald-600/95 hover:bg-emerald-500 text-white border border-emerald-400/50 shadow-lg px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 backdrop-blur transition-all active:scale-95 cursor-pointer"
+            title="Volver a centrar en el punto a adivinar"
+          >
+            <Target className="w-3.5 h-3.5" />
+            <span>Centrar Punto</span>
+          </button>
+        )}
 
-      {/* Legend Badge reminding of no-labels mechanic */}
-      <div className="absolute bottom-3 left-3 z-10 pointer-events-none bg-slate-950/80 backdrop-blur border border-slate-800/80 text-[11px] text-slate-400 px-2.5 py-1 rounded-md shadow-md flex items-center gap-1.5">
-        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        <span>Mapa mudo (orientate por plazas y avenidas)</span>
+        <button
+          onClick={handleRecenterPlaza}
+          className="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700/80 shadow-lg px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur transition-all active:scale-95 cursor-pointer"
+          title="Centrar en Plaza 25 de Mayo para orientarte"
+        >
+          <Landmark className="w-3.5 h-3.5 text-amber-400" />
+          <span className="hidden sm:inline">Plaza 25 de Mayo</span>
+        </button>
+
+        {/* Map Style Toggle (Dark Mute / Satelital) */}
+        <button
+          onClick={() => setMapMode(prev => (prev === 'dark' ? 'satellite' : 'dark'))}
+          className="bg-slate-900/90 hover:bg-slate-800 text-slate-300 border border-slate-700/80 shadow-lg px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 backdrop-blur transition-all active:scale-95 cursor-pointer"
+          title="Cambiar entre mapa oscuro mudo y vista satelital"
+        >
+          {mapMode === 'dark' ? (
+            <>
+              <Layers className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Ver Satelital</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-3.5 h-3.5 text-blue-400" />
+              <span className="hidden sm:inline">Ver Mapa Oscuro</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Bottom Legend Badge */}
+      <div className="absolute bottom-3 left-3 z-[1000] pointer-events-none bg-slate-950/85 backdrop-blur border border-slate-800/80 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-2">
+        <span className="w-2.5 h-2.5 rounded-full bg-[#339136] shadow-sm shadow-emerald-400 animate-pulse" />
+        <span>Sin nombres de calles (orientate por plazas y lagunas)</span>
       </div>
     </div>
   );

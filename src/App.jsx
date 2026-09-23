@@ -7,11 +7,15 @@ import GameOverScreen from './components/GameOverScreen';
 import StartScreen from './components/StartScreen';
 import LeaderboardModal from './components/LeaderboardModal';
 import HelpModal from './components/HelpModal';
+import AdvertiseModal from './components/AdvertiseModal';
 
 import landmarksData from './data/landmarks.json';
 import ranksData from './data/ranks.json';
-import { getRandomStreetRound, getRankForScore } from './utils/streetRandomizer';
-import { calculateDistanceToStreet, calculateScore } from './utils/geoUtils';
+import streetsData from './data/resistenciaStreets.json';
+import sponsorsData from './data/sponsors.json';
+import { getRandomStreetRound, getRankForScore, generateRoundOptions } from './utils/streetRandomizer';
+import { getRandomNonIntersectionPoint, validateStreetGuess } from './utils/geoUtils';
+import { saveScoreEntry } from './services/firebase';
 
 const TOTAL_ROUNDS = 5;
 
@@ -20,7 +24,8 @@ export default function App() {
   const [selectedZoneId, setSelectedZoneId] = useState('centro');
   const [roundStreets, setRoundStreets] = useState([]);
   const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
-  const [userPin, setUserPin] = useState(null);
+  const [targetPoint, setTargetPoint] = useState(null);
+  const [roundOptions, setRoundOptions] = useState([]);
   const [totalScore, setTotalScore] = useState(0);
   const [lastRoundResult, setLastRoundResult] = useState(null);
   const [roundHistory, setRoundHistory] = useState([]);
@@ -28,52 +33,104 @@ export default function App() {
   // Modals
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [isAdvertiseOpen, setIsAdvertiseOpen] = useState(false);
 
   // Active Zone metadata
   const currentZone = useMemo(() => {
     return landmarksData.find(z => z.id === selectedZoneId) || landmarksData[0];
   }, [selectedZoneId]);
 
-  // Current street to find
+  // Active Zone Sponsor (Sponsors with plan: 'sponsor_zona')
+  const zoneSponsor = useMemo(() => {
+    return (
+      sponsorsData.find(
+        (s) =>
+          s.active !== false &&
+          s.plan === 'sponsor_zona' &&
+          (s.zoneId === selectedZoneId ||
+            s.zoneId === 'all' ||
+            selectedZoneId === 'toda_ciudad' ||
+            !s.zoneId ||
+            sponsorsData.filter((x) => x.active !== false && x.plan === 'sponsor_zona').length === 1)
+      ) || null
+    );
+  }, [selectedZoneId]);
+
+  // Current street to guess
   const currentStreet = roundStreets[currentRoundIndex] || null;
 
   // Start new game
   const handleStartGame = (zoneId) => {
     setSelectedZoneId(zoneId);
+    const zone = landmarksData.find(z => z.id === zoneId) || landmarksData[0];
     const streets = getRandomStreetRound({
       zoneId,
       count: TOTAL_ROUNDS
     });
+
     setRoundStreets(streets);
     setCurrentRoundIndex(0);
-    setUserPin(null);
     setTotalScore(0);
     setRoundHistory([]);
     setLastRoundResult(null);
+
+    // Prepare first round point & options
+    if (streets.length > 0) {
+      const firstStreet = streets[0];
+      const pt = getRandomNonIntersectionPoint(firstStreet, streetsData, zone);
+      const opts = generateRoundOptions(firstStreet, streetsData, 4);
+      setTargetPoint(pt);
+      setRoundOptions(opts);
+    }
+
     setGameState('playing');
   };
 
-  // Drop / Move pin
-  const handlePinChange = (coords) => {
-    setUserPin(coords);
-  };
+  // Process user's guess (either write mode or multiple-choice mode)
+  const handleSubmitGuess = ({ mode, guess, streetId }) => {
+    if (!currentStreet) return;
 
-  // Confirm user's guess
-  const handleConfirmGuess = () => {
-    if (!userPin || !currentStreet) return;
+    let isCorrect = false;
+    let missedAccents = false;
+    let isExactAddress = false;
+    let scoreDelta = 0;
 
-    const { distance, closestPoint } = calculateDistanceToStreet(userPin, currentStreet);
-    const pointsEarned = calculateScore(distance);
+    if (mode === 'write') {
+      const validation = validateStreetGuess(guess, currentStreet);
+      isCorrect = validation.isCorrect;
+      missedAccents = validation.missedAccents;
+      isExactAddress = Boolean(currentStreet?.isSponsored && validation.isExactAddress);
+
+      if (isCorrect) {
+        scoreDelta = isExactAddress ? 4 : 2;
+      } else {
+        scoreDelta = totalScore > 0 ? -1 : 0;
+      }
+    } else {
+      // Multiple Choice mode
+      isCorrect = (streetId === currentStreet.id) || (guess === currentStreet.name) || (currentStreet.sponsor?.targetStreet?.id === streetId);
+
+      if (isCorrect) {
+        scoreDelta = 1;
+      } else {
+        scoreDelta = totalScore > 0 ? -1 : 0;
+      }
+    }
+
+    const newScore = Math.max(0, totalScore + scoreDelta);
 
     const result = {
       street: currentStreet,
-      distance,
-      points: pointsEarned,
-      closestPoint
+      isCorrect,
+      isExactAddress,
+      scoreDelta,
+      mode,
+      userGuess: guess,
+      missedAccents
     };
 
     setLastRoundResult(result);
-    setTotalScore(prev => prev + pointsEarned);
+    setTotalScore(newScore);
     setRoundHistory(prev => [...prev, result]);
     setGameState('round_result');
   };
@@ -81,8 +138,14 @@ export default function App() {
   // Move to next round or finish
   const handleNextRound = () => {
     if (currentRoundIndex + 1 < TOTAL_ROUNDS) {
-      setCurrentRoundIndex(prev => prev + 1);
-      setUserPin(null);
+      const nextIdx = currentRoundIndex + 1;
+      const nextStreet = roundStreets[nextIdx];
+      const pt = getRandomNonIntersectionPoint(nextStreet, streetsData, currentZone);
+      const opts = generateRoundOptions(nextStreet, streetsData, 4);
+
+      setCurrentRoundIndex(nextIdx);
+      setTargetPoint(pt);
+      setRoundOptions(opts);
       setLastRoundResult(null);
       setGameState('playing');
     } else {
@@ -90,26 +153,16 @@ export default function App() {
     }
   };
 
-  // Save record to local storage
+  // Save record to Firestore and local storage
   const handleSaveScore = (playerName) => {
     const rank = getRankForScore(totalScore, ranksData);
-    const newEntry = {
+    saveScoreEntry({
       name: playerName,
       score: totalScore,
       rankBadge: rank.badge,
       zone: currentZone.shortName,
       date: new Date().toISOString().split('T')[0]
-    };
-
-    try {
-      const stored = localStorage.getItem('cuanta_calle_leaderboard');
-      const list = stored ? JSON.parse(stored) : [];
-      list.push(newEntry);
-      list.sort((a, b) => b.score - a.score);
-      localStorage.setItem('cuanta_calle_leaderboard', JSON.stringify(list.slice(0, 20)));
-    } catch (e) {
-      console.error(e);
-    }
+    });
   };
 
   const finalRank = useMemo(() => {
@@ -118,34 +171,33 @@ export default function App() {
 
   return (
     <div className="relative w-full h-full flex flex-col bg-[#0B0F19] text-slate-100 overflow-hidden select-none">
-      {/* 1. Mandatory Denis Gimenez Ribbon Header */}
+      {/* 1. Denis Ribbon Header */}
       <DenisRibbonHeader
         onOpenHelp={() => setIsHelpOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenAdvertise={() => setIsAdvertiseOpen(true)}
         currentZoneName={gameState !== 'start' ? currentZone.shortName : null}
       />
 
       {/* 2. Main Map Canvas (Interactive without labels) */}
       <main className="relative flex-1 w-full h-full overflow-hidden">
         <StreetGameMap
-          userPin={userPin}
-          onPinChange={handlePinChange}
+          targetPoint={targetPoint}
           isRevealed={gameState === 'round_result'}
           currentStreet={currentStreet}
-          closestPoint={lastRoundResult?.closestPoint}
           zoneCenter={currentZone.center}
           zoneZoom={currentZone.zoom}
         />
 
-        {/* 3. Gameplay HUD (during guessing) */}
+        {/* 3. Gameplay HUD (Guessing input / options) */}
         {gameState === 'playing' && (
           <RoundHUD
             currentRound={currentRoundIndex + 1}
             totalRounds={TOTAL_ROUNDS}
-            currentStreet={currentStreet}
             score={totalScore}
-            userPin={userPin}
-            onConfirmGuess={handleConfirmGuess}
+            options={roundOptions}
+            onSubmitGuess={handleSubmitGuess}
+            currentStreet={currentStreet}
           />
         )}
 
@@ -155,8 +207,7 @@ export default function App() {
             currentRound={currentRoundIndex + 1}
             totalRounds={TOTAL_ROUNDS}
             street={currentStreet}
-            distanceMeters={lastRoundResult.distance}
-            pointsEarned={lastRoundResult.points}
+            result={lastRoundResult}
             onNextRound={handleNextRound}
           />
         )}
@@ -167,6 +218,7 @@ export default function App() {
             onStartGame={handleStartGame}
             onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             onOpenHelp={() => setIsHelpOpen(true)}
+            onOpenAdvertise={() => setIsAdvertiseOpen(true)}
           />
         )}
 
@@ -177,8 +229,10 @@ export default function App() {
             roundHistory={roundHistory}
             rank={finalRank}
             zoneName={currentZone.name}
+            zoneSponsor={zoneSponsor}
             onPlayAgain={() => setGameState('start')}
             onSaveScore={handleSaveScore}
+            onOpenAdvertise={() => setIsAdvertiseOpen(true)}
           />
         )}
       </main>
@@ -190,6 +244,10 @@ export default function App() {
 
       {isHelpOpen && (
         <HelpModal onClose={() => setIsHelpOpen(false)} />
+      )}
+
+      {isAdvertiseOpen && (
+        <AdvertiseModal onClose={() => setIsAdvertiseOpen(false)} />
       )}
     </div>
   );

@@ -1,0 +1,152 @@
+[
+  {
+    "id": "plaza_25_mayo",
+    "name": "Plaza 25 de Mayo",
+    "pos": [
+      -27.45105,
+      -58.98648
+    ],
+    "icon": "🏛️",
+    "iconImage": null,
+    "type": "main_plaza",
+    "color": "#F48138",
+    "enabled": true,
+    "description": "Plaza central y punto de orientación principal de Resistencia"
+  },
+  {
+    "id": "plaza_12_octubre",
+    "name": "Plaza 12 de Octubre",
+    "pos": [
+      -27.444178,
+      -58.986520
+    ],
+    "icon": "🌳",
+    "iconImage": null,
+    "type": "plaza",
+    "color": "#38BDF8",
+    "enabled": true,
+    "description": "Plaza periférica norte sobre Av. Wilde y Av. Lavalle"
+  },
+  {
+    "id": "plaza_espana",
+    "name": "Plaza España",
+    "pos": [
+      -27.458087,
+      -58.986485
+    ],
+    "icon": "🌳",
+    "iconImage": null,
+    "type": "plaza",
+    "color": "#38BDF8",
+    "enabled": true,
+    "description": "Plaza periférica sur sobre Av. San Martín y Av. Belgrano"
+  },
+  {
+    "id": "plaza_9_julio",
+    "name": "Plaza 9 de Julio",
+    "pos": [
+      -27.451166,
+      -58.994300
+    ],
+    "icon": "🌳",
+    "iconImage": null,
+    "type": "plaza",
+    "color": "#38BDF8",
+    "enabled": true,
+    "description": "Plaza periférica oeste sobre Av. Belgrano y Av. Alvear"
+  },
+  {
+    "id": "plaza_belgrano",
+    "name": "Plaza Belgrano",
+    "pos": [
+      -27.450347,
+      -58.979566
+    ],
+    "icon": "🌳",
+    "iconImage": null,
+    "type": "plaza",
+    "color": "#38BDF8",
+    "enabled": true,
+    "description": "Plaza periférica este sobre Av. Paraguay y Av. Las Heras"
+  },
+  {
+    "id": "parque_2_febrero",
+    "name": "Parque 2 de Febrero",
+    "pos": [
+      -27.437672,
+      -58.984299
+    ],
+    "icon": "🎭",
+    "iconImage": null,
+    "type": "park",
+    "color": "#34D399",
+    "enabled": true,
+    "description": "Pulmón recreativo, Domo del Centenario y paseo del Río Negro"
+  },
+  {
+    "id": "laguna_arguello",
+    "name": "Laguna Argüello",
+    "pos": [
+      -27.453842,
+      -58.973186
+    ],
+    "icon": "💧",
+    "iconImage": null,
+    "type": "lake",
+    "color": "#38BDF8",
+    "enabled": true,
+    "description": "Espejo de agua urbano y parque lineal sobre Av. Vélez Sarsfield"
+  },
+  {
+    "id": "parque_democracia",
+    "name": "Parque de la Democracia",
+    "pos": [
+      -27.432713,
+      -58.973149
+    ],
+    "icon": "🌿",
+    "iconImage": null,
+    "type": "park",
+    "color": "#34D399",
+    "enabled": true,
+    "description": "Gran predio verde sobre Av. Sarmiento"
+  },
+  {
+    "id": "domo_centenario",
+    "name": "Domo del Centenario",
+    "pos": [
+      -27.439200,
+      -58.980800
+    ],
+    "icon": "/icons/monument.svg",
+    "iconImage": null,
+    "type": "culture",
+    "color": "#F48138",
+    "enabled": true,
+    "description": "Centro cultural y sede de las bienales internacionales de escultura"
+  },
+  {
+    "id": "bacanal_burgers",
+    "name": "Bacanal Burgers",
+    "pos": [
+      -27.448863,
+      -58.977195
+    ],
+    "icon": "🍔",
+    "iconImage": "/sponsors/bacanal.png",
+    "logoBg": "#FFFFFF",
+    "type": "commercial",
+    "category": "Gastronomía",
+    "address": "French 683",
+    "color": "#F48138",
+    "enabled": true,
+    "isSponsored": true,
+    "description": "Hamburguesería artesanal y street food gourmet en French 683",
+    "coupon": {
+      "title": "15% OFF en tu Combo / Burger",
+      "code": "CALLE-BACANAL",
+      "instruction": "Mostrá esta pantalla o código en caja en French 683",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-27.448863,-58.977195"
+    }
+  }
+]

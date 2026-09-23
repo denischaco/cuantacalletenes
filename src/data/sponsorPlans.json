@@ -1,0 +1,54 @@
+{
+  "monthlyPlayers": 48,
+  "milestoneTarget": 100,
+  "milestoneNotice": "Al llegar a 100, actualizaremos precios, publicitá antes",
+  "plans": [
+    {
+      "id": "pase_barrial",
+      "name": "Pase Barrial",
+      "price": "$25.000",
+      "period": "/ mes",
+      "badge": "Básico",
+      "popular": false,
+      "color": "border-slate-700 bg-slate-900/90",
+      "features": [
+        "Presencia fija como punto de referencia en el mapa",
+        "Ícono temático o logo visible al hacer zoom",
+        "Botón directo \"Cómo Llegar\" en Google Maps",
+        "Capacidad: hasta 20 comercios de la ciudad"
+      ]
+    },
+    {
+      "id": "esquina_destacada",
+      "name": "Esquina Destacada + Cupón",
+      "price": "$55.000",
+      "period": "/ mes",
+      "badge": "⭐ Más Elegido",
+      "popular": true,
+      "color": "border-[#F48138] bg-gradient-to-b from-[#251206] to-slate-900 shadow-lg shadow-amber-950/50",
+      "features": [
+        "Todo lo del Pase Barrial incluido",
+        "Aparece como desafío de ronda oficial del juego",
+        "Cupón digital desbloqueable para canjear en caja",
+        "Reporte mensual de partidas y clics a tu local",
+        "Capacidad limitada: 10 comercios por mes"
+      ]
+    },
+    {
+      "id": "sponsor_zona",
+      "name": "Sponsor Oficial de Zona",
+      "price": "$120.000",
+      "period": "/ mes",
+      "badge": "Exclusivo",
+      "popular": false,
+      "color": "border-emerald-600/80 bg-slate-900/90",
+      "features": [
+        "Todo lo anterior incluido",
+        "Exclusividad absoluta de tu rubro en tu avenida",
+        "Menciones oficiales en Instagram Stories del juego",
+        "Banner destacado en la pantalla final de podio",
+        "Solo 3 marcas en toda la ciudad"
+      ]
+    }
+  ]
+}
