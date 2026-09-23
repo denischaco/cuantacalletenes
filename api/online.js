@@ -1,6 +1,18 @@
 import { Redis } from '@upstash/redis';
 
-const redis = Redis.fromEnv();
+const redis = new Redis({
+  url:
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_URL ||
+    process.env.KV_REST_API_URL ||
+    process.env.UPSTASH_REDIS_REST_URL ||
+    process.env.UPSTASH_REDIS_URL,
+  token:
+    process.env.UPSTASH_REDIS_REST_KV_REST_API_TOKEN ||
+    process.env.KV_REST_API_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN ||
+    process.env.UPSTASH_REDIS_TOKEN,
+});
+
 const ONLINE_KEY = 'active_players';
 const TIMEOUT_SECONDS = 90;
 
@@ -29,7 +41,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ online: count });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Internal Error' });
+    console.error('Error con Redis:', error);
+    return res.status(500).json({ error: 'Internal Error', message: error.message });
   }
 }
