@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Megaphone, CheckCircle2, MessageSquare, Sparkles, Users } from 'lucide-react';
 import { saveSponsorshipLead } from '../services/firebase';
+import { trackSubmitLead } from '../services/analytics';
 import sponsorPlansData from '../data/sponsorPlans.json';
 
 const PLANS = sponsorPlansData.plans || sponsorPlansData;
@@ -55,6 +56,9 @@ export default function AdvertiseModal({ onClose }) {
     // Número directo de Denis: +543624625240
     const whatsappUrl = `https://wa.me/543624625240?text=${text}`;
     setLastWhatsAppUrl(whatsappUrl);
+
+    // Tracking de conversión en Google Analytics
+    trackSubmitLead(leadData);
 
     // Abrir WhatsApp
     window.open(whatsappUrl, '_blank');

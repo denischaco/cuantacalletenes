@@ -16,6 +16,12 @@ import sponsorsData from './data/sponsors.json';
 import { getRandomStreetRound, getRankForScore, generateRoundOptions } from './utils/streetRandomizer';
 import { getRandomNonIntersectionPoint, validateStreetGuess } from './utils/geoUtils';
 import { saveScoreEntry } from './services/firebase';
+import {
+  trackGameStart,
+  trackOpenAdvertise,
+  trackRoundAnswer,
+  trackGameComplete
+} from './services/analytics';
 
 const TOTAL_ROUNDS = 5;
 
@@ -59,10 +65,18 @@ export default function App() {
   // Current street to guess
   const currentStreet = roundStreets[currentRoundIndex] || null;
 
+  // Open advertise modal with analytics source tracking
+  const handleOpenAdvertise = (source = 'unknown') => {
+    trackOpenAdvertise(source);
+    setIsAdvertiseOpen(true);
+  };
+
   // Start new game
   const handleStartGame = (zoneId) => {
     setSelectedZoneId(zoneId);
     const zone = landmarksData.find(z => z.id === zoneId) || landmarksData[0];
+    trackGameStart(zoneId, zone.name);
+
     const streets = getRandomStreetRound({
       zoneId,
       count: TOTAL_ROUNDS
@@ -119,6 +133,15 @@ export default function App() {
 
     const newScore = Math.max(0, totalScore + scoreDelta);
 
+    trackRoundAnswer({
+      roundNumber: currentRoundIndex + 1,
+      mode,
+      isCorrect,
+      scoreDelta,
+      streetName: currentStreet.name,
+      isExactAddress
+    });
+
     const result = {
       street: currentStreet,
       isCorrect,
@@ -149,6 +172,13 @@ export default function App() {
       setLastRoundResult(null);
       setGameState('playing');
     } else {
+      const rank = getRankForScore(totalScore, ranksData);
+      trackGameComplete({
+        totalScore,
+        rankTitle: rank.title,
+        rankBadge: rank.badge,
+        zoneName: currentZone.name
+      });
       setGameState('game_over');
     }
   };
@@ -175,7 +205,7 @@ export default function App() {
       <DenisRibbonHeader
         onOpenHelp={() => setIsHelpOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
-        onOpenAdvertise={() => setIsAdvertiseOpen(true)}
+        onOpenAdvertise={() => handleOpenAdvertise('header')}
         currentZoneName={gameState !== 'start' ? currentZone.shortName : null}
       />
 
@@ -218,7 +248,7 @@ export default function App() {
             onStartGame={handleStartGame}
             onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             onOpenHelp={() => setIsHelpOpen(true)}
-            onOpenAdvertise={() => setIsAdvertiseOpen(true)}
+            onOpenAdvertise={() => handleOpenAdvertise('start_screen')}
           />
         )}
 
@@ -232,7 +262,7 @@ export default function App() {
             zoneSponsor={zoneSponsor}
             onPlayAgain={() => setGameState('start')}
             onSaveScore={handleSaveScore}
-            onOpenAdvertise={() => setIsAdvertiseOpen(true)}
+            onOpenAdvertise={() => handleOpenAdvertise('game_over')}
           />
         )}
       </main>

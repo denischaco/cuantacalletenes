@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink } from 'lucide-react';
+import { trackSponsorClick } from '../services/analytics';
 
 function renderBadge(badge, name = 'Sponsor', logoBg = '#FFFFFF', className = 'w-full h-full object-contain') {
   if (!badge) return <span className="text-2xl">🍔</span>;
@@ -208,6 +209,7 @@ export default function RoundResultModal({
                     <button
                       type="button"
                       onClick={() => {
+                        trackSponsorClick(street.sponsor.name, 'copy_coupon');
                         navigator.clipboard.writeText(street.sponsor.coupon?.code || 'CALLE-BACANAL');
                         setCopiedCode(true);
                         setTimeout(() => setCopiedCode(false), 2000);
@@ -232,6 +234,7 @@ export default function RoundResultModal({
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackSponsorClick(street.sponsor.name, 'round_result_how_to_get')}
                   className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <MapPin className="w-3.5 h-3.5 text-[#F48138]" />

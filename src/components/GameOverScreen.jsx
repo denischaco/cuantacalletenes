@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Trophy, RotateCcw, Share2, Check, UserCheck, CheckCircle2, XCircle, MapPin } from 'lucide-react';
+import { trackShareScore, trackSaveScore, trackSponsorClick } from '../services/analytics';
 
 export default function GameOverScreen({
   totalScore,
@@ -28,18 +29,20 @@ export default function GameOverScreen({
   const handleSave = (e) => {
     e.preventDefault();
     if (!playerName.trim() || saved) return;
+    trackSaveScore({ totalScore, zoneName });
     onSaveScore(playerName.trim());
     setSaved(true);
   };
 
   const handleShare = async () => {
+    trackShareScore({ totalScore, rankTitle: rank.title });
     const text = `¡Hice ${totalScore} de 10 puntos en "¿Cuánta Calle Tenés?" (Resistencia, Chaco)! Rango: ${rank.title} ${rank.badge}. ¿Te animás a superarme?`;
     if (navigator.share) {
       try {
         await navigator.share({
           title: '¿Cuánta Calle Tenés? - Resistencia, Chaco',
           text,
-          url: 'https://denischaco.com.ar'
+          url: 'https://cuantacalletenes.denischaco.com.ar/'
         });
       } catch {
         // user cancelled or share failed
@@ -121,9 +124,8 @@ export default function GameOverScreen({
                   ) : (
                     <XCircle className="w-4 h-4 text-rose-400" />
                   )}
-                  <span className={`font-bold w-14 ${
-                    item.scoreDelta > 0 ? 'text-emerald-400' : item.scoreDelta < 0 ? 'text-rose-400' : 'text-slate-400'
-                  }`}>
+                  <span className={`font-bold w-14 ${item.scoreDelta > 0 ? 'text-emerald-400' : item.scoreDelta < 0 ? 'text-rose-400' : 'text-slate-400'
+                    }`}>
                     {item.scoreDelta > 0 ? `+${item.scoreDelta}` : item.scoreDelta} {Math.abs(item.scoreDelta) === 1 ? 'pt' : 'pts'}
                   </span>
                 </div>
@@ -200,6 +202,7 @@ export default function GameOverScreen({
                 href={zoneSponsor.coupon?.googleMapsUrl || zoneSponsor.googleMapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackSponsorClick(zoneSponsor.name, 'game_over_how_to_get')}
                 className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
               >
                 <MapPin className="w-3.5 h-3.5 text-[#F48138]" />
