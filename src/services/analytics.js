@@ -5,11 +5,19 @@
 
 export function trackEvent(eventName, params = {}) {
   try {
-    if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
-      window.gtag('event', eventName, params);
-      if (import.meta.env.DEV) {
-        console.debug(`[GA4] Event "${eventName}":`, params);
-      }
+    if (typeof window !== 'undefined') {
+      window.dataLayer = window.dataLayer || [];
+      const gtagFn =
+        typeof window.gtag === 'function'
+          ? window.gtag
+          : typeof gtag === 'function'
+          ? gtag
+          : function () {
+              window.dataLayer.push(arguments);
+            };
+
+      gtagFn('event', eventName, params);
+      console.log(`[GA4] Evento enviado: "${eventName}"`, params);
     }
   } catch (err) {
     console.warn('[GA4] Error enviando evento:', err);
