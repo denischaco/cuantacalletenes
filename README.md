@@ -74,8 +74,24 @@ El desarrollo del proyecto atravesó distintas etapas de ingeniería de software
   - **Sponsor de Zona**: Auspiciante destacado en la pantalla de podio final y exclusividad de rubro.
 - Formulario de contacto directo con enlace a WhatsApp (`+543624625240`) para presupuestos instantáneos.
 
-### 5. Identidad Visual y Experiencia de Usuario
-- Interfaz construida con la paleta de marca oficial de Denis Chaco:
+### 5. Telemetría y Analítica de Juego (Google Analytics 4)
+- Medición de interacción y eventos del juego sin sesgos a través de **GA4** (`src/services/analytics.js` y `gtag.js`):
+  - **Métricas Nativas de Interacción (`user_engagement`)**: GA4 recopila automáticamente el tiempo real activo en pantalla (`engagement_time_msec`). A partir de esto calcula el tiempo de juego promedio por sesión, sesiones con interacción (*engaged sessions*) y tasa de rebote (*bounce rate*) real, pausando el conteo si el usuario cambia de pestaña.
+  - **Eventos Personalizados de Dominio**:
+    | Evento | Cuándo se dispara | Parámetros Registrados |
+    |---|---|---|
+    | `game_start` | Inicio de partida en una zona | `zone_id`, `zone_name` |
+    | `round_answer` | Respuesta de cada calle en la ronda | `round_number`, `mode`, `is_correct`, `score_delta`, `street_name`, `is_exact_address` |
+    | `game_complete` | Finalización exitosa de las 5 calles | `score`, `rank`, `rank_badge`, `zone` |
+    | `generate_lead` | Envío de formulario para auspiciantes | `plan`, `business_name`, `category`, `currency` |
+    | `share` | Clic en compartir resultado o puntaje | `content_type`, `score`, `rank` |
+    | `save_score` | Registro del récord en el podio | `score`, `zone` |
+    | `select_content` | Interacción con un auspiciante (ej: ver en Maps) | `content_type`, `item_id`, `action` |
+    | `open_advertise_modal` | Apertura de la ventana de sponsors | `source` (`header`, `start_screen`, `game_over`, `ribbon`) |
+- **Privacidad y Cookies**: La plataforma emplea exclusivamente cookies de origen técnicas y analíticas anónimas (`_ga`, `_ga_*`) para estadísticas agregadas de uso y rendimiento. No se utilizan cookies de seguimiento publicitario cruzado de terceros ni tecnologías invasivas.
+
+### 6. Identidad Visual y Experiencia de Usuario
+- Interfaz construida con la paleta de marca oficial del creador @denischaco:
   - 🟢 **Verde Monte**: `#339136`
   - 🟤 **Marrón Chaqueño**: `#321401`
   - 🟠 **Naranja Chaco**: `#F48138`
@@ -112,6 +128,7 @@ cuantacalletenes/
 │   │   ├── sponsorPlans.json     # Tarifario y planes comerciales administrables
 │   │   └── sponsors.json         # Comercios participantes y cupones activos
 │   ├── services/
+│   │   ├── analytics.js          # Helper de tracking y telemetría de eventos con GA4
 │   │   ├── firebase.js           # Conexión Firestore para records y solicitudes
 │   │   └── onlinePresence.js     # Hook y heartbeat de presencia en tiempo real
 │   ├── utils/
@@ -196,9 +213,10 @@ Este proyecto es posible gracias al trabajo colaborativo de la comunidad abierta
   - [Tailwind CSS](https://tailwindcss.com/) por el sistema de utilidades CSS.
   - [Lucide Icons](https://lucide.dev/) por la iconografía limpia y consistente.
   - [Canvas Confetti](https://github.com/catdad/canvas-confetti) por los efectos de festejo.
-- **Infraestructura en la Nube**:
+- **Infraestructura en la Nube y Telemetría**:
   - [Upstash](https://upstash.com/) por su base de datos Redis Serverless de baja latencia.
   - [Firebase / Google Cloud](https://firebase.google.com/) por la persistencia NoSQL de récords.
+  - [Google Analytics 4](https://analytics.google.com/) por la analítica anónima y métricas de interacción.
   - [Vercel](https://vercel.com/) por el despliegue serverless global.
 - **Comunidad y Comercios Chaqueños**:
   - A todos los vecinos, estudiantes, choferes y caminantes de Resistencia que se sumaron al testeo y aportaron anécdotas, correcciones de calles y sugerencias.
