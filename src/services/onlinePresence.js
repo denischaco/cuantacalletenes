@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 /**
- * Servicio de Presencia y Heartbeat con Redis Sorted Sets
+ * Servicio de Presencia y Heartbeat con Redis Sorted Sets + HyperLogLog Mensual
  */
 
 // 1. Generar o recuperar ID único por pestaña (sessionStorage)
@@ -17,8 +17,24 @@ export function getSessionId() {
   return sessionId;
 }
 
+// 2. Generar o recuperar ID único por dispositivo persistente (localStorage)
+export function getDeviceId() {
+  if (typeof window === 'undefined') return 'server';
+  let deviceId = localStorage.getItem('cc_device_uid');
+  if (!deviceId) {
+    deviceId = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `dev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem('cc_device_uid', deviceId);
+  }
+  return deviceId;
+}
+
 let currentOnlineCount = null;
+let currentMonthlyPlayers = null;
+
 const listeners = new Set();
+const monthlyListeners = new Set();
 let heartbeatInterval = null;
 
 export function subscribeOnlineCount(callback) {
@@ -31,16 +47,27 @@ export function subscribeOnlineCount(callback) {
   };
 }
 
-// 2. Función para avisar que el jugador sigue activo y obtener el total
+export function subscribeMonthlyCount(callback) {
+  monthlyListeners.add(callback);
+  if (currentMonthlyPlayers !== null) {
+    callback(currentMonthlyPlayers);
+  }
+  return () => {
+    monthlyListeners.delete(callback);
+  };
+}
+
+// 3. Función para avisar que el jugador sigue activo y obtener el total en vivo
 export async function sendHeartbeat() {
   if (typeof window === 'undefined') return;
   const sessionId = getSessionId();
+  const deviceId = getDeviceId();
 
   try {
     const res = await fetch('/api/online', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId })
+      body: JSON.stringify({ sessionId, deviceId })
     });
 
     if (!res.ok) return;
@@ -60,12 +87,21 @@ export async function sendHeartbeat() {
         badge.innerText = `🟢 ${data.online} jugando ahora`;
       }
     }
+
+    if (typeof data.monthlyPlayers === 'number' && data.monthlyPlayers > 0) {
+      currentMonthlyPlayers = data.monthlyPlayers;
+      monthlyListeners.forEach((fn) => {
+        try {
+          fn(data.monthlyPlayers);
+        } catch {}
+      });
+    }
   } catch (err) {
     console.warn('No se pudo enviar el heartbeat:', err);
   }
 }
 
-// 3. Optimización: Pings con pausa por pestaña inactiva
+// 4. Optimización: Pings con pausa por pestaña inactiva
 export function startHeartbeat() {
   if (heartbeatInterval || typeof window === 'undefined') return;
   sendHeartbeat(); // Envío inmediato al volver
@@ -94,7 +130,7 @@ if (typeof document !== 'undefined') {
 }
 
 /**
- * Hook para componentes React
+ * Hook para jugadores online en vivo
  */
 export function useOnlineCount() {
   const [online, setOnline] = useState(currentOnlineCount);
@@ -106,4 +142,19 @@ export function useOnlineCount() {
   }, []);
 
   return online;
+}
+
+/**
+ * Hook para jugadores únicos reales del mes en curso
+ */
+export function useMonthlyPlayers() {
+  const [monthly, setMonthly] = useState(currentMonthlyPlayers);
+
+  useEffect(() => {
+    return subscribeMonthlyCount((count) => {
+      setMonthly(count);
+    });
+  }, []);
+
+  return monthly;
 }

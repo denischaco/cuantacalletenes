@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { X, Megaphone, CheckCircle2, MessageSquare, Sparkles, Users } from 'lucide-react';
 import { saveSponsorshipLead } from '../services/firebase';
 import { trackSubmitLead } from '../services/analytics';
+import { useMonthlyPlayers } from '../services/onlinePresence';
 import sponsorPlansData from '../data/sponsorPlans.json';
 
 const PLANS = sponsorPlansData.plans || sponsorPlansData;
-const monthlyPlayers = sponsorPlansData.monthlyPlayers ?? 48;
-const milestoneNotice = sponsorPlansData.milestoneNotice || 'Al llegar a 100, actualizaremos precios, publicitá antes';
+const defaultMonthlyPlayers = sponsorPlansData.monthlyPlayers ?? 48;
+const milestoneNotice = sponsorPlansData.milestoneNotice || 'Tarifa de lanzamiento por 90 días. Al completar cupos por zona, se actualizarán valores.';
 
 export default function AdvertiseModal({ onClose }) {
   const [selectedPlanId, setSelectedPlanId] = useState('esquina_destacada');
@@ -16,6 +17,9 @@ export default function AdvertiseModal({ onClose }) {
   const [contactName, setContactName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [notes, setNotes] = useState('');
+
+  const liveMonthlyPlayers = useMonthlyPlayers();
+  const displayMonthlyPlayers = liveMonthlyPlayers || defaultMonthlyPlayers;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -49,8 +53,8 @@ export default function AdvertiseModal({ onClose }) {
       `🏷️ *Rubro*: ${leadData.category}\n` +
       `📌 *Ubicación*: ${leadData.address || 'Resistencia'}\n` +
       `👤 *Contacto*: ${leadData.contactName || 'Encargado'}\n` +
-      `💼 *Plan de interés*: ${leadData.plan}\n\n` +
-      `¿Coordinamos para armar el punto en el mapa?`
+      `💼 *Plan de interés*: ${leadData.plan} (Pase Temporada 90 días)\n\n` +
+      `¿Coordinamos para armar el punto y el cupón en el mapa?`
     );
 
     // Número directo de Denis: +543624625240
@@ -137,7 +141,7 @@ export default function AdvertiseModal({ onClose }) {
             <div>
               <p className="text-[11px] text-slate-400 font-medium leading-none mb-1">Tráfico y alcance</p>
               <h5 className="text-xs sm:text-sm font-heading font-black text-white">
-                Actualmente <span className="text-emerald-400 font-extrabold">{monthlyPlayers}</span> jugadores por mes
+                Actualmente <span className="text-emerald-400 font-extrabold">{displayMonthlyPlayers}</span> jugadores este mes
               </h5>
             </div>
           </div>
@@ -148,7 +152,7 @@ export default function AdvertiseModal({ onClose }) {
               🔥
             </div>
             <div>
-              <span className="inline-block text-[10px] font-black uppercase tracking-wider text-[#FFA559]">Tarifa de lanzamiento</span>
+              <span className="inline-block text-[10px] font-black uppercase tracking-wider text-[#FFA559]">Pase Temporada (3 Meses)</span>
               <p className="text-xs font-semibold text-slate-200 leading-snug">
                 {milestoneNotice}
               </p>
@@ -159,8 +163,8 @@ export default function AdvertiseModal({ onClose }) {
         {/* Plans Selector */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
-            <span>1. Elegí tu Paquete Mensual:</span>
-            <span className="text-[11px] text-[#FFA559] normal-case font-semibold">Sin contratos a largo plazo</span>
+            <span>1. Elegí tu Paquete Trimestral (90 Días):</span>
+            <span className="text-[11px] text-[#FFA559] normal-case font-semibold">Pase Temporada • Cobertura 90 días</span>
           </label>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -190,10 +194,18 @@ export default function AdvertiseModal({ onClose }) {
                       </h4>
                     </div>
 
-                    <div className="mt-1 flex items-baseline gap-1">
+                    <div className="mt-1 flex items-baseline gap-1 flex-wrap">
                       <span className="text-lg font-black text-emerald-400">{plan.price}</span>
                       <span className="text-[10px] text-slate-400">{plan.period}</span>
                     </div>
+
+                    {plan.monthlyEquivalent && (
+                      <div className="mt-1">
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-950/70 border border-emerald-500/30 text-emerald-300 font-bold text-[9px]">
+                          equiv. {plan.monthlyEquivalent}
+                        </span>
+                      </div>
+                    )}
 
                     <ul className="mt-2.5 space-y-1.5 text-[10px] text-slate-300">
                       {plan.features.map((feat, idx) => (
