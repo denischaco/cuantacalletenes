@@ -4,6 +4,44 @@ import sponsorsData from '../data/sponsors.json';
 import { calculateHaversineDistance } from './geoUtils.js';
 
 /**
+ * Resolves a street by ID, checking both regular streets and sponsor target streets.
+ * Essential for 1v1 challenges where a sponsored street was in the round.
+ */
+export function getStreetById(id) {
+  if (!id) return null;
+
+  // 1. Check regular streets
+  const regular = streetsData.find((s) => s.id === id);
+  if (regular) return regular;
+
+  // 2. Check sponsor streets
+  if (Array.isArray(sponsorsData)) {
+    const sp = sponsorsData.find(
+      (s) => s.targetStreet?.id === id || s.id === id
+    );
+    if (sp && sp.targetStreet) {
+      return {
+        id: sp.targetStreet.id,
+        name: sp.targetStreet.name,
+        shortName: sp.targetStreet.shortStreet || sp.targetStreet.name,
+        number: sp.targetStreet.number || '683',
+        aliases: sp.targetStreet.aliases || [],
+        trivia: sp.targetStreet.trivia || '',
+        center: sp.coordinates,
+        path: [
+          sp.coordinates,
+          [sp.coordinates[0] + 0.00015, sp.coordinates[1] + 0.00015]
+        ],
+        isSponsored: true,
+        sponsor: sp
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
  * Parametric Street Randomizer Engine
  * Generates random rounds of streets matching zone, landmark, or radius filters.
  * Injects at most 1 sponsored round per 5-round match (Brand Guardian Rule).

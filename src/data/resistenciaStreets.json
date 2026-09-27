@@ -1308,6 +1308,12 @@
   {
     "id": "pellegrini",
     "name": "Calle Pellegrini",
+    "aliases": [
+      "pellegrini",
+      "calle pellegrini",
+      "carlos pellegrini",
+      "pelegrini"
+    ],
     "type": "calle",
     "category": "centro",
     "zoneIds": [

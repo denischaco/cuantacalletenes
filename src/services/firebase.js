@@ -3,6 +3,7 @@ import {
   getFirestore,
   collection,
   addDoc,
+  getDoc,
   getDocs,
   deleteDoc,
   doc,
@@ -15,6 +16,7 @@ import {
 import { getAuth, signInAnonymously } from 'firebase/auth';
 
 const STORAGE_KEY = 'cuanta_calle_leaderboard';
+const LEADERBOARD_COLLECTION = 'leaderboard';
 export const ADMIN_CLEAR_PASSWORD = import.meta.env.VITE_ADMIN_CLEAR_PASSWORD || 'matadoresalataque';
 
 // Firebase configuration from environment
@@ -51,6 +53,13 @@ if (firebaseConfig.apiKey) {
 }
 
 /**
+ * Access Firestore instance safely
+ */
+export function getFirestoreInstance() {
+  return isFirebaseAvailable ? db : null;
+}
+
+/**
  * Get cached local leaderboard
  */
 export function getLocalLeaderboard() {
@@ -77,7 +86,33 @@ export function saveLocalLeaderboard(scores) {
 }
 
 /**
+ * Save score locally with desempate logic (score DESC, totalTimeMs ASC)
+ */
+export function saveLocalScore({ name, score, rankBadge, zone, totalTimeMs, date }) {
+  const newEntry = {
+    name: (name || 'Jugador').slice(0, 24),
+    score: Number(score) || 0,
+    totalTimeMs: Number(totalTimeMs) || 0,
+    rankBadge: rankBadge || '🚕',
+    zone: zone || 'Centro',
+    date: date || new Date().toISOString().split('T')[0],
+    createdAt: new Date().toISOString()
+  };
+
+  const current = getLocalLeaderboard();
+  const updated = [...current, newEntry]
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (a.totalTimeMs || 0) - (b.totalTimeMs || 0);
+    })
+    .slice(0, 30);
+  saveLocalLeaderboard(updated);
+  return updated;
+}
+
+/**
  * Subscribe in real-time to the Firestore leaderboard.
+ * Orders by score descending and totalTimeMs ascending (speed tiebreaker).
  * Automatically falls back to localStorage if Firestore is unavailable.
  */
 export function subscribeLeaderboard(callback) {
@@ -85,13 +120,14 @@ export function subscribeLeaderboard(callback) {
   const localScores = getLocalLeaderboard();
   callback(localScores);
 
-  if (!isFirebaseAvailable || !db) {
+  const firestoreDb = getFirestoreInstance();
+  if (!firestoreDb) {
     return () => {};
   }
 
   try {
-    const colRef = collection(db, 'cuanta_calle_leaderboard');
-    const q = query(colRef, orderBy('score', 'desc'), limit(30));
+    const colRef = collection(firestoreDb, LEADERBOARD_COLLECTION);
+    const q = query(colRef, orderBy('score', 'desc'), limit(50));
 
     const unsubscribe = onSnapshot(
       q,
@@ -103,16 +139,22 @@ export function subscribeLeaderboard(callback) {
               id: d.id,
               name: data.name || 'Anónimo',
               score: Number(data.score) || 0,
-              rankBadge: data.rankBadge || '🧭',
-              zone: data.zone || '4 Avenidas',
+              totalTimeMs: Number(data.totalTimeMs) || 0,
+              rankBadge: data.rankBadge || '🚕',
+              zone: data.zone || 'Centro',
               date: data.date || new Date().toISOString().split('T')[0]
             };
+          });
+
+          // Memory sort to guarantee exact desempate order
+          remoteScores.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            return (a.totalTimeMs || 0) - (b.totalTimeMs || 0);
           });
 
           saveLocalLeaderboard(remoteScores);
           callback(remoteScores);
         } else if (snapshot.metadata.fromCache === false) {
-          // Empty collection in Firestore
           saveLocalLeaderboard([]);
           callback([]);
         }
@@ -131,39 +173,102 @@ export function subscribeLeaderboard(callback) {
 }
 
 /**
- * Save a new score entry to Firestore and localStorage
+ * Save score entry with totalTimeMs support (Documento Técnico Maestro v2.0)
  */
-export async function saveScoreEntry(entry) {
-  const newEntry = {
-    name: entry.name || 'Jugador',
-    score: Number(entry.score) || 0,
-    rankBadge: entry.rankBadge || '🧭',
-    zone: entry.zone || '4 Avenidas',
-    date: entry.date || new Date().toISOString().split('T')[0],
-    createdAt: new Date().toISOString()
-  };
+export const saveScoreEntry = async ({ name, score, rankBadge, zone, totalTimeMs, date }) => {
+  const localResult = saveLocalScore({ name, score, rankBadge, zone, totalTimeMs, date });
+  try {
+    const firestoreDb = getFirestoreInstance();
+    if (!firestoreDb) {
+      return localResult;
+    }
 
-  // Update local cache immediately
-  const current = getLocalLeaderboard();
-  const updated = [...current, newEntry].sort((a, b) => b.score - a.score).slice(0, 30);
-  saveLocalLeaderboard(updated);
+    const colRef = collection(firestoreDb, LEADERBOARD_COLLECTION);
+    const docRef = await addDoc(colRef, {
+      name: (name || 'Jugador').slice(0, 24),
+      score: Number(score),
+      totalTimeMs: Number(totalTimeMs) || 0,
+      rankBadge: rankBadge || '🚕',
+      zone: zone || 'Centro',
+      date: date || new Date().toISOString().split('T')[0],
+      createdAt: serverTimestamp()
+    });
+    console.log('✅ Récord guardado exitosamente en Firestore (ID:', docRef.id, ')');
+  } catch (err) {
+    console.error('Error saving score:', err);
+  }
+  return localResult;
+};
 
-  // Send to Firestore if available
-  if (isFirebaseAvailable && db) {
+/**
+ * Crear reto 1v1 Asincrónico por Enlace (Colección `challenges`)
+ */
+export const createChallenge = async ({ creatorName, creatorScore, creatorTimeMs, zoneId, streetIds, creatorPhone }) => {
+  const firestoreDb = getFirestoreInstance();
+  if (!firestoreDb) {
+    // Fallback local para entornos sin Firebase activo
+    const fallbackId = `ch_${Date.now()}`;
+    const fallbackChallenge = {
+      id: fallbackId,
+      creatorName: (creatorName || 'Jugador').slice(0, 24),
+      creatorScore: Number(creatorScore) || 0,
+      creatorTimeMs: Number(creatorTimeMs) || 0,
+      zoneId: zoneId || 'centro',
+      streetIds: Array.isArray(streetIds) ? streetIds : [],
+      creatorPhone: creatorPhone || null,
+      createdAt: new Date().toISOString()
+    };
     try {
-      const colRef = collection(db, 'cuanta_calle_leaderboard');
-      const docRef = await addDoc(colRef, {
-        ...newEntry,
-        timestamp: serverTimestamp()
-      });
-      console.log('✅ Récord guardado exitosamente en Firestore (ID:', docRef.id, '):', newEntry);
+      const stored = JSON.parse(localStorage.getItem('cuanta_calle_challenges') || '{}');
+      stored[fallbackId] = fallbackChallenge;
+      localStorage.setItem('cuanta_calle_challenges', JSON.stringify(stored));
+    } catch (e) {
+      console.warn('Error saving local challenge fallback:', e);
+    }
+    return fallbackId;
+  }
+
+  const docRef = await addDoc(collection(firestoreDb, 'challenges'), {
+    creatorName: (creatorName || 'Jugador').slice(0, 24),
+    creatorScore: Number(creatorScore) || 0,
+    creatorTimeMs: Number(creatorTimeMs) || 0,
+    zoneId: zoneId || 'centro',
+    streetIds: Array.isArray(streetIds) ? streetIds : [],
+    creatorPhone: creatorPhone || null,
+    createdAt: serverTimestamp()
+  });
+  return docRef.id;
+};
+
+/**
+ * Obtener datos del reto 1v1 Asincrónico
+ */
+export const getChallenge = async (challengeId) => {
+  if (!challengeId) return null;
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const docSnap = await getDoc(doc(firestoreDb, 'challenges', challengeId));
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() };
+      }
     } catch (err) {
-      console.error('❌ No se pudo guardar en Firestore (se guardó solo local):', err.message, err);
+      console.warn('Error fetching challenge from Firestore, checking local fallback:', err);
     }
   }
 
-  return updated;
-}
+  // Fallback local
+  try {
+    const stored = JSON.parse(localStorage.getItem('cuanta_calle_challenges') || '{}');
+    if (stored[challengeId]) {
+      return stored[challengeId];
+    }
+  } catch (e) {
+    console.warn('Error reading local challenge fallback:', e);
+  }
+
+  return null;
+};
 
 /**
  * Send a test score to create/verify the collection in Firestore
@@ -172,13 +277,15 @@ export async function sendTestScoreToFirestore() {
   const testEntry = {
     name: 'Prueba Moderación',
     score: 10,
+    totalTimeMs: 15400,
     rankBadge: '🧪',
     zone: 'Centro',
     date: new Date().toISOString().split('T')[0],
     createdAt: new Date().toISOString()
   };
 
-  if (!isFirebaseAvailable || !db) {
+  const firestoreDb = getFirestoreInstance();
+  if (!firestoreDb) {
     return {
       success: false,
       error: 'Firebase no está inicializado. Revisá la configuración en .env'
@@ -186,7 +293,7 @@ export async function sendTestScoreToFirestore() {
   }
 
   try {
-    const colRef = collection(db, 'cuanta_calle_leaderboard');
+    const colRef = collection(firestoreDb, LEADERBOARD_COLLECTION);
     const docRef = await addDoc(colRef, {
       ...testEntry,
       timestamp: serverTimestamp()
@@ -216,10 +323,10 @@ export async function deleteScoreEntry(id, index, password) {
     };
   }
 
-  // Delete from Firestore if connected and has document ID
-  if (isFirebaseAvailable && db && id) {
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb && id) {
     try {
-      await deleteDoc(doc(db, 'cuanta_calle_leaderboard', id));
+      await deleteDoc(doc(firestoreDb, LEADERBOARD_COLLECTION, id));
     } catch (err) {
       console.warn('Error eliminando de Firestore:', err.message);
     }
@@ -253,11 +360,12 @@ export async function clearLeaderboardWithPassword(password) {
   saveLocalLeaderboard([]);
 
   // Clear Firestore documents if connected
-  if (isFirebaseAvailable && db) {
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
     try {
-      const colRef = collection(db, 'cuanta_calle_leaderboard');
+      const colRef = collection(firestoreDb, LEADERBOARD_COLLECTION);
       const snapshot = await getDocs(colRef);
-      const deletePromises = snapshot.docs.map((d) => deleteDoc(doc(db, 'cuanta_calle_leaderboard', d.id)));
+      const deletePromises = snapshot.docs.map((d) => deleteDoc(doc(firestoreDb, LEADERBOARD_COLLECTION, d.id)));
       await Promise.all(deletePromises);
     } catch (err) {
       console.warn('Notice clearing Firestore collection:', err.message);
@@ -292,10 +400,10 @@ export async function saveSponsorshipLead(leadData) {
     console.warn('Error caching lead locally:', e);
   }
 
-  // Save to Firestore if available
-  if (isFirebaseAvailable && db) {
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
     try {
-      const colRef = collection(db, 'sponsorship_leads');
+      const colRef = collection(firestoreDb, 'sponsorship_leads');
       const docRef = await addDoc(colRef, {
         ...leadEntry,
         timestamp: serverTimestamp()

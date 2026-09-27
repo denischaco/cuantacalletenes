@@ -1,6 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink } from 'lucide-react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
+import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink, Download, Check } from 'lucide-react';
 import { trackSponsorClick } from '../services/analytics';
+import { downloadCouponCard } from '../utils/canvasCards';
+import { findNearbySculpture, unlockSculpture } from '../utils/sculptureUtils';
+import SculptureUnlockCard from './SculptureUnlockCard';
 
 function renderBadge(badge, name = 'Sponsor', logoBg = '#FFFFFF', className = 'w-full h-full object-contain') {
   if (!badge) return <span className="text-2xl">🍔</span>;
@@ -38,6 +41,19 @@ export default function RoundResultModal({
   const [copiedCode, setCopiedCode] = useState(false);
   const nextButtonRef = useRef(null);
 
+  // Detección automática de la escultura más cercana a la calle de esta ronda
+  const nearbySculpture = useMemo(() => {
+    return findNearbySculpture(street, 250);
+  }, [street]);
+
+  // Desbloqueo garantizado de la escultura descubierta al revelar la ronda
+  const [unlockStatus] = useState(() => {
+    if (nearbySculpture) {
+      return unlockSculpture(nearbySculpture.catalogId);
+    }
+    return { isNewUnlock: false };
+  });
+
   // Auto-focus on button and listen for Enter key to advance immediately
   useEffect(() => {
     // Focus button on mount
@@ -60,7 +76,7 @@ export default function RoundResultModal({
   }, [onNextRound]);
 
   return (
-    <div className="absolute inset-0 z-30 flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-sm animate-fade-in pointer-events-auto pb-[env(safe-area-inset-bottom,0px)] overflow-y-auto">
+    <div className="absolute inset-0 z-[1500] flex items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-sm animate-fade-in pointer-events-auto pb-[env(safe-area-inset-bottom,0px)] overflow-y-auto">
       <div className="w-full max-w-md bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-2xl space-y-3 sm:space-y-4 my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto">
         {/* Header result badge */}
         <div className="flex items-center justify-between">
@@ -196,36 +212,71 @@ export default function RoundResultModal({
                 )}
               </div>
 
-              {/* Promo Code Box (solo si el cupón está activo) */}
+              {/* Voucher Ticket Visual Card */}
               {hasActiveCoupon && (
-                <>
-                  <div className="bg-slate-950/80 border border-dashed border-[#F48138]/70 rounded-xl p-2.5 flex items-center justify-between">
+                <div className="space-y-2.5">
+                  <div className="bg-slate-950/90 border-2 border-dashed border-[#F48138]/80 rounded-2xl p-3 text-center space-y-2 shadow-inner">
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                      <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                        Voucher Digital
+                      </span>
+                      <span className="text-[10px] text-amber-400 font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                        {street.sponsor.coupon?.discount || '15% OFF'}
+                      </span>
+                    </div>
+
                     <div>
-                      <p className="text-[10px] text-slate-400">Código de canje en mostrador:</p>
-                      <p className="text-sm font-mono font-black text-amber-400 tracking-wider">
+                      <p className="text-[10px] text-slate-400">Código para el mostrador:</p>
+                      <p className="text-lg sm:text-xl font-mono font-black text-amber-400 tracking-wider select-all py-0.5">
                         {street.sponsor.coupon?.code || 'CALLE-BACANAL'}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        trackSponsorClick(street.sponsor.name, 'copy_coupon');
-                        navigator.clipboard.writeText(street.sponsor.coupon?.code || 'CALLE-BACANAL');
-                        setCopiedCode(true);
-                        setTimeout(() => setCopiedCode(false), 2000);
-                      }}
-                      className="px-2.5 py-1 rounded-lg bg-[#F48138]/20 hover:bg-[#F48138]/30 border border-[#F48138]/50 text-[#FFA559] text-[11px] font-bold transition-colors cursor-pointer"
-                    >
-                      {copiedCode ? '¡Copiado!' : 'Copiar'}
-                    </button>
-                  </div>
 
-                  {street.sponsor.coupon?.instructions && (
                     <p className="text-[11px] text-slate-300 leading-snug">
-                      {street.sponsor.coupon.instructions}
+                      {street.sponsor.coupon?.instructions || 'Mostrá esta pantalla o la captura descargada en caja.'}
                     </p>
-                  )}
-                </>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          trackSponsorClick(street.sponsor.name, 'download_coupon_image');
+                          downloadCouponCard({
+                            sponsorName: street.sponsor.name,
+                            discount: street.sponsor.coupon?.discount || '15% OFF',
+                            code: street.sponsor.coupon?.code || 'CALLE-BACANAL',
+                            address: street.sponsor.address || 'Resistencia, Chaco',
+                            expiresAt: street.sponsor.coupon?.expiresAt || '2026-12-31',
+                            instructions: street.sponsor.coupon?.instructions || 'Mostrá esta imagen en caja.',
+                            title: street.sponsor.coupon?.title || 'Cupón Oficial de Descuento'
+                          });
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2500);
+                        }}
+                        className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-[#F48138] to-amber-500 hover:from-[#FFA559] hover:to-amber-400 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-orange-950/40 transition-all cursor-pointer"
+                        title="Descarga la imagen del cupón en tu celular o PC para mostrarla en el local"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>{copiedCode ? '¡Cupón Descargado!' : '📸 Guardar Cupón (Imagen PNG)'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          trackSponsorClick(street.sponsor.name, 'copy_coupon');
+                          navigator.clipboard.writeText(street.sponsor.coupon?.code || 'CALLE-BACANAL');
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        }}
+                        className="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer border border-slate-700"
+                        title="Copiar solo el código de texto"
+                      >
+                        {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : null}
+                        <span>{copiedCode ? 'Copiado' : 'Copiar'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Google Maps 'Cómo Llegar' Button */}
@@ -261,6 +312,14 @@ export default function RoundResultModal({
               </p>
             </div>
           </div>
+        )}
+
+        {/* Nearby Sculpture Discovery Card */}
+        {nearbySculpture && (
+          <SculptureUnlockCard
+            sculpture={nearbySculpture}
+            isNewUnlock={unlockStatus.isNewUnlock}
+          />
         )}
 
         {/* Action Button: focused by default and triggered on Enter */}

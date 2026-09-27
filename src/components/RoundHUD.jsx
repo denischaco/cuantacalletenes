@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Sparkles, Edit3, ListOrdered, CheckCircle2, ChevronDown, ChevronUp, AlertCircle, Lock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Sparkles, Edit3, ListOrdered, CheckCircle2, ChevronDown, ChevronUp, AlertCircle, Lock, Clock } from 'lucide-react';
+
+const ROUND_TIME_LIMIT = 20; // 20 segundos por ronda
 
 function renderSponsorBadge(badge, name = 'Sponsor', logoBg = '#FFFFFF') {
   if (!badge) return <span>🍔</span>;
@@ -34,6 +36,8 @@ export default function RoundHUD({
   onSubmitGuess,
   currentStreet = null
 }) {
+  const [timeLeft, setTimeLeft] = useState(ROUND_TIME_LIMIT);
+  const startTimeRef = useRef(null);
   const [activeTab, setActiveTab] = useState('write'); // 'write' | 'options'
   const [hasSeenOptions, setHasSeenOptions] = useState(false);
   const [writtenGuess, setWrittenGuess] = useState('');
@@ -41,15 +45,32 @@ export default function RoundHUD({
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputError, setInputError] = useState('');
 
-  // Reset state on each new round
+  // Cronómetro regresivo de 20s
   useEffect(() => {
-    setActiveTab('write');
-    setHasSeenOptions(false);
-    setWrittenGuess('');
-    setSelectedOptionId(null);
-    setInputError('');
-    setIsMinimized(false);
-  }, [currentRound]);
+    startTimeRef.current = Date.now();
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleSendGuess = (payload) => {
+    const start = startTimeRef.current || Date.now();
+    const elapsedSeconds = Math.min(ROUND_TIME_LIMIT, (Date.now() - start) / 1000);
+    const speedBonus = Math.max(0, Math.floor((ROUND_TIME_LIMIT - elapsedSeconds) * 100));
+    onSubmitGuess({
+      ...payload,
+      elapsedSeconds,
+      speedBonus
+    });
+  };
 
   // Handle Write Guess Submission
   const handleWriteSubmit = (e) => {
@@ -60,7 +81,7 @@ export default function RoundHUD({
       return;
     }
     setInputError('');
-    onSubmitGuess({
+    handleSendGuess({
       mode: 'write',
       guess: trimmed
     });
@@ -69,10 +90,10 @@ export default function RoundHUD({
   // Handle Option Selection and Submission
   const handleOptionSubmit = () => {
     if (!selectedOptionId) return;
-    const chosenStreet = options.find(o => o.id === selectedOptionId);
+    const chosenStreet = options.find((o) => o.id === selectedOptionId);
     if (!chosenStreet) return;
 
-    onSubmitGuess({
+    handleSendGuess({
       mode: 'multiple_choice',
       guess: chosenStreet.name,
       streetId: chosenStreet.id
@@ -85,27 +106,65 @@ export default function RoundHUD({
     setInputError('');
   };
 
+  // Barra de progreso visual
+  const progressPercent = (timeLeft / ROUND_TIME_LIMIT) * 100;
+  const barColor =
+    timeLeft > 10
+      ? 'bg-emerald-500'
+      : timeLeft > 5
+      ? 'bg-amber-500'
+      : 'bg-rose-500 animate-pulse';
+
   return (
     <>
-      {/* 1. Top Banner: Round status & Score */}
+      {/* 1. Top Banner: Round status, Timer & Score */}
       <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-20 w-[95%] max-w-lg pointer-events-auto">
-        <div className={`glass-panel border rounded-2xl p-2.5 sm:p-3.5 shadow-2xl backdrop-blur-md ${
-          currentStreet?.isSponsored
-            ? 'bg-gradient-to-b from-slate-900 via-[#1a0f05] to-slate-900 border-[#F48138]/60 shadow-amber-950/40'
-            : 'bg-slate-900/95 border-slate-700/80'
-        }`}>
+        <div
+          className={`glass-panel border rounded-2xl p-2.5 sm:p-3.5 shadow-2xl backdrop-blur-md ${
+            currentStreet?.isSponsored
+              ? 'bg-gradient-to-b from-slate-900 via-[#1a0f05] to-slate-900 border-[#F48138]/60 shadow-amber-950/40'
+              : 'bg-slate-900/95 border-slate-700/80'
+          }`}
+        >
+          {/* Progress bar visual del cronómetro */}
+          <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-2">
+            <div
+              className={`h-full transition-all duration-1000 ${barColor}`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
           <div className="flex items-center justify-between text-xs text-slate-400 font-semibold mb-1">
-            <span className={`px-2.5 py-0.5 rounded-full border text-[11px] sm:text-xs ${
-              currentStreet?.isSponsored
-                ? 'bg-amber-500/20 text-[#FFA559] border-[#F48138]/50 font-bold'
-                : 'bg-slate-800 text-slate-200 border-slate-700'
-            }`}>
+            <span
+              className={`px-2.5 py-0.5 rounded-full border text-[11px] sm:text-xs ${
+                currentStreet?.isSponsored
+                  ? 'bg-amber-500/20 text-[#FFA559] border-[#F48138]/50 font-bold'
+                  : 'bg-slate-800 text-slate-200 border-slate-700'
+              }`}
+            >
               {currentStreet?.isSponsored ? '⭐ Ronda Especial' : `Ronda ${currentRound} de ${totalRounds}`}
             </span>
 
-            <div className="flex items-center gap-1.5 text-amber-400 bg-amber-950/40 border border-amber-800/40 px-3 py-0.5 rounded-full font-bold text-xs sm:text-sm">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{score} / 10 pts</span>
+            {/* Timer + Score */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-xs sm:text-sm border transition-colors ${
+                  timeLeft > 10
+                    ? 'bg-emerald-950/50 text-emerald-400 border-emerald-500/40'
+                    : timeLeft > 5
+                    ? 'bg-amber-950/50 text-amber-400 border-amber-500/40'
+                    : 'bg-rose-950/70 text-rose-400 border-rose-500/60 animate-pulse'
+                }`}
+                title={`Tiempo restante: ${timeLeft}s`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>{timeLeft}s</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-amber-400 bg-amber-950/40 border border-amber-800/40 px-3 py-0.5 rounded-full font-bold text-xs sm:text-sm">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{score} / 10 pts</span>
+              </div>
             </div>
           </div>
 
@@ -149,7 +208,7 @@ export default function RoundHUD({
             onClick={() => setIsMinimized(false)}
             className="bg-gradient-to-r from-[#339136] to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-heading font-bold text-sm px-6 py-2.5 sm:py-3 rounded-full shadow-2xl border border-emerald-400/40 flex items-center gap-2 cursor-pointer"
           >
-            <span>🎯 Adivinar Calle</span>
+            <span>🎯 Adivinar Calle ({timeLeft}s)</span>
             <ChevronUp className="w-4 h-4" />
           </button>
         </div>

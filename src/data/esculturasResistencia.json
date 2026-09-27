@@ -1,0 +1,482 @@
+[
+  {
+    "id": "escultura-2",
+    "catalogId": 2,
+    "title": "Gestación",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Carlos Pellegrini 209",
+    "coordinates": [
+      -27.451013705177846,
+      -58.98295583741702
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/2/1768922707004-geljvb-2_5.jpg",
+    "description": "El crítico de arte Aldo Galli(*) escribe: \\'Gestación es una escultura abstracta en hierro, de óptima factura. se aprecia en ella cierto simbolismo que se trasunta en el sentido ascendente de la composición, realizada con formas envolventes que actúan como si fuesen generándose unas y otras hasta qu",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-4",
+    "catalogId": 4,
+    "title": "El escriba",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1991",
+    "locationDescription": "Juan Domingo Perón 159",
+    "coordinates": [
+      -27.45148254073291,
+      -58.989625509467196
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/4/1768922793208-k3x8bc-4_3.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-5",
+    "catalogId": 5,
+    "title": "Torso",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1961-07-14",
+    "locationDescription": "Almte. Brow 134",
+    "coordinates": [
+      -27.45070657702164,
+      -58.98358549692422
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/5/1768922805633-twbqgh-5_8.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-6",
+    "catalogId": 6,
+    "title": "Torso",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1976-06-16",
+    "locationDescription": "Juan Domingo Perón 85",
+    "coordinates": [
+      -27.45210817745096,
+      -58.988985344046526
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/6/1768922813613-kurkuy-6_8.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-7",
+    "catalogId": 7,
+    "title": "Desde las entrañas",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1997-03-30",
+    "locationDescription": "Julio Argentino Roca 586",
+    "coordinates": [
+      -27.447420187437746,
+      -58.99239895865321
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/7/1768922821659-azitxg-7_6.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-8",
+    "catalogId": 8,
+    "title": "Tehuelche",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Mitre 198",
+    "coordinates": [
+      -27.448916761574964,
+      -58.985715942691044
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/8/1768922832880-hj8rwo-8_9.jpg",
+    "description": "Busto de un guerrero tehuelche que se destaca por su expresividad y se convierte en una pieza importante del arte público y patrimonio cultural de Argentina que se encuentra emplazada en Resistencia. Esta obra se enmarca en la línea de trabajo que desarrolla el autor sobre las construcciones identit",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-9",
+    "catalogId": 9,
+    "title": "Holocausto universal",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1994",
+    "locationDescription": "Plaza 9 de Julio",
+    "coordinates": [
+      -27.450938891953655,
+      -58.99401590606855
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/9/1768922846573-5aydet-9.jpg",
+    "description": "El monumento consta de una plataforma de hormigón revestida en acero de la cual emergen siete columnas de distintas alturas y colores con una perspectiva minimalista. Las columnas evolucionan por distintos grados de destrucción hasta llegar a las más pulidas y van desde la más oscura hasta la más cl",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-10",
+    "catalogId": 10,
+    "title": "Un día ya no tendré miedo",
+    "artist": "Artista chaqueño",
+    "country": "Canadá",
+    "year": "1997",
+    "locationDescription": "Sta. Fe 642",
+    "coordinates": [
+      -27.44457353096503,
+      -58.99029714587111
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/10/1768922855494-apvvnt-10_12.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-11",
+    "catalogId": 11,
+    "title": "El hombre y la roca",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1974",
+    "locationDescription": "Juan Domingo Perón 43",
+    "coordinates": [
+      -27.452349536663714,
+      -58.98867234248947
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/11/1768922861152-7cdill-11_4.jpg",
+    "description": "Una de las pocas obras modeladas por el artista y también una de las obras más pequeña de su producción.",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-12",
+    "catalogId": 12,
+    "title": "Figura con cántaro",
+    "artist": "Argentina Arena",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Aeropuerto Internacional de Resistencia",
+    "coordinates": [
+      -27.444822969466024,
+      -59.0493206307292
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/12/1768922866077-puv02s-12_1.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-14",
+    "catalogId": 14,
+    "title": "Abstracción",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1962",
+    "locationDescription": "Marcelo T. de Alvear 145",
+    "coordinates": [
+      -27.44954034733718,
+      -58.98720745394992
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/14/1786704351301-tfuzck-14.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-15",
+    "catalogId": 15,
+    "title": "Frustración",
+    "artist": "Argentina Arrigutti",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Av. Alberdi 198",
+    "coordinates": [
+      -27.45260081487084,
+      -58.9883029848
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/15/1768922875117-3qy1zn-15_7.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-16",
+    "catalogId": 16,
+    "title": "San Francisco",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Almte. Brown 500",
+    "coordinates": [
+      -27.453459047572636,
+      -58.98052419879225
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/16/1768922882543-0ruwnb-16_4.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-17",
+    "catalogId": 17,
+    "title": "Leda",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": "1972-11-03",
+    "locationDescription": "Almte. Brown 65",
+    "coordinates": [
+      -27.449980425679122,
+      -58.98397517375492
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/17/imports/to-import/cover/91125b6856a5a093-17.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-18",
+    "catalogId": 18,
+    "title": "Bailarina en descanso",
+    "artist": "Artista chaqueño",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Av. Sarmiento 706",
+    "coordinates": [
+      -27.445657162344762,
+      -58.980196172376736
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/18/1768922896929-xqs4y8-18_5.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-19",
+    "catalogId": 19,
+    "title": "Manantial",
+    "artist": "Ernestina Azlor",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Plaza 25 de Mayo",
+    "coordinates": [
+      -27.452268719417155,
+      -58.98644312617539
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/19/1768922907149-eq3lhu-19_7.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-20",
+    "catalogId": 20,
+    "title": "El alma",
+    "artist": "Líbero Badíi",
+    "country": "Argentina",
+    "year": "1962-04-04",
+    "locationDescription": "Av. Alberdi 202",
+    "coordinates": [
+      -27.452676198296636,
+      -58.98839788175893
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/20/1768922911165-wf5tqe-20_4.jpg",
+    "description": "Cubo que tiene sus cuatro caras laterales en forma de espiral, lo que permite entrever el medio de la escultura como un cubo vacío. El artista recurre a un lenguaje abstracto, su desarrollo va desde una acentuada geometrización que se expande en el espacio. \\'El alma\\' es premio del Salón Nacional.",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-29",
+    "catalogId": 29,
+    "title": "Chaco",
+    "artist": "Argentina Bonome",
+    "country": "Argentina",
+    "year": "1969",
+    "locationDescription": "Plaza 25 de Mayo",
+    "coordinates": [
+      -27.450526287117913,
+      -58.98694064666176
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/29/1768923056132-6ima4d-29_7.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-34",
+    "catalogId": 34,
+    "title": "Ritual rupestre del próximo milenio",
+    "artist": "Argentina Bustos Navarro",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Av. Sabin 337",
+    "coordinates": [
+      -27.43237045886755,
+      -58.980467769094716
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/34/1768923106852-5mir9z-34_2.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-49",
+    "catalogId": 49,
+    "title": "Remordimiento",
+    "artist": "Argentina Cullen Ayerza",
+    "country": "Argentina",
+    "year": "1962-10-31",
+    "locationDescription": "Juan B. Justo 102",
+    "coordinates": [
+      -27.452866397628398,
+      -58.98646741318597
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/49/1768923284054-vcq513-49_1.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-55",
+    "catalogId": 55,
+    "title": "Madre",
+    "artist": "Argentina De Robertis",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Juan Domingo Perón 123",
+    "coordinates": [
+      -27.45168032110558,
+      -58.989405758375675
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/55/1768923333051-o4pjpr-55_6.jpg",
+    "description": "$46",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-78",
+    "catalogId": 78,
+    "title": "Monumento al maestro",
+    "artist": "Argentina Eidman",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Plaza 25 de Mayo",
+    "coordinates": [
+      -27.450875337655862,
+      -58.987272223860856
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/78/1768923601984-vfd1db-78_23.jpg",
+    "description": "Obra ubicada en la Plaza 25 de Mayo. Las figuras humanas recortadas permiten que la obra se incorpore en el paisaje y se integre al entorno, siendo un ejemplo de la integración del conjunto escultórico a la ciudad.",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-89",
+    "catalogId": 89,
+    "title": "Inmaculada",
+    "artist": "Fabriciano",
+    "country": "Argentina",
+    "year": "1978-02-02",
+    "locationDescription": "Santa María de Oro 60",
+    "coordinates": [
+      -27.450857,
+      -58.988149
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/89/1768923706721-1o61tm-MCA_89.jpg",
+    "description": "Obra declarada \\",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-90",
+    "catalogId": 90,
+    "title": "San Fernando",
+    "artist": "Fabriciano",
+    "country": "Argentina",
+    "year": "1978",
+    "locationDescription": "Santa María de Oro 60",
+    "coordinates": [
+      -27.450961281246546,
+      -58.98828792700099
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/90/1768923708721-439lmz-90_1.jpg",
+    "description": "Obra declarada \\",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-101",
+    "catalogId": 101,
+    "title": "Mujer del éxodo ",
+    "artist": "Argentina Falcini",
+    "country": "Argentina",
+    "year": "1962-04-04",
+    "locationDescription": "Peatonal Arturo Illia 161",
+    "coordinates": [
+      -27.45401914646729,
+      -58.986753400450084
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/101/1768923850366-cy8aw6-101_1.jpg",
+    "description": "Esta escultura pertenece al Museo “Rosa Galisteo de Rodríguez” (Santa Fe) y fue donada al Fondo Nacional de las Artes (1967). Fue realizada entre 1941-1942, luego de concluir la guerra civil española (1936- 1939). Representa el dolor frente",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-106",
+    "catalogId": 106,
+    "title": "Despertar",
+    "artist": "Argentina Fontana",
+    "country": "Argentina",
+    "year": "1969-06-19",
+    "locationDescription": "Güemes 2",
+    "coordinates": [
+      -27.45190303347347,
+      -58.985447935196284
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/106/1768923876605-9lp0v5-106_3.jpg",
+    "description": "“Despertar” es una de las esculturas más valiosas que contiene la ciudad de Resistencia en su patrimonio. Luego de su emplazamiento en el año 1969 y debido a su figura -la de una niña desnuda- generó revuelo en la sociedad y sus habitantes ",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-636",
+    "catalogId": 636,
+    "title": "Testigo del presente",
+    "artist": "Fabriciano",
+    "country": "Argentina",
+    "year": "2018",
+    "locationDescription": "Julio Argentino Roca 1481",
+    "coordinates": [
+      -27.44018798901471,
+      -59.00074127911588
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/636/1768927527111-6pc1z4-636_9.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-637",
+    "catalogId": 637,
+    "title": "Fraternidad",
+    "artist": "Fabriciano",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Mitre 1455",
+    "coordinates": [
+      -27.438731740516516,
+      -58.97430807848682
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/637/1768927534472-xi1d5b-637_7.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-639",
+    "catalogId": 639,
+    "title": "Pasion",
+    "artist": "Fabriciano",
+    "country": "Argentina",
+    "year": "2018",
+    "locationDescription": "\\",
+    "coordinates": [
+      -27.45550593500168,
+      -59.01712358067855
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/639/1768927542970-u4zup7-639_8.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  },
+  {
+    "id": "escultura-655",
+    "catalogId": 655,
+    "title": "Muralla",
+    "artist": "Fabriciano",
+    "country": "Argentina",
+    "year": null,
+    "locationDescription": "Ingreso Aeropuerto Internacional de Resistencia",
+    "coordinates": [
+      -27.444726862693038,
+      -59.02294569688697
+    ],
+    "imageUrl": "https://kgebljzumnxzwfknvral.supabase.co/storage/v1/object/public/images/sculptures/655/1768927629725-23wmli-655_13.jpg",
+    "description": "",
+    "source": "Fundación Urunday - Museo a Cielo Abierto (museoacieloabierto.org)"
+  }
+]

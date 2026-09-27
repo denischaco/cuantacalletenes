@@ -331,7 +331,7 @@ export function validateStreetGuess(rawGuess, targetStreet) {
     .trim()
     .replace(/\s+/g, ' ');
 
-  if (targetNumber && textWithoutAnyNumbers && aliases.includes(textWithoutAnyNumbers)) {
+  if (textWithoutAnyNumbers && aliases.includes(textWithoutAnyNumbers)) {
     return {
       isCorrect: true,
       missedAccents: false,
@@ -348,7 +348,7 @@ export function validateStreetGuess(rawGuess, targetStreet) {
   if (
     unaccentedAliases.includes(unaccentedGuess) ||
     (unaccentedText && unaccentedAliases.includes(unaccentedText)) ||
-    (targetNumber && unaccentedAnyNumbers && unaccentedAliases.includes(unaccentedAnyNumbers))
+    (unaccentedAnyNumbers && unaccentedAliases.includes(unaccentedAnyNumbers))
   ) {
     return { isCorrect: false, missedAccents: true, isExactAddress: hasTargetNumber };
   }

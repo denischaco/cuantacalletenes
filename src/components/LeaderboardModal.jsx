@@ -98,7 +98,7 @@ export default function LeaderboardModal({ onClose }) {
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md pointer-events-auto">
+    <div className="absolute inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md pointer-events-auto">
       <div className="w-full max-w-md bg-slate-900 border border-slate-700/90 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-3.5 max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2 text-amber-400">
@@ -174,7 +174,7 @@ export default function LeaderboardModal({ onClose }) {
                       {item.name} <span className="text-base">{item.rankBadge}</span>
                     </p>
                     <p className="text-[10px] text-slate-500">
-                      {item.zone} • {item.date}
+                      {item.zone} • {item.date}{item.totalTimeMs > 0 ? ` • ⏱️ ${(item.totalTimeMs / 1000).toFixed(1)}s` : ''}
                     </p>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import DenisRibbonHeader from './components/DenisRibbonHeader';
 import StreetGameMap from './components/StreetGameMap';
 import RoundHUD from './components/RoundHUD';
@@ -8,14 +8,16 @@ import StartScreen from './components/StartScreen';
 import LeaderboardModal from './components/LeaderboardModal';
 import HelpModal from './components/HelpModal';
 import AdvertiseModal from './components/AdvertiseModal';
+import CreditsModal from './components/CreditsModal';
+import SculpturesAlbumModal from './components/SculpturesAlbumModal';
 
 import landmarksData from './data/landmarks.json';
 import ranksData from './data/ranks.json';
 import streetsData from './data/resistenciaStreets.json';
 import sponsorsData from './data/sponsors.json';
-import { getRandomStreetRound, getRankForScore, generateRoundOptions } from './utils/streetRandomizer';
+import { getRandomStreetRound, getRankForScore, generateRoundOptions, getStreetById } from './utils/streetRandomizer';
 import { getRandomNonIntersectionPoint, validateStreetGuess } from './utils/geoUtils';
-import { saveScoreEntry } from './services/firebase';
+import { saveScoreEntry, getChallenge } from './services/firebase';
 import {
   trackGameStart,
   trackOpenAdvertise,
@@ -36,10 +38,39 @@ export default function App() {
   const [lastRoundResult, setLastRoundResult] = useState(null);
   const [roundHistory, setRoundHistory] = useState([]);
 
+  // Time tracking
+  const [gameStartTime, setGameStartTime] = useState(null);
+  const [totalTimeMs, setTotalTimeMs] = useState(0);
+
+  // 1v1 Asynchronous Challenge
+  const [activeChallenge, setActiveChallenge] = useState(null);
+
   // Modals
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isAdvertiseOpen, setIsAdvertiseOpen] = useState(false);
+  const [isCreditsOpen, setIsCreditsOpen] = useState(false);
+  const [isAlbumOpen, setIsAlbumOpen] = useState(false);
+
+  // Detect 1v1 challenge in URL query parameters (?reto=... or ?duelo=...)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const challengeId = params.get('reto') || params.get('duelo') || params.get('challenge');
+      if (challengeId) {
+        getChallenge(challengeId).then((data) => {
+          if (data) {
+            setActiveChallenge(data);
+            if (data.zoneId && landmarksData.some((l) => l.id === data.zoneId)) {
+              setSelectedZoneId(data.zoneId);
+            }
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Error reading challenge param from URL:', e);
+    }
+  }, []);
 
   // Active Zone metadata
   const currentZone = useMemo(() => {
@@ -73,20 +104,37 @@ export default function App() {
 
   // Start new game
   const handleStartGame = (zoneId) => {
-    setSelectedZoneId(zoneId);
-    const zone = landmarksData.find(z => z.id === zoneId) || landmarksData[0];
-    trackGameStart(zoneId, zone.name);
+    const targetZoneId = zoneId || selectedZoneId;
+    setSelectedZoneId(targetZoneId);
+    const zone = landmarksData.find(z => z.id === targetZoneId) || landmarksData[0];
+    trackGameStart(targetZoneId, zone.name);
 
-    const streets = getRandomStreetRound({
-      zoneId,
-      count: TOTAL_ROUNDS
-    });
+    let streets;
+    // If accepting a specific 1v1 challenge with preset streetIds
+    if (activeChallenge && Array.isArray(activeChallenge.streetIds) && activeChallenge.streetIds.length >= TOTAL_ROUNDS) {
+      const matchedStreets = activeChallenge.streetIds
+        .map(getStreetById)
+        .filter(Boolean);
+
+      if (matchedStreets.length === TOTAL_ROUNDS) {
+        streets = matchedStreets;
+      } else {
+        streets = getRandomStreetRound({ zoneId: targetZoneId, count: TOTAL_ROUNDS });
+      }
+    } else {
+      streets = getRandomStreetRound({
+        zoneId: targetZoneId,
+        count: TOTAL_ROUNDS
+      });
+    }
 
     setRoundStreets(streets);
     setCurrentRoundIndex(0);
     setTotalScore(0);
     setRoundHistory([]);
     setLastRoundResult(null);
+    setGameStartTime(Date.now());
+    setTotalTimeMs(0);
 
     // Prepare first round point & options
     if (streets.length > 0) {
@@ -101,7 +149,7 @@ export default function App() {
   };
 
   // Process user's guess (either write mode or multiple-choice mode)
-  const handleSubmitGuess = ({ mode, guess, streetId }) => {
+  const handleSubmitGuess = ({ mode, guess, streetId, elapsedSeconds = 0, speedBonus = 0 }) => {
     if (!currentStreet) return;
 
     let isCorrect = false;
@@ -149,7 +197,9 @@ export default function App() {
       scoreDelta,
       mode,
       userGuess: guess,
-      missedAccents
+      missedAccents,
+      elapsedSeconds,
+      speedBonus
     };
 
     setLastRoundResult(result);
@@ -172,9 +222,13 @@ export default function App() {
       setLastRoundResult(null);
       setGameState('playing');
     } else {
+      const elapsedTotal = gameStartTime ? Date.now() - gameStartTime : 0;
+      setTotalTimeMs(elapsedTotal);
+
       const rank = getRankForScore(totalScore, ranksData);
       trackGameComplete({
         totalScore,
+        totalTimeMs: elapsedTotal,
         rankTitle: rank.title,
         rankBadge: rank.badge,
         zoneName: currentZone.name
@@ -183,12 +237,13 @@ export default function App() {
     }
   };
 
-  // Save record to Firestore and local storage
+  // Save record to Firestore and local storage with totalTimeMs support
   const handleSaveScore = (playerName) => {
     const rank = getRankForScore(totalScore, ranksData);
     saveScoreEntry({
       name: playerName,
       score: totalScore,
+      totalTimeMs,
       rankBadge: rank.badge,
       zone: currentZone.shortName,
       date: new Date().toISOString().split('T')[0]
@@ -206,6 +261,7 @@ export default function App() {
         onOpenHelp={() => setIsHelpOpen(true)}
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenAdvertise={() => handleOpenAdvertise('header')}
+        onOpenCredits={() => setIsCreditsOpen(true)}
         currentZoneName={gameState !== 'start' ? currentZone.shortName : null}
       />
 
@@ -219,9 +275,10 @@ export default function App() {
           zoneZoom={currentZone.zoom}
         />
 
-        {/* 3. Gameplay HUD (Guessing input / options) */}
+        {/* 3. Gameplay HUD (Guessing input / options with key to guarantee clean state per round) */}
         {gameState === 'playing' && (
           <RoundHUD
+            key={currentRoundIndex}
             currentRound={currentRoundIndex + 1}
             totalRounds={TOTAL_ROUNDS}
             score={totalScore}
@@ -249,6 +306,9 @@ export default function App() {
             onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
             onOpenHelp={() => setIsHelpOpen(true)}
             onOpenAdvertise={() => handleOpenAdvertise('start_screen')}
+            onOpenCredits={() => setIsCreditsOpen(true)}
+            onOpenAlbum={() => setIsAlbumOpen(true)}
+            activeChallenge={activeChallenge}
           />
         )}
 
@@ -256,13 +316,23 @@ export default function App() {
         {gameState === 'game_over' && (
           <GameOverScreen
             totalScore={totalScore}
+            totalTimeMs={totalTimeMs}
             roundHistory={roundHistory}
             rank={finalRank}
             zoneName={currentZone.name}
+            zoneId={selectedZoneId}
             zoneSponsor={zoneSponsor}
-            onPlayAgain={() => setGameState('start')}
+            activeChallenge={activeChallenge}
+            onPlayAgain={() => {
+              setActiveChallenge(null);
+              if (window.history?.replaceState) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+              }
+              setGameState('start');
+            }}
             onSaveScore={handleSaveScore}
             onOpenAdvertise={() => handleOpenAdvertise('game_over')}
+            onOpenCredits={() => setIsCreditsOpen(true)}
           />
         )}
       </main>
@@ -278,6 +348,14 @@ export default function App() {
 
       {isAdvertiseOpen && (
         <AdvertiseModal onClose={() => setIsAdvertiseOpen(false)} />
+      )}
+
+      {isCreditsOpen && (
+        <CreditsModal onClose={() => setIsCreditsOpen(false)} />
+      )}
+
+      {isAlbumOpen && (
+        <SculpturesAlbumModal onClose={() => setIsAlbumOpen(false)} />
       )}
     </div>
   );

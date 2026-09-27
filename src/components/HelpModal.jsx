@@ -3,7 +3,7 @@ import { X, HelpCircle, Eye, Compass, Award, ZoomIn } from 'lucide-react';
 
 export default function HelpModal({ onClose }) {
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md pointer-events-auto">
+    <div className="absolute inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md pointer-events-auto">
       <div className="w-full max-w-md bg-slate-900 border border-slate-700/90 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2 text-cyan-400">

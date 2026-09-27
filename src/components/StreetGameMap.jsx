@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Target, Landmark, Layers, Moon, Sun } from 'lucide-react';
+import { Target, Landmark, Layers, Moon } from 'lucide-react';
 
 import defaultReferencePoints from '../data/referencePoints.json';
+import { findNearbySculpture } from '../utils/sculptureUtils';
 
 // Helper to check if an icon value represents an image URL or path
 function isImageIcon(iconStr, iconImage) {
@@ -23,6 +24,7 @@ export default function StreetGameMap({
   targetPoint,
   isRevealed,
   currentStreet,
+  targetStreet = currentStreet,
   zoneCenter = [-27.4514, -58.9866],
   zoneZoom = 15,
   referencePoints = defaultReferencePoints
@@ -114,6 +116,7 @@ export default function StreetGameMap({
       mapInstanceRef.current = null;
       setIsMapReady(false);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 2. Render and dynamically update reference landmarks from JSON
@@ -266,6 +269,47 @@ export default function StreetGameMap({
     }
   }, [targetPoint]);
 
+  // 5. Render commemorative sculpture pin on reveal if nearby
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isRevealed || !targetStreet) return;
+
+    const sculpture = findNearbySculpture(targetStreet, 300);
+
+    if (sculpture && sculpture.coordinates) {
+      const sculptureIcon = L.divIcon({
+        className: 'sculpture-map-marker',
+        html: `
+          <div style="
+            background: #047857;
+            color: #ffffff;
+            border: 2px solid #34d399;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            cursor: pointer;
+          ">
+            🏛️
+          </div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      const marker = L.marker(sculpture.coordinates, { icon: sculptureIcon })
+        .addTo(mapInstanceRef.current)
+        .bindPopup(`<b>${sculpture.title}</b><br><span style="font-size:11px">${sculpture.artist}</span>`);
+
+      return () => {
+        marker.remove();
+      };
+    }
+  }, [isRevealed, targetStreet]);
+
   // Center on Target Point button
   const handleRecenterTarget = () => {
     const map = mapInstanceRef.current;
@@ -288,7 +332,7 @@ export default function StreetGameMap({
       <div ref={mapContainerRef} className="w-full h-full z-0 cursor-grab active:cursor-grabbing" />
 
       {/* Action Buttons (Top Right) */}
-      <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2 items-end">
+      <div className="absolute top-3 right-3 z-10 flex flex-col gap-2 items-end">
         {targetPoint && (
           <button
             onClick={handleRecenterTarget}
@@ -330,7 +374,7 @@ export default function StreetGameMap({
       </div>
 
       {/* Bottom Legend Badge */}
-      <div className="absolute bottom-3 left-3 z-[1000] pointer-events-none bg-slate-950/85 backdrop-blur border border-slate-800/80 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-2">
+      <div className="absolute bottom-3 left-3 z-10 pointer-events-none bg-slate-950/85 backdrop-blur border border-slate-800/80 text-[11px] text-slate-300 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-2">
         <span className="w-2.5 h-2.5 rounded-full bg-[#339136] shadow-sm shadow-emerald-400 animate-pulse" />
         <span>Sin nombres de calles (orientate por plazas y lagunas)</span>
       </div>

@@ -74,7 +74,7 @@ export default function AdvertiseModal({ onClose }) {
   };
 
   return (
-    <div className="absolute inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto pointer-events-auto">
+    <div className="absolute inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto pointer-events-auto">
       <div className="w-full max-w-2xl bg-slate-900 border border-slate-700/90 rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl space-y-4 sm:space-y-6 my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-800 pb-3 sm:pb-4">

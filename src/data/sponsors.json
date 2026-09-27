@@ -10,50 +10,53 @@
     "plan": "sponsor_zona",
     "active": true,
     "zoneId": "centro",
-    "coordinates": [
-      -27.448863,
-      -58.977195
-    ],
+    "coordinates": [-27.448863, -58.977195],
+    "expiresAt": null,
     "targetStreet": {
       "id": "french-683",
       "name": "Calle French 683",
       "shortStreet": "Calle French",
       "number": "683",
-      "aliases": [
-        "french",
-        "calle french",
-        "domingo french",
-        "french 683",
-        "calle french 683",
-        "french al 683",
-        "bacanal"
-      ],
-      "trivia": ""
+      "aliases": ["french", "calle french", "french 683", "bacanal"]
     },
-    "alternativeStreets": [
-      {
-        "id": "guemes",
-        "name": "Calle Güemes 450",
-        "number": "450"
-      },
-      {
-        "id": "sarmiento",
-        "name": "Avenida Sarmiento 720",
-        "number": "720"
-      },
-      {
-        "id": "alvear",
-        "name": "Calle Marcelo T. de Alvear 580",
-        "number": "580"
-      }
-    ],
     "coupon": {
-      "active": false,
-      "title": "15% OFF en tu Combo / Burger",
+      "active": true,
+      "title": "15% OFF en tu Burger",
       "discount": "15% OFF",
       "code": "CALLE-BACANAL",
-      "instructions": "Mostrá esta pantalla o captura en la caja de French 683 para activar tu descuento.",
+      "expiresAt": "2026-12-31",
+      "instructions": "Mostrá esta pantalla o captura en la caja de French 683.",
       "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-27.448863,-58.977195"
+    }
+  },
+  {
+    "id": "fichita",
+    "name": "La Fichita Bar",
+    "shortName": "La Fichita",
+    "rubro": "Café / Coworking / Bar",
+    "address": "Arturo Illia 345",
+    "badge": "/sponsors/fichita.png",
+    "logoBg": "#1E1B4B",
+    "plan": "esquina_destacada",
+    "active": true,
+    "zoneId": "centro",
+    "coordinates": [-27.4518, -58.9835],
+    "expiresAt": "2026-12-26",
+    "targetStreet": {
+      "id": "illia-345",
+      "name": "Calle Arturo Illia 345",
+      "shortStreet": "Calle Arturo Illia",
+      "number": "345",
+      "aliases": ["illia", "calle illia", "arturo illia", "fichita"]
+    },
+    "coupon": {
+      "active": true,
+      "title": "15% OFF en Café o Consumición",
+      "discount": "15% OFF",
+      "code": "CALLE-FICHITA",
+      "expiresAt": "2026-12-26",
+      "instructions": "Mostrá esta pantalla en la barra de Illia 345.",
+      "googleMapsUrl": "https://maps.google.com"
     }
   }
 ]
