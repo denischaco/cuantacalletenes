@@ -34,7 +34,8 @@ export default function RoundHUD({
   score,
   options = [],
   onSubmitGuess,
-  currentStreet = null
+  currentStreet = null,
+  activeChallenge = null
 }) {
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME_LIMIT);
   const startTimeRef = useRef(null);
@@ -135,15 +136,23 @@ export default function RoundHUD({
           </div>
 
           <div className="flex items-center justify-between text-xs text-slate-400 font-semibold mb-1">
-            <span
-              className={`px-2.5 py-0.5 rounded-full border text-[11px] sm:text-xs ${
-                currentStreet?.isSponsored
-                  ? 'bg-amber-500/20 text-[#FFA559] border-[#F48138]/50 font-bold'
-                  : 'bg-slate-800 text-slate-200 border-slate-700'
-              }`}
-            >
-              {currentStreet?.isSponsored ? '⭐ Ronda Especial' : `Ronda ${currentRound} de ${totalRounds}`}
-            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className={`px-2.5 py-0.5 rounded-full border text-[11px] sm:text-xs ${
+                  currentStreet?.isSponsored
+                    ? 'bg-amber-500/20 text-[#FFA559] border-[#F48138]/50 font-bold'
+                    : 'bg-slate-800 text-slate-200 border-slate-700'
+                }`}
+              >
+                {currentStreet?.isSponsored ? '⭐ Ronda Especial' : `Ronda ${currentRound} de ${totalRounds}`}
+              </span>
+
+              {activeChallenge && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-950/60 border border-[#F48138]/40 text-[#FFA559] text-[10px] font-bold">
+                  ⚔️ vs {activeChallenge.creatorName} ({activeChallenge.creatorScore} pts)
+                </span>
+              )}
+            </div>
 
             {/* Timer + Score */}
             <div className="flex items-center gap-2">

@@ -19,15 +19,15 @@ const STORAGE_KEY = 'cuanta_calle_leaderboard';
 const LEADERBOARD_COLLECTION = 'leaderboard';
 export const ADMIN_CLEAR_PASSWORD = import.meta.env.VITE_ADMIN_CLEAR_PASSWORD || 'matadoresalataque';
 
-// Firebase configuration from environment
+// Firebase configuration from environment with reliable client-side fallbacks
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAeEy-OKbhU4lMwpapqmT1VqPBrHuJfTVg',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'cuantacalletenes.firebaseapp.com',
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'cuantacalletenes',
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'cuantacalletenes.firebasestorage.app',
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '495525843068',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:495525843068:web:f91f6ab573e30f7b88b9f9',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-5QEL8C8RBG'
 };
 
 let app = null;
@@ -201,50 +201,123 @@ export const saveScoreEntry = async ({ name, score, rankBadge, zone, totalTimeMs
 };
 
 /**
- * Crear reto 1v1 Asincrónico por Enlace (Colección `challenges`)
+ * Codifica los datos esenciales del reto en una cadena compacta URL-safe UTF-8
+ */
+export function encodeChallengePayload(data) {
+  try {
+    const compact = {
+      n: data.creatorName || 'Jugador',
+      s: Number(data.creatorScore) || 0,
+      t: Number(data.creatorTimeMs) || 0,
+      z: data.zoneId || 'centro',
+      st: Array.isArray(data.streetIds) ? data.streetIds : []
+    };
+    const jsonStr = JSON.stringify(compact);
+    return btoa(unescape(encodeURIComponent(jsonStr)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  } catch (e) {
+    console.warn('Error encoding challenge payload:', e);
+    return null;
+  }
+}
+
+/**
+ * Decodifica la cadena compacta URL-safe
+ */
+export function decodeChallengePayload(str) {
+  try {
+    if (!str) return null;
+    let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    const jsonStr = decodeURIComponent(escape(atob(b64)));
+    const c = JSON.parse(jsonStr);
+    return {
+      creatorName: c.n || 'Retador',
+      creatorScore: Number(c.s) || 0,
+      creatorTimeMs: Number(c.t) || 0,
+      zoneId: c.z || 'centro',
+      streetIds: Array.isArray(c.st) ? c.st : []
+    };
+  } catch (e) {
+    console.warn('Error decoding challenge payload:', e);
+    return null;
+  }
+}
+
+/**
+ * Crear reto 1v1 Asincrónico por Enlace (Colección `challenges` + Respaldo Híbrido)
  */
 export const createChallenge = async ({ creatorName, creatorScore, creatorTimeMs, zoneId, streetIds, creatorPhone }) => {
-  const firestoreDb = getFirestoreInstance();
-  if (!firestoreDb) {
-    // Fallback local para entornos sin Firebase activo
-    const fallbackId = `ch_${Date.now()}`;
-    const fallbackChallenge = {
-      id: fallbackId,
-      creatorName: (creatorName || 'Jugador').slice(0, 24),
-      creatorScore: Number(creatorScore) || 0,
-      creatorTimeMs: Number(creatorTimeMs) || 0,
-      zoneId: zoneId || 'centro',
-      streetIds: Array.isArray(streetIds) ? streetIds : [],
-      creatorPhone: creatorPhone || null,
-      createdAt: new Date().toISOString()
-    };
-    try {
-      const stored = JSON.parse(localStorage.getItem('cuanta_calle_challenges') || '{}');
-      stored[fallbackId] = fallbackChallenge;
-      localStorage.setItem('cuanta_calle_challenges', JSON.stringify(stored));
-    } catch (e) {
-      console.warn('Error saving local challenge fallback:', e);
-    }
-    return fallbackId;
-  }
-
-  const docRef = await addDoc(collection(firestoreDb, 'challenges'), {
+  const challengeData = {
     creatorName: (creatorName || 'Jugador').slice(0, 24),
     creatorScore: Number(creatorScore) || 0,
     creatorTimeMs: Number(creatorTimeMs) || 0,
     zoneId: zoneId || 'centro',
     streetIds: Array.isArray(streetIds) ? streetIds : [],
-    creatorPhone: creatorPhone || null,
-    createdAt: serverTimestamp()
-  });
-  return docRef.id;
+    creatorPhone: creatorPhone || null
+  };
+
+  const encodedData = encodeChallengePayload(challengeData);
+  let challengeId = null;
+
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const docRef = await addDoc(collection(firestoreDb, 'challenges'), {
+        ...challengeData,
+        createdAt: serverTimestamp()
+      });
+      challengeId = docRef.id;
+    } catch (e) {
+      console.warn('Error saving challenge to Firestore, using fallback:', e);
+    }
+  }
+
+  // Fallback ID si Firestore no estuviera disponible
+  if (!challengeId) {
+    challengeId = encodedData ? `d_${encodedData}` : `ch_${Date.now()}`;
+  }
+
+  // Guardar en cache local del dispositivo
+  try {
+    const stored = JSON.parse(localStorage.getItem('cuanta_calle_challenges') || '{}');
+    stored[challengeId] = { id: challengeId, ...challengeData, createdAt: new Date().toISOString() };
+    localStorage.setItem('cuanta_calle_challenges', JSON.stringify(stored));
+  } catch (e) {
+    console.warn('Error saving local challenge fallback:', e);
+  }
+
+  return {
+    challengeId,
+    encodedData
+  };
 };
 
 /**
- * Obtener datos del reto 1v1 Asincrónico
+ * Obtener datos del reto 1v1 Asincrónico (soporta Firestore, payload directo ?d=... o fallback local)
  */
-export const getChallenge = async (challengeId) => {
+export const getChallenge = async (challengeId, encodedDataParam = null) => {
+  // 1. Decodificación instantánea de alta velocidad desde ?d=...
+  if (encodedDataParam) {
+    const decoded = decodeChallengePayload(encodedDataParam);
+    if (decoded && Array.isArray(decoded.streetIds) && decoded.streetIds.length > 0) {
+      return { id: challengeId || 'encoded', ...decoded };
+    }
+  }
+
   if (!challengeId) return null;
+
+  // 2. Si el challengeId contiene los datos autocontenidos (inicia con d_)
+  if (challengeId.startsWith('d_')) {
+    const decoded = decodeChallengePayload(challengeId.slice(2));
+    if (decoded && Array.isArray(decoded.streetIds) && decoded.streetIds.length > 0) {
+      return { id: challengeId, ...decoded };
+    }
+  }
+
+  // 3. Consultar Firestore
   const firestoreDb = getFirestoreInstance();
   if (firestoreDb) {
     try {
@@ -257,7 +330,7 @@ export const getChallenge = async (challengeId) => {
     }
   }
 
-  // Fallback local
+  // 4. Fallback de almacenamiento local
   try {
     const stored = JSON.parse(localStorage.getItem('cuanta_calle_challenges') || '{}');
     if (stored[challengeId]) {

@@ -101,26 +101,32 @@ export default function GameOverScreen({
     setIsCreatingChallenge(true);
     try {
       const streetIds = roundHistory.map((h) => h.street?.id).filter(Boolean);
-      const challengeId = await createChallenge({
+      const res = await createChallenge({
         creatorName: trimmed,
         creatorScore: totalScore,
         creatorTimeMs: totalTimeMs,
         zoneId: zoneId || 'centro',
         streetIds
       });
-      const url = `${window.location.origin}/?reto=${challengeId}`;
+      const challengeId = typeof res === 'object' ? res.challengeId : res;
+      const encodedData = typeof res === 'object' ? res.encodedData : null;
+      const url = `${window.location.origin}/?reto=${challengeId}${encodedData ? `&d=${encodedData}` : ''}`;
       setChallengeUrl(url);
 
-      // Also auto-save leaderboard record if not saved yet
+      // Auto-save leaderboard record if not saved yet
       if (!saved) {
         onSaveScore(trimmed);
         setSaved(true);
       }
 
+      // Copiar mensaje completo con contexto listo para pegar en cualquier chat
+      const timeStr = totalTimeMs ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : '';
+      const fullInviteMessage = `¡Te desafío en "¿Cuánta Calle Tenés?"! ⚔️\nHice ${totalScore}/10 pts${timeStr} en ${zoneName}.\n¿Podés superarme en el mismo circuito de calles?\n\nJugá acá 👉 ${url}`;
+
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(url);
+        navigator.clipboard.writeText(fullInviteMessage);
         setChallengeCopied(true);
-        setTimeout(() => setChallengeCopied(false), 3000);
+        setTimeout(() => setChallengeCopied(false), 3500);
       }
     } catch (err) {
       console.error('Error creating challenge:', err);
@@ -487,29 +493,46 @@ export default function GameOverScreen({
               </div>
             ) : (
               <div className="space-y-2 pt-1 animate-fade-in">
-                <div className="p-2 bg-slate-950/90 border border-slate-700 rounded-xl flex items-center justify-between text-xs">
-                  <span className="truncate pr-2 font-mono text-[11px] text-amber-300">{challengeUrl}</span>
+                <div className="p-2.5 bg-slate-950/90 border border-slate-700/80 rounded-xl space-y-2 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-mono text-[11px] text-amber-300 flex-1">{challengeUrl}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(challengeUrl);
+                        setChallengeCopied(true);
+                        setTimeout(() => setChallengeCopied(false), 2500);
+                      }}
+                      className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-[10px] shrink-0 cursor-pointer"
+                      title="Copiar solo URL"
+                    >
+                      Copiar solo link
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText(challengeUrl);
+                      const timeStr = totalTimeMs ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : '';
+                      const fullMsg = `¡Te desafío en "¿Cuánta Calle Tenés?"! ⚔️\nHice ${totalScore}/10 pts${timeStr} en ${zoneName}.\n¿Podés superarme en el mismo circuito de calles?\n\nJugá acá 👉 ${challengeUrl}`;
+                      navigator.clipboard.writeText(fullMsg);
                       setChallengeCopied(true);
-                      setTimeout(() => setChallengeCopied(false), 2500);
+                      setTimeout(() => setChallengeCopied(false), 3500);
                     }}
-                    className="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-[11px] flex items-center gap-1 shrink-0 cursor-pointer"
+                    className="w-full py-2 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs flex items-center justify-center gap-1.5 border border-amber-500/30 transition-colors cursor-pointer"
                   >
-                    <Copy className="w-3 h-3" />
-                    <span>{challengeCopied ? '¡Copiado!' : 'Copiar'}</span>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{challengeCopied ? '¡Invitación copiada al portapapeles!' : '📋 Copiar Mensaje de Desafío Completo'}</span>
                   </button>
                 </div>
 
                 <a
                   href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                    `¡Te desafío en "¿Cuánta Calle Tenés?"! Hice ${totalScore}/10 pts${totalTimeMs ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : ''} en ${zoneName}. ¿Podés superarme en el mismo circuito? Jugá acá: ${challengeUrl}`
+                    `¡Te desafío en "¿Cuánta Calle Tenés?"! ⚔️\nHice ${totalScore}/10 pts${totalTimeMs ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : ''} en ${zoneName}.\n¿Podés superarme en el mismo circuito de calles?\n\nJugá acá 👉 ${challengeUrl}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
                 >
                   <span>📲 Compartir Reto por WhatsApp</span>
                 </a>

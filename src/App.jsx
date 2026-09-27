@@ -44,6 +44,13 @@ export default function App() {
 
   // 1v1 Asynchronous Challenge
   const [activeChallenge, setActiveChallenge] = useState(null);
+  const [isLoadingChallenge, setIsLoadingChallenge] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      return Boolean(p.get('reto') || p.get('duelo') || p.get('challenge') || p.get('d'));
+    }
+    return false;
+  });
 
   // Modals
   const [isHelpOpen, setIsHelpOpen] = useState(false);
@@ -52,25 +59,40 @@ export default function App() {
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
 
-  // Detect 1v1 challenge in URL query parameters (?reto=... or ?duelo=...)
+  // Detect 1v1 challenge in URL query parameters (?reto=... or ?duelo=... or ?d=...)
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const challengeId = params.get('reto') || params.get('duelo') || params.get('challenge');
-      if (challengeId) {
-        getChallenge(challengeId).then((data) => {
-          if (data) {
-            setActiveChallenge(data);
-            if (data.zoneId && landmarksData.some((l) => l.id === data.zoneId)) {
-              setSelectedZoneId(data.zoneId);
+      const dataParam = params.get('d');
+
+      if (challengeId || dataParam) {
+        getChallenge(challengeId, dataParam)
+          .then((data) => {
+            setIsLoadingChallenge(false);
+            if (data) {
+              setActiveChallenge(data);
+              if (data.zoneId && landmarksData.some((l) => l.id === data.zoneId)) {
+                setSelectedZoneId(data.zoneId);
+              }
             }
-          }
-        });
+          })
+          .catch((err) => {
+            console.warn('Error reading challenge param from URL:', err);
+            setIsLoadingChallenge(false);
+          });
       }
     } catch (e) {
       console.warn('Error reading challenge param from URL:', e);
     }
   }, []);
+
+  const handleDismissChallenge = () => {
+    setActiveChallenge(null);
+    if (window.history?.replaceState) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  };
 
   // Active Zone metadata
   const currentZone = useMemo(() => {
@@ -111,15 +133,21 @@ export default function App() {
 
     let streets;
     // If accepting a specific 1v1 challenge with preset streetIds
-    if (activeChallenge && Array.isArray(activeChallenge.streetIds) && activeChallenge.streetIds.length >= TOTAL_ROUNDS) {
+    if (activeChallenge && Array.isArray(activeChallenge.streetIds) && activeChallenge.streetIds.length > 0) {
       const matchedStreets = activeChallenge.streetIds
         .map(getStreetById)
         .filter(Boolean);
 
-      if (matchedStreets.length === TOTAL_ROUNDS) {
-        streets = matchedStreets;
+      if (matchedStreets.length >= TOTAL_ROUNDS) {
+        streets = matchedStreets.slice(0, TOTAL_ROUNDS);
       } else {
-        streets = getRandomStreetRound({ zoneId: targetZoneId, count: TOTAL_ROUNDS });
+        const remainingNeeded = TOTAL_ROUNDS - matchedStreets.length;
+        const filler = getRandomStreetRound({
+          zoneId: targetZoneId,
+          count: remainingNeeded,
+          excludeIds: matchedStreets.map((s) => s.id)
+        });
+        streets = [...matchedStreets, ...filler];
       }
     } else {
       streets = getRandomStreetRound({
@@ -285,6 +313,7 @@ export default function App() {
             options={roundOptions}
             onSubmitGuess={handleSubmitGuess}
             currentStreet={currentStreet}
+            activeChallenge={activeChallenge}
           />
         )}
 
@@ -309,6 +338,8 @@ export default function App() {
             onOpenCredits={() => setIsCreditsOpen(true)}
             onOpenAlbum={() => setIsAlbumOpen(true)}
             activeChallenge={activeChallenge}
+            isLoadingChallenge={isLoadingChallenge}
+            onDismissChallenge={handleDismissChallenge}
           />
         )}
 
