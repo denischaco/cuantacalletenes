@@ -48,13 +48,13 @@ export default function AdvertiseModal({ onClose }) {
     };
 
     const text = encodeURIComponent(
-      `¡Hola Denis! 👋 Quiero sumar mi comercio a "¿Cuánta Calle Tenés?".\n\n` +
+      `¡Hola Denis! 👋 Quiero publicitar mi comercio por los próximos 3 meses en "¿Cuánta Calle Tenés?".\n\n` +
       `📍 *Comercio*: ${leadData.businessName}\n` +
       `🏷️ *Rubro*: ${leadData.category}\n` +
       `📌 *Ubicación*: ${leadData.address || 'Resistencia'}\n` +
       `👤 *Contacto*: ${leadData.contactName || 'Encargado'}\n` +
       `💼 *Plan de interés*: ${leadData.plan} (Pase Temporada 90 días)\n\n` +
-      `¿Coordinamos para armar el punto y el cupón en el mapa?`
+      `¿Coordinamos para armar el punto y el cupón de descuento en el mapa?`
     );
 
     // Número directo de Denis: +543624625240
@@ -85,14 +85,18 @@ export default function AdvertiseModal({ onClose }) {
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-[#F48138]/40 text-[#FFA559] text-[11px] font-bold uppercase tracking-wider">
               <Megaphone className="w-3.5 h-3.5 text-[#F48138]" />
-              <span>Capa Comercial B2B • Resistencia, Chaco</span>
+              <span>Espacio para Comercios • Resistencia, Chaco</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-heading font-black text-white">
-              Publicitá tu Comercio en el Mapa
+              Publicitá tu Comercio por los Próximos 3 Meses
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-lg">
-              No es un banner que la gente ignora: es <strong className="text-slate-200">atención activa</strong> de miles de chaqueños buscando tu esquina y <strong className="text-emerald-400">clientes reales</strong> entrando a tu local con cupones de descuento.
+            <p className="text-xs sm:text-sm text-slate-300 max-w-lg leading-relaxed">
+              No es un banner que la gente ignora: es <strong className="text-white font-bold">atención activa de miles de chaqueños</strong> buscando tu esquina en el mapa y <strong className="text-emerald-400 font-bold">clientes reales</strong> entrando a tu local con cupones de descuento.
             </p>
+            <div className="flex items-center gap-1.5 pt-1 text-[11px] text-[#FFA559] font-medium">
+              <span>⭐</span>
+              <span>Comercios locales que ya confían: <strong>Bacanal Burgers</strong> y <strong>La Fichita</strong></span>
+            </div>
           </div>
           <button
             onClick={onClose}
@@ -108,21 +112,21 @@ export default function AdvertiseModal({ onClose }) {
             <div className="text-lg mb-1">🎯</div>
             <h4 className="text-xs font-bold text-white">Memoria Geográfica</h4>
             <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              15 a 20 segundos de atención visual exclusiva buscando tu manzana en el mapa.
+              15 a 20 segundos de atención visual exclusiva buscando tu manzana en el mapa sin nombres.
             </p>
           </div>
           <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
             <div className="text-lg mb-1">🎟️</div>
-            <h4 className="text-xs font-bold text-white">Cupones Geo-Activados</h4>
+            <h4 className="text-xs font-bold text-white">Comprobante en Caja</h4>
             <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              Al acertar, el jugador desbloquea una promo exclusiva para consumir en tu caja.
+              Al acertar, el jugador desbloquea un cupón digital para mostrar en tu barra o caja sin POS ni vueltas.
             </p>
           </div>
           <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800">
             <div className="text-lg mb-1">🛡️</div>
             <h4 className="text-xs font-bold text-white">Exclusividad por Rubro</h4>
             <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              Solo 1 comercio por rubro por zona comercial para garantizar máxima recordación.
+              Solo 1 comercio por rubro por zona comercial durante los 90 días de la temporada.
             </p>
           </div>
         </div>
@@ -315,7 +319,7 @@ export default function AdvertiseModal({ onClose }) {
                 className="w-full py-3.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-[#339136] to-emerald-500 hover:from-emerald-500 hover:to-emerald-600 text-white font-heading font-black text-sm sm:text-base flex items-center justify-center gap-2.5 shadow-xl shadow-emerald-950/60 border border-emerald-400/40 cursor-pointer transition-transform active:scale-98 disabled:opacity-50"
               >
                 <MessageSquare className="w-5 h-5 fill-white" />
-                <span>Enviar y Chatear por WhatsApp</span>
+                <span>Publicitar por 3 Meses (Chatear con Denis por WhatsApp)</span>
               </button>
             </div>
           </form>
@@ -328,7 +332,7 @@ export default function AdvertiseModal({ onClose }) {
               ¡Conversación Iniciada con Denis!
             </h3>
             <p className="text-xs text-slate-300 max-w-md mx-auto">
-              Registramos a <strong>{businessName}</strong> para el plan <strong>{selectedPlan.name}</strong>. Se abrió una ventana de WhatsApp para coordinar tu comercio.
+              Registramos a <strong>{businessName}</strong> para el plan <strong>{selectedPlan.name}</strong> (Pase 3 Meses). Se abrió una ventana de WhatsApp para coordinar tu comercio.
             </p>
             {lastWhatsAppUrl && (
               <div>

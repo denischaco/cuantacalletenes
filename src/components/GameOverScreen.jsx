@@ -632,7 +632,7 @@ export default function GameOverScreen({
                 className="text-[11px] text-slate-400 hover:text-[#FFA559] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span>📢</span>
-                <span>¿Tenés un comercio en Resistencia? <u className="underline decoration-[#F48138]">Sumá tu local y cupones al juego</u></span>
+                <span>¿Tenés un comercio? <u className="underline decoration-[#F48138]">Publicitá por los próximos 3 meses</u></span>
               </button>
             </div>
           )}

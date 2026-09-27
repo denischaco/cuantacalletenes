@@ -280,7 +280,7 @@ export default function StartScreen({
               className="inline-flex items-center gap-1.5 text-[11px] text-[#FFA559] hover:text-white bg-amber-500/10 hover:bg-amber-500/20 border border-[#F48138]/40 px-3 py-1.5 rounded-full transition-all cursor-pointer"
             >
               <span>📢</span>
-              <span>¿Tenés un comercio en Resistencia? <strong>Publicitá acá</strong></span>
+              <span>¿Tenés un comercio? <strong>Publicitá por los próximos 3 meses</strong></span>
             </button>
           </div>
         )}
