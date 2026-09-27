@@ -34,20 +34,20 @@
     "name": "La Fichita Bar",
     "shortName": "La Fichita",
     "rubro": "Café / Coworking / Bar",
-    "address": "Arturo Illia 345",
+    "address": "Pellegrini 69",
     "badge": "/sponsors/fichita.png",
     "logoBg": "#1E1B4B",
     "plan": "esquina_destacada",
     "active": true,
     "zoneId": "centro",
-    "coordinates": [-27.4518, -58.9835],
+    "coordinates": [-27.452144, -58.984264],
     "expiresAt": "2026-12-26",
     "targetStreet": {
-      "id": "illia-345",
-      "name": "Calle Arturo Illia 345",
-      "shortStreet": "Calle Arturo Illia",
-      "number": "345",
-      "aliases": ["illia", "calle illia", "arturo illia", "fichita"]
+      "id": "pellegrini-69",
+      "name": "Calle Pellegrini 69",
+      "shortStreet": "Calle Pellegrini",
+      "number": "69",
+      "aliases": ["pellegrini", "calle pellegrini", "carlos pellegrini", "pellegrini 69", "fichita", "la fichita"]
     },
     "coupon": {
       "active": true,
@@ -55,8 +55,8 @@
       "discount": "15% OFF",
       "code": "CALLE-FICHITA",
       "expiresAt": "2026-12-26",
-      "instructions": "Mostrá esta pantalla en la barra de Illia 345.",
-      "googleMapsUrl": "https://maps.google.com"
+      "instructions": "Mostrá esta pantalla en la barra de Pellegrini 69.",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-27.452144,-58.984264"
     }
   }
 ]
