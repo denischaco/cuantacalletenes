@@ -88,13 +88,17 @@ export function saveLocalLeaderboard(scores) {
 /**
  * Save score locally with desempate logic (score DESC, totalTimeMs ASC)
  */
-export function saveLocalScore({ name, score, rankBadge, zone, totalTimeMs, date }) {
+export function saveLocalScore({ name, score, rankBadge, zone, zoneId, totalTimeMs, date }) {
+  const normalizedZone = zone || '4 Avenidas';
+  const normalizedZoneId = zoneId || (normalizedZone.toLowerCase().includes('gran') ? 'toda_ciudad' : 'centro');
+
   const newEntry = {
     name: (name || 'Jugador').slice(0, 24),
     score: Number(score) || 0,
     totalTimeMs: Number(totalTimeMs) || 0,
     rankBadge: rankBadge || '🚕',
-    zone: zone || 'Centro',
+    zone: normalizedZone,
+    zoneId: normalizedZoneId,
     date: date || new Date().toISOString().split('T')[0],
     createdAt: new Date().toISOString()
   };
@@ -103,9 +107,11 @@ export function saveLocalScore({ name, score, rankBadge, zone, totalTimeMs, date
   const updated = [...current, newEntry]
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      return (a.totalTimeMs || 0) - (b.totalTimeMs || 0);
+      const tA = a.totalTimeMs && a.totalTimeMs > 0 ? a.totalTimeMs : 99999999;
+      const tB = b.totalTimeMs && b.totalTimeMs > 0 ? b.totalTimeMs : 99999999;
+      return tA - tB;
     })
-    .slice(0, 30);
+    .slice(0, 50);
   saveLocalLeaderboard(updated);
   return updated;
 }
@@ -127,7 +133,7 @@ export function subscribeLeaderboard(callback) {
 
   try {
     const colRef = collection(firestoreDb, LEADERBOARD_COLLECTION);
-    const q = query(colRef, orderBy('score', 'desc'), limit(50));
+    const q = query(colRef, orderBy('score', 'desc'), limit(100));
 
     const unsubscribe = onSnapshot(
       q,
@@ -135,21 +141,26 @@ export function subscribeLeaderboard(callback) {
         if (!snapshot.empty) {
           const remoteScores = snapshot.docs.map((d) => {
             const data = d.data();
+            const z = data.zone || '4 Avenidas';
+            const zid = data.zoneId || (z.toLowerCase().includes('gran') ? 'toda_ciudad' : 'centro');
             return {
               id: d.id,
               name: data.name || 'Anónimo',
               score: Number(data.score) || 0,
               totalTimeMs: Number(data.totalTimeMs) || 0,
               rankBadge: data.rankBadge || '🚕',
-              zone: data.zone || 'Centro',
+              zone: z,
+              zoneId: zid,
               date: data.date || new Date().toISOString().split('T')[0]
             };
           });
 
-          // Memory sort to guarantee exact desempate order
+          // Memory sort to guarantee exact desempate order (score DESC, time ASC)
           remoteScores.sort((a, b) => {
             if (b.score !== a.score) return b.score - a.score;
-            return (a.totalTimeMs || 0) - (b.totalTimeMs || 0);
+            const tA = a.totalTimeMs && a.totalTimeMs > 0 ? a.totalTimeMs : 99999999;
+            const tB = b.totalTimeMs && b.totalTimeMs > 0 ? b.totalTimeMs : 99999999;
+            return tA - tB;
           });
 
           saveLocalLeaderboard(remoteScores);
@@ -173,10 +184,13 @@ export function subscribeLeaderboard(callback) {
 }
 
 /**
- * Save score entry with totalTimeMs support (Documento Técnico Maestro v2.0)
+ * Save score entry with totalTimeMs and zoneId support
  */
-export const saveScoreEntry = async ({ name, score, rankBadge, zone, totalTimeMs, date }) => {
-  const localResult = saveLocalScore({ name, score, rankBadge, zone, totalTimeMs, date });
+export const saveScoreEntry = async ({ name, score, rankBadge, zone, zoneId, totalTimeMs, date }) => {
+  const normalizedZone = zone || '4 Avenidas';
+  const normalizedZoneId = zoneId || (normalizedZone.toLowerCase().includes('gran') ? 'toda_ciudad' : 'centro');
+
+  const localResult = saveLocalScore({ name, score, rankBadge, zone: normalizedZone, zoneId: normalizedZoneId, totalTimeMs, date });
   try {
     const firestoreDb = getFirestoreInstance();
     if (!firestoreDb) {
@@ -189,7 +203,8 @@ export const saveScoreEntry = async ({ name, score, rankBadge, zone, totalTimeMs
       score: Number(score),
       totalTimeMs: Number(totalTimeMs) || 0,
       rankBadge: rankBadge || '🚕',
-      zone: zone || 'Centro',
+      zone: normalizedZone,
+      zoneId: normalizedZoneId,
       date: date || new Date().toISOString().split('T')[0],
       createdAt: serverTimestamp()
     });
@@ -352,7 +367,8 @@ export async function sendTestScoreToFirestore() {
     score: 10,
     totalTimeMs: 15400,
     rankBadge: '🧪',
-    zone: 'Centro',
+    zone: '4 Avenidas',
+    zoneId: 'centro',
     date: new Date().toISOString().split('T')[0],
     createdAt: new Date().toISOString()
   };

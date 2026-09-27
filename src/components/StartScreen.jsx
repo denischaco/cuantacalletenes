@@ -13,13 +13,26 @@ export default function StartScreen({
   onOpenAlbum,
   activeChallenge = null,
   isLoadingChallenge = false,
-  onDismissChallenge = null
+  onDismissChallenge = null,
+  selectedZoneId: propSelectedZoneId = null,
+  onSelectZone = null
 }) {
-  const [selectedZoneId, setSelectedZoneId] = useState(activeChallenge?.zoneId || 'centro');
+  const [selectedZoneId, setSelectedZoneId] = useState(activeChallenge?.zoneId || propSelectedZoneId || 'centro');
   const onlineCount = useOnlineCount();
   const albumStats = useMemo(() => getAlbumStats(), []);
 
+  React.useEffect(() => {
+    if (propSelectedZoneId && !activeChallenge) {
+      setSelectedZoneId(propSelectedZoneId);
+    }
+  }, [propSelectedZoneId, activeChallenge]);
+
   const effectiveZoneId = activeChallenge?.zoneId || selectedZoneId;
+
+  const handleZoneSelect = (zoneId) => {
+    setSelectedZoneId(zoneId);
+    if (onSelectZone) onSelectZone(zoneId);
+  };
 
   const handleStart = () => {
     onStartGame(effectiveZoneId);
@@ -151,7 +164,7 @@ export default function StartScreen({
                   return (
                     <button
                       key={zone.id}
-                      onClick={() => setSelectedZoneId(zone.id)}
+                      onClick={() => handleZoneSelect(zone.id)}
                       className={`p-3 rounded-2xl text-left border transition-all ${
                         isSelected
                           ? 'bg-gradient-to-r from-cyan-950/70 to-slate-900 border-cyan-500/80 shadow-md shadow-cyan-950/50 scale-[1.02]'
@@ -216,7 +229,7 @@ export default function StartScreen({
           {/* Ranking / Récords Button */}
           <button
             type="button"
-            onClick={onOpenLeaderboard}
+            onClick={() => onOpenLeaderboard(effectiveZoneId)}
             className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-br from-amber-950/60 via-slate-900 to-slate-950 border border-[#F48138]/40 hover:border-[#FFA559] flex items-center gap-2.5 sm:gap-3 text-left transition-all hover:scale-[1.02] hover:shadow-lg hover:shadow-orange-950/50 cursor-pointer group"
           >
             <div className="p-2 sm:p-2.5 rounded-xl bg-amber-500/10 border border-[#F48138]/30 text-amber-400 group-hover:bg-[#F48138] group-hover:text-slate-950 transition-colors shrink-0">

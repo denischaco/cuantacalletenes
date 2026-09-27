@@ -274,6 +274,7 @@ export default function App() {
       totalTimeMs,
       rankBadge: rank.badge,
       zone: currentZone.shortName,
+      zoneId: selectedZoneId,
       date: new Date().toISOString().split('T')[0]
     });
   };
@@ -331,8 +332,13 @@ export default function App() {
         {/* 5. Start / Zone Selection Screen */}
         {gameState === 'start' && (
           <StartScreen
+            selectedZoneId={selectedZoneId}
+            onSelectZone={setSelectedZoneId}
             onStartGame={handleStartGame}
-            onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+            onOpenLeaderboard={(zoneId) => {
+              if (zoneId) setSelectedZoneId(zoneId);
+              setIsLeaderboardOpen(true);
+            }}
             onOpenHelp={() => setIsHelpOpen(true)}
             onOpenAdvertise={() => handleOpenAdvertise('start_screen')}
             onOpenCredits={() => setIsCreditsOpen(true)}
@@ -370,7 +376,15 @@ export default function App() {
 
       {/* Auxiliary Modals */}
       {isLeaderboardOpen && (
-        <LeaderboardModal onClose={() => setIsLeaderboardOpen(false)} />
+        <LeaderboardModal
+          initialZoneId={selectedZoneId}
+          onSelectZoneAndPlay={(targetZoneId) => {
+            setSelectedZoneId(targetZoneId);
+            setIsLeaderboardOpen(false);
+            handleStartGame(targetZoneId);
+          }}
+          onClose={() => setIsLeaderboardOpen(false)}
+        />
       )}
 
       {isHelpOpen && (
