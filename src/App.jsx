@@ -306,6 +306,7 @@ export default function App() {
         onOpenAdvertise={() => handleOpenAdvertise('header')}
         onOpenCredits={() => setIsCreditsOpen(true)}
         currentZoneName={gameState !== 'start' ? currentZone.shortName : null}
+        geoboost={geoboost}
       />
 
       {/* 2. Main Map Canvas (Interactive without labels) */}
@@ -362,6 +363,7 @@ export default function App() {
             activeChallenge={activeChallenge}
             isLoadingChallenge={isLoadingChallenge}
             onDismissChallenge={handleDismissChallenge}
+            geoboost={geoboost}
           />
         )}
 

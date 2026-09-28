@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import landmarksData from '../data/landmarks.json';
-import { Play, Compass, HelpCircle, MapPin, Heart, Swords, Landmark, Trophy } from 'lucide-react';
+import { Play, Compass, HelpCircle, MapPin, Heart, Swords, Landmark, Trophy, Zap, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
 import { getAlbumStats } from '../utils/sculptureUtils';
 
@@ -15,7 +15,8 @@ export default function StartScreen({
   isLoadingChallenge = false,
   onDismissChallenge = null,
   selectedZoneId: propSelectedZoneId = null,
-  onSelectZone = null
+  onSelectZone = null,
+  geoboost = null
 }) {
   const [selectedZoneId, setSelectedZoneId] = useState(activeChallenge?.zoneId || propSelectedZoneId || 'centro');
   const onlineCount = useOnlineCount();
@@ -58,8 +59,8 @@ export default function StartScreen({
             El juego de geografía urbana de Resistencia, Chaco
           </p>
 
-          {/* Online active players badge */}
-          <div className="flex items-center justify-center gap-2 pt-0.5">
+          {/* Badges: Online players & Active Boost */}
+          <div className="flex items-center justify-center gap-2 pt-0.5 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/70 border border-emerald-500/40 text-emerald-400 text-xs font-semibold shadow-sm">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -67,6 +68,14 @@ export default function StartScreen({
               </span>
               <span>{onlineCount !== null ? `${onlineCount} jugando ahora` : '🟢 En línea'}</span>
             </span>
+
+            {/* Persistent top indicator when player is boosted */}
+            {geoboost?.isBoostActive && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-950/90 border border-amber-400 text-amber-300 text-xs font-heading font-black shadow-md shadow-amber-950/60 animate-pulse">
+                <Zap className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <span>⚡ ¡BOOST 2X ACTIVO!</span>
+              </span>
+            )}
           </div>
 
           {!activeChallenge && (
@@ -74,6 +83,160 @@ export default function StartScreen({
               Te desafiamos a adivinar <span className="text-white font-bold">5 calles secretas</span> marcadas con un punto sobre un mapa <span className="text-amber-400 font-bold">sin nombres</span>. Escribí el nombre exacto con tildes (<span className="text-emerald-400 font-bold">+2 pts</span>) o elegí entre 4 opciones (<span className="text-amber-400 font-bold">+1 pt</span>).
             </p>
           )}
+
+          {/* Interactive GeoBoost 2x Section (Before starting the game) */}
+          <div className="pt-1 max-w-md mx-auto">
+            {/* 1. STATE: ACTIVELY BOOSTED */}
+            {geoboost?.isBoostActive && geoboost?.boostSponsor && (
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-950/80 via-yellow-950/60 to-slate-900 border-2 border-amber-400 shadow-xl shadow-amber-950/50 text-left relative overflow-hidden transition-all animate-scale-up">
+                <div className="absolute top-0 right-0 -mr-6 -mt-6 w-24 h-24 bg-amber-400/20 rounded-full blur-xl pointer-events-none" />
+                <div className="flex items-center justify-between gap-3 relative z-10">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-400 to-[#F48138] text-slate-950 shadow-md shadow-amber-950/60 shrink-0">
+                      <Zap className="w-5 h-5 fill-slate-950" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-heading font-black text-xs sm:text-sm text-amber-300 tracking-wide uppercase">
+                          ¡ESTÁS BOOSTIEADO!
+                        </span>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 shadow-sm">
+                          2X MULTIPLICADOR
+                        </span>
+                        {geoboost.isSimulated && (
+                          <span className="text-[9px] px-1.5 py-0.2 bg-slate-800 text-slate-400 border border-slate-700 rounded-md">
+                            (Modo Demo)
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] sm:text-xs text-amber-200/90 mt-0.5 leading-snug">
+                        Detectamos que estás en <strong className="text-white font-bold">{geoboost.boostSponsor.name}</strong> ({geoboost.distanceMeters ? `a ~${geoboost.distanceMeters}m` : 'en el local'}). ¡Tus aciertos sumarán <span className="text-white font-bold">Doble Puntaje (+4 / +2 pts)</span>!
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={geoboost.checkProximity}
+                    title="Actualizar GPS"
+                    className="p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-amber-300 hover:text-white transition-colors shrink-0 cursor-pointer border border-amber-500/40"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 2. STATE: CHECKING GPS */}
+            {geoboost?.geoStatus === 'checking' && (
+              <div className="p-3 rounded-2xl bg-slate-950/80 border border-amber-500/40 text-center space-y-1.5 animate-pulse">
+                <div className="flex items-center justify-center gap-2 text-amber-400 text-xs font-semibold">
+                  <RefreshCw className="w-4 h-4 animate-spin text-amber-400" />
+                  <span>Comprobando ubicación GPS...</span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Verificando si estás en el radio de 70m de un local auspiciante (Bacanal Burgers o La Fichita).
+                </p>
+              </div>
+            )}
+
+            {/* 3. STATE: OUT OF RANGE */}
+            {geoboost?.geoStatus === 'out_of_range' && !geoboost?.isBoostActive && (
+              <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800 text-left space-y-2 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-slate-800 text-slate-400 shrink-0">
+                      <MapPin className="w-4 h-4 text-cyan-400" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-white block text-xs">Ubicación verificada (Puntaje normal 1x)</span>
+                      <span className="text-[11px] text-slate-400">Estás a más de 70m de los locales auspiciantes.</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={geoboost.checkProximity}
+                    className="px-2.5 py-1 rounded-xl bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 hover:text-white transition-colors border border-slate-700 flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Reintentar</span>
+                  </button>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[10px] text-slate-500 flex-wrap gap-1">
+                  <span>💡 Acercate a French 683 o Pellegrini 69 para duplicar.</span>
+                  {geoboost.simulateBoost && (
+                    <button
+                      type="button"
+                      onClick={() => geoboost.simulateBoost('bacanal')}
+                      className="text-amber-400/90 hover:text-amber-300 underline cursor-pointer"
+                    >
+                      Probar cómo se ve 2x
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 4. STATE: PERMISSION DENIED */}
+            {geoboost?.geoStatus === 'denied' && !geoboost?.isBoostActive && (
+              <div className="p-3 rounded-2xl bg-slate-950/70 border border-amber-900/60 text-left space-y-1.5 text-xs">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 shrink-0">
+                      <AlertCircle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-white text-xs block">GPS no habilitado en el navegador</span>
+                      <span className="text-[11px] text-slate-400">Habilitalo si estás en un comercio amigo.</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={geoboost.checkProximity}
+                    className="px-2.5 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-[11px] text-amber-300 hover:text-white transition-colors border border-amber-500/40 flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>Reintentar</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 5. STATE: IDLE / NOT CHECKED YET */}
+            {(!geoboost?.geoStatus || geoboost?.geoStatus === 'idle' || geoboost?.geoStatus === 'unavailable') && !geoboost?.isBoostActive && (
+              <div className="p-3 rounded-2xl bg-slate-950/70 border border-slate-800/90 text-left space-y-2">
+                <div className="flex items-start gap-2.5">
+                  <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0 mt-0.5">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="font-bold text-white text-xs sm:text-sm">
+                        Multiplicador GeoBoost 2x
+                      </h4>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold">
+                        Doble Puntaje
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+                      ¿Estás en un local amigo (ej: <em>Bacanal Burgers</em> o <em>La Fichita</em>)? Habilitá tu ubicación antes de jugar para duplicar tus puntos.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="pt-0.5">
+                  <button
+                    type="button"
+                    onClick={geoboost?.checkProximity}
+                    className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/10 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 hover:text-white border border-amber-500/40 hover:border-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Habilitar Ubicación y Activar 2x</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Loading state if reading challenge */}

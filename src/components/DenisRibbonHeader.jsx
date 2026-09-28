@@ -1,8 +1,8 @@
 import React from 'react';
-import { ExternalLink, Compass, Heart } from 'lucide-react';
+import { ExternalLink, Compass, Heart, Zap } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
 
-export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpenAdvertise, onOpenCredits, currentZoneName }) {
+export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpenAdvertise, onOpenCredits, currentZoneName, geoboost = null }) {
   const onlineCount = useOnlineCount();
 
   return (
@@ -32,6 +32,17 @@ export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpe
           </span>
           <span>{onlineCount !== null ? `${onlineCount} jugando` : '🟢 En línea'}</span>
         </span>
+
+        {/* GeoBoost 2x Live Header Badge */}
+        {geoboost?.isBoostActive && (
+          <span
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-950/90 border border-amber-400 text-amber-300 text-[10px] sm:text-[11px] font-black shadow-sm shrink-0 animate-pulse"
+            title={`Multiplicador 2x activo en ${geoboost.boostSponsor?.name || 'Local Sponsor'}`}
+          >
+            <Zap className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <span>2X ACTIVO</span>
+          </span>
+        )}
 
         {/* Enlace discreto a la web personal mediante pill "By @denischaco" */}
         <a
