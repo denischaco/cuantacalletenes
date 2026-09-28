@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink, Download, Check, ShieldAlert } from 'lucide-react';
+import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink, Download, Check, ShieldAlert, Clock } from 'lucide-react';
 import { trackSponsorClick, trackEvent } from '../services/analytics';
 import { getOrCreateSessionCoupon } from '../utils/couponGenerator';
 import { downloadCouponVoucher } from '../utils/voucherCanvas';
@@ -111,18 +111,25 @@ export default function RoundResultModal({
 
           <span
             className={`text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 ${
-              isCorrect && mode === 'write' && (scoreDelta === 4 || isExactAddress)
+              mode === 'timeout'
+                ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                : isCorrect && mode === 'write' && (scoreDelta === 4 || isExactAddress)
                 ? 'bg-amber-500/20 text-[#FFA559] border border-[#F48138]/60 shadow-sm'
                 : isCorrect && mode === 'write'
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                 : isCorrect
-                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40'
+                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                 : missedAccents
                 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                 : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
             }`}
           >
-            {isCorrect && mode === 'write' && (scoreDelta === 4 || isExactAddress) ? (
+            {mode === 'timeout' ? (
+              <>
+                <Clock className="w-3.5 h-3.5 text-rose-400" />
+                <span>⏰ ¡Tiempo Agotado (0 pts)!</span>
+              </>
+            ) : isCorrect && mode === 'write' && (scoreDelta === 4 || isExactAddress) ? (
               <>
                 <Award className="w-3.5 h-3.5 text-[#FFA559]" />
                 <span>🎯 ¡Dirección Exacta (+4 pts)!</span>

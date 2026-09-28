@@ -300,7 +300,7 @@ export default function GameOverScreen({
                 title="Genera y descarga una imagen con el resultado del duelo para compartir"
               >
                 <Download className="w-4 h-4" />
-                <span>{duelCardDownloaded ? '¡Captura Descargada!' : '📸 Descargar Captura del Duelo (PNG)'}</span>
+                <span>{duelCardDownloaded ? '¡Tarjeta Descargada!' : '📸 Compartir en Estados / Stories (Descargar Tarjeta HD)'}</span>
               </button>
 
               {(() => {
@@ -322,7 +322,7 @@ export default function GameOverScreen({
 
                 return (
                   <a
-                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(replyText)}`}
+                    href={`https://wa.me/?text=${encodeURIComponent(replyText)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => {
@@ -528,14 +528,14 @@ export default function GameOverScreen({
                 </div>
 
                 <a
-                  href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                  href={`https://wa.me/?text=${encodeURIComponent(
                     `¡Te desafío en "¿Cuánta Calle Tenés?"! ⚔️\nHice ${totalScore}/10 pts${totalTimeMs ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : ''} en ${zoneName}.\n¿Podés superarme en el mismo circuito de calles?\n\nJugá acá 👉 ${challengeUrl}`
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-colors cursor-pointer"
                 >
-                  <span>📲 Compartir Reto por WhatsApp</span>
+                  <span>📲 Desafiar por WhatsApp</span>
                 </a>
               </div>
             )}
@@ -609,21 +609,34 @@ export default function GameOverScreen({
         )}
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 pt-1">
-          <button
-            onClick={handleShare}
-            className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+        <div className="space-y-2 pt-1">
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(
+              `¡Hice ${totalScore} de 10 puntos${totalTimeMs > 0 ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : ''} en "¿Cuánta Calle Tenés?" (Resistencia, Chaco)! Rango: ${rank.title} ${rank.badge}. ¿Te animás a superarme?\n\nJugá acá 👉 https://cuantacalletenes.denischaco.com.ar/`
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-[#339136] hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-all cursor-pointer"
           >
-            <Share2 className="w-4 h-4 text-cyan-400" />
-            <span>{copied ? '¡Copiado!' : 'Compartir'}</span>
-          </button>
-          <button
-            onClick={onPlayAgain}
-            className="py-3 px-4 rounded-xl bg-gradient-to-r from-[#339136] to-emerald-600 hover:from-emerald-600 hover:to-teal-500 text-white font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-transform active:scale-98 cursor-pointer"
-          >
-            <RotateCcw className="w-4 h-4" />
-            <span>{isDuelMode ? 'Volver al Inicio' : 'Jugar de Nuevo'}</span>
-          </button>
+            <span>💬 Compartir mi Puntaje por WhatsApp</span>
+          </a>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={handleShare}
+              className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            >
+              <Share2 className="w-4 h-4 text-[#F48138]" />
+              <span>{copied ? '¡Copiado!' : 'Compartir'}</span>
+            </button>
+            <button
+              onClick={onPlayAgain}
+              className="py-3 px-4 rounded-xl bg-gradient-to-r from-[#339136] to-emerald-600 hover:from-emerald-600 hover:to-teal-500 text-white font-heading font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/40 transition-transform active:scale-98 cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>{isDuelMode ? 'Volver al Inicio' : 'Jugar de Nuevo'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Credits & Merchant Links in GameOver screen */}

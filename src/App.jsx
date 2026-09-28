@@ -1,16 +1,18 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, lazy, Suspense } from 'react';
 import DenisRibbonHeader from './components/DenisRibbonHeader';
 import StreetGameMap from './components/StreetGameMap';
 import RoundHUD from './components/RoundHUD';
 import RoundResultModal from './components/RoundResultModal';
 import GameOverScreen from './components/GameOverScreen';
 import StartScreen from './components/StartScreen';
-import LeaderboardModal from './components/LeaderboardModal';
-import HelpModal from './components/HelpModal';
-import AdvertiseModal from './components/AdvertiseModal';
-import CreditsModal from './components/CreditsModal';
-import SculpturesAlbumModal from './components/SculpturesAlbumModal';
-import CouponModal from './components/CouponModal';
+
+const LeaderboardModal = lazy(() => import('./components/LeaderboardModal'));
+const HelpModal = lazy(() => import('./components/HelpModal'));
+const AdvertiseModal = lazy(() => import('./components/AdvertiseModal'));
+const CreditsModal = lazy(() => import('./components/CreditsModal'));
+const SculpturesAlbumModal = lazy(() => import('./components/SculpturesAlbumModal'));
+const CouponModal = lazy(() => import('./components/CouponModal'));
+const LegalModal = lazy(() => import('./components/LegalModal'));
 import { useSponsorGeoboost } from './hooks/useSponsorGeoboost';
 
 import landmarksData from './data/landmarks.json';
@@ -60,6 +62,7 @@ export default function App() {
   const [isAdvertiseOpen, setIsAdvertiseOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
+  const [isLegalOpen, setIsLegalOpen] = useState(false);
   const [activeCouponSponsor, setActiveCouponSponsor] = useState(null);
 
   // GeoBoost 2x Physical Proximity Engine
@@ -192,7 +195,10 @@ export default function App() {
     let scoreDelta = 0;
     const boostMultiplier = geoboost.isBoostActive ? 2 : 1;
 
-    if (mode === 'write') {
+    if (mode === 'timeout') {
+      isCorrect = false;
+      scoreDelta = 0;
+    } else if (mode === 'write') {
       const validation = validateStreetGuess(guess, currentStreet);
       isCorrect = validation.isCorrect;
       missedAccents = validation.missedAccents;
@@ -305,6 +311,7 @@ export default function App() {
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenAdvertise={() => handleOpenAdvertise('header')}
         onOpenCredits={() => setIsCreditsOpen(true)}
+        onOpenLegal={() => setIsLegalOpen(true)}
         currentZoneName={gameState !== 'start' ? currentZone.shortName : null}
         geoboost={geoboost}
       />
@@ -360,6 +367,7 @@ export default function App() {
             onOpenAdvertise={() => handleOpenAdvertise('start_screen')}
             onOpenCredits={() => setIsCreditsOpen(true)}
             onOpenAlbum={() => setIsAlbumOpen(true)}
+            onOpenLegal={() => setIsLegalOpen(true)}
             activeChallenge={activeChallenge}
             isLoadingChallenge={isLoadingChallenge}
             onDismissChallenge={handleDismissChallenge}
@@ -393,42 +401,48 @@ export default function App() {
         )}
       </main>
 
-      {/* Auxiliary Modals */}
-      {isLeaderboardOpen && (
-        <LeaderboardModal
-          initialZoneId={selectedZoneId}
-          onSelectZoneAndPlay={(targetZoneId) => {
-            setSelectedZoneId(targetZoneId);
-            setIsLeaderboardOpen(false);
-            handleStartGame(targetZoneId);
-          }}
-          onClose={() => setIsLeaderboardOpen(false)}
-        />
-      )}
+      {/* Auxiliary Modals (Code-split with React.lazy and Suspense) */}
+      <Suspense fallback={null}>
+        {isLeaderboardOpen && (
+          <LeaderboardModal
+            initialZoneId={selectedZoneId}
+            onSelectZoneAndPlay={(targetZoneId) => {
+              setSelectedZoneId(targetZoneId);
+              setIsLeaderboardOpen(false);
+              handleStartGame(targetZoneId);
+            }}
+            onClose={() => setIsLeaderboardOpen(false)}
+          />
+        )}
 
-      {isHelpOpen && (
-        <HelpModal onClose={() => setIsHelpOpen(false)} />
-      )}
+        {isHelpOpen && (
+          <HelpModal onClose={() => setIsHelpOpen(false)} />
+        )}
 
-      {isAdvertiseOpen && (
-        <AdvertiseModal onClose={() => setIsAdvertiseOpen(false)} />
-      )}
+        {isAdvertiseOpen && (
+          <AdvertiseModal onClose={() => setIsAdvertiseOpen(false)} />
+        )}
 
-      {isCreditsOpen && (
-        <CreditsModal onClose={() => setIsCreditsOpen(false)} />
-      )}
+        {isCreditsOpen && (
+          <CreditsModal onClose={() => setIsCreditsOpen(false)} />
+        )}
 
-      {isAlbumOpen && (
-        <SculpturesAlbumModal onClose={() => setIsAlbumOpen(false)} />
-      )}
+        {isAlbumOpen && (
+          <SculpturesAlbumModal onClose={() => setIsAlbumOpen(false)} />
+        )}
 
-      {/* 7. Dedicated Session Coupon Modal with Unique ID & Terms */}
-      {activeCouponSponsor && (
-        <CouponModal
-          sponsor={activeCouponSponsor}
-          onClose={() => setActiveCouponSponsor(null)}
-        />
-      )}
+        {isLegalOpen && (
+          <LegalModal onClose={() => setIsLegalOpen(false)} />
+        )}
+
+        {/* 7. Dedicated Session Coupon Modal with Unique ID & Terms */}
+        {activeCouponSponsor && (
+          <CouponModal
+            sponsor={activeCouponSponsor}
+            onClose={() => setActiveCouponSponsor(null)}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

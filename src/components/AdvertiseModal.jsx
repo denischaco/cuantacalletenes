@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Megaphone, CheckCircle2, MessageSquare, Sparkles, Users } from 'lucide-react';
+import { X, Megaphone, CheckCircle2, MessageSquare, Sparkles, Users, AlertCircle } from 'lucide-react';
 import { saveSponsorshipLead } from '../services/firebase';
 import { trackSubmitLead } from '../services/analytics';
 import { useMonthlyPlayers } from '../services/onlinePresence';
@@ -17,6 +17,7 @@ export default function AdvertiseModal({ onClose }) {
   const [contactName, setContactName] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [notes, setNotes] = useState('');
+  const [formError, setFormError] = useState('');
 
   const liveMonthlyPlayers = useMonthlyPlayers();
   const displayMonthlyPlayers = liveMonthlyPlayers || defaultMonthlyPlayers;
@@ -31,9 +32,10 @@ export default function AdvertiseModal({ onClose }) {
     if (e) e.preventDefault();
 
     if (!businessName.trim() || !whatsapp.trim()) {
-      alert('Por favor completá el nombre de tu comercio y tu WhatsApp de contacto.');
+      setFormError('Por favor completá el nombre de tu comercio y tu WhatsApp de contacto.');
       return;
     }
+    setFormError('');
 
     setIsSubmitting(true);
 
@@ -310,6 +312,14 @@ export default function AdvertiseModal({ onClose }) {
                 />
               </div>
             </div>
+
+            {/* Inline Error Notice */}
+            {formError && (
+              <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-800 text-rose-300 text-xs flex items-center gap-2 animate-fade-in">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{formError}</span>
+              </div>
+            )}
 
             {/* Action button */}
             <div className="pt-2">

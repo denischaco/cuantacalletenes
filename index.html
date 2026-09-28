@@ -37,13 +37,54 @@
       gtag('config', 'G-5QEL8C8RBG');
     </script>
     
+    <!-- PWA & Mobile Web Capabilities -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Cuánta Calle" />
+
     <!-- Google Fonts: Outfit & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Schema.org JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "¿Cuánta Calle Tenés?",
+      "alternateName": "Cuanta Calle Tenes",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "All",
+      "url": "https://cuantacalletenes.denischaco.com.ar/",
+      "image": "https://cuantacalletenes.denischaco.com.ar/og-preview.jpg",
+      "description": "Juego interactivo de geografía urbana sobre Resistencia, Chaco. Adiviná calles en un mapa mudo, coleccioná esculturas y desafiá a tus amigos en duelos 1v1.",
+      "genre": ["Trivia", "Geografía", "Educativo", "Juegos"],
+      "inLanguage": "es-AR",
+      "author": {
+        "@type": "Person",
+        "name": "Denis Gómez",
+        "url": "https://denischaco.com.ar"
+      },
+      "spatialCoverage": {
+        "@type": "Place",
+        "name": "Resistencia, Chaco, Argentina",
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": -27.45105,
+          "longitude": -58.98648
+        }
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "ARS"
+      }
+    }
+    </script>
     
     <title>¿Cuánta Calle Tenés? | Resistencia, Chaco</title>
   </head>

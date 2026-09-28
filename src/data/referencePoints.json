@@ -148,5 +148,29 @@
       "instruction": "Mostrá esta pantalla o código en caja en French 683",
       "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-27.448863,-58.977195"
     }
+  },
+  {
+    "id": "fichita_bar",
+    "name": "La Fichita Bar",
+    "pos": [
+      -27.452144,
+      -58.984264
+    ],
+    "icon": "🕹️",
+    "iconImage": "/sponsors/fichita.png",
+    "logoBg": "#1E1B4B",
+    "type": "commercial",
+    "category": "Café / Coworking / Bar",
+    "address": "Pellegrini 69",
+    "color": "#F48138",
+    "enabled": true,
+    "isSponsored": true,
+    "description": "Café, coworking y bar temático retro-arcade en Pellegrini 69",
+    "coupon": {
+      "title": "15% OFF en tu Consumo",
+      "code": "CALLE-FICHITA",
+      "instruction": "Mostrá este cupón con ID único en caja en Pellegrini 69",
+      "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-27.452144,-58.984264"
+    }
   }
 ]

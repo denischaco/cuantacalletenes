@@ -2,13 +2,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Trophy,
   X,
-  Trash2,
-  Lock,
-  Unlock,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw,
-  ShieldCheck,
   MapPin,
   Flame,
   Landmark,
@@ -18,11 +11,7 @@ import {
   Play
 } from 'lucide-react';
 import {
-  subscribeLeaderboard,
-  clearLeaderboardWithPassword,
-  deleteScoreEntry,
-  sendTestScoreToFirestore,
-  ADMIN_CLEAR_PASSWORD
+  subscribeLeaderboard
 } from '../services/firebase';
 import sponsorsData from '../data/sponsors.json';
 
@@ -32,33 +21,9 @@ export default function LeaderboardModal({
   onSelectZoneAndPlay = null
 }) {
   const [scores, setScores] = useState([]);
-  const [activeZoneTab, setActiveZoneTab] = useState(() => {
-    if (initialZoneId === 'toda_ciudad') return 'toda_ciudad';
-    if (initialZoneId === 'all') return 'all';
-    return 'centro';
-  });
+  const [userZoneTab, setUserZoneTab] = useState(null);
+  const activeZoneTab = userZoneTab || (initialZoneId === 'toda_ciudad' ? 'toda_ciudad' : initialZoneId === 'all' ? 'all' : 'centro');
   const [onlyBestPerPlayer, setOnlyBestPerPlayer] = useState(false);
-
-  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
-  const [passwordInput, setPasswordInput] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [isClearing, setIsClearing] = useState(false);
-  const [isSendingTest, setIsSendingTest] = useState(false);
-  const [adminUnlocked, setAdminUnlocked] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [deletingIndex, setDeletingIndex] = useState(null);
-
-  // Sync tab if initialZoneId changes while mounted
-  useEffect(() => {
-    if (initialZoneId === 'toda_ciudad') {
-      setActiveZoneTab('toda_ciudad');
-    } else if (initialZoneId === 'all') {
-      setActiveZoneTab('all');
-    } else if (initialZoneId === 'centro') {
-      setActiveZoneTab('centro');
-    }
-  }, [initialZoneId]);
 
   // Level 3 Sponsors (Tier: sponsor_zona)
   const level3Sponsors = sponsorsData.filter(
@@ -163,72 +128,6 @@ export default function LeaderboardModal({
     return filtered;
   }, [scores, activeZoneTab, onlyBestPerPlayer]);
 
-  const handleOpenPrompt = () => {
-    setShowPasswordPrompt(true);
-    setPasswordInput('');
-    setPasswordError('');
-    setSuccessMessage('');
-  };
-
-  const handleUnlockAdmin = (e) => {
-    if (e) e.preventDefault();
-    if (!passwordInput) {
-      setPasswordError('Ingresá la contraseña de administrador');
-      return;
-    }
-
-    if (passwordInput === ADMIN_CLEAR_PASSWORD) {
-      setAdminUnlocked(true);
-      setAdminPassword(passwordInput);
-      setShowPasswordPrompt(false);
-      setPasswordError('');
-      setSuccessMessage('¡Modo moderación activado!');
-      setTimeout(() => setSuccessMessage(''), 2500);
-    } else {
-      setPasswordError('Contraseña incorrecta');
-    }
-  };
-
-  const handleDeleteSingle = async (item, idx) => {
-    if (!window.confirm(`¿Seguro que querés eliminar el registro de "${item.name}" (${item.score} pts)?`)) {
-      return;
-    }
-    setDeletingIndex(idx);
-    const res = await deleteScoreEntry(item.id, idx, adminPassword);
-    setDeletingIndex(null);
-    if (!res.success) {
-      alert(res.error || 'No se pudo eliminar el registro');
-    }
-  };
-
-  const handleConfirmClearAll = async () => {
-    if (!window.confirm('⚠️ ¿Estás seguro de que querés VACIAR TODA la tabla de récords? Esta acción no se puede deshacer.')) {
-      return;
-    }
-    setIsClearing(true);
-    const res = await clearLeaderboardWithPassword(adminPassword);
-    setIsClearing(false);
-    if (res.success) {
-      setScores([]);
-      setSuccessMessage('¡Toda la tabla ha sido vaciada!');
-      setTimeout(() => setSuccessMessage(''), 2000);
-    } else {
-      alert(res.error || 'Error al vaciar la tabla');
-    }
-  };
-
-  const handleSendTestScore = async () => {
-    setIsSendingTest(true);
-    const res = await sendTestScoreToFirestore();
-    setIsSendingTest(false);
-    if (res.success) {
-      setSuccessMessage('¡Récord de prueba guardado en Firestore! Revisá la consola de Firebase.');
-      setTimeout(() => setSuccessMessage(''), 3500);
-    } else {
-      alert(`Error al guardar en Firestore:\n${res.error}\n\nRevisá que Firestore Database esté creado en el proyecto "cuantacalletenes" y que las reglas permitan lectura y escritura.`);
-    }
-  };
-
   return (
     <div className="absolute inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md pointer-events-auto">
       <div className="w-full max-w-md bg-slate-900 border border-slate-700/90 rounded-3xl p-4 sm:p-5 shadow-2xl space-y-3 max-h-[calc(100dvh-2rem)] overflow-y-auto">
@@ -252,7 +151,7 @@ export default function LeaderboardModal({
         <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-2xl border border-slate-800">
           <button
             type="button"
-            onClick={() => setActiveZoneTab('centro')}
+            onClick={() => setUserZoneTab('centro')}
             className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeZoneTab === 'centro'
                 ? 'bg-gradient-to-r from-[#339136] to-emerald-600 text-white shadow-md shadow-emerald-950/50'
@@ -272,7 +171,7 @@ export default function LeaderboardModal({
 
           <button
             type="button"
-            onClick={() => setActiveZoneTab('toda_ciudad')}
+            onClick={() => setUserZoneTab('toda_ciudad')}
             className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
               activeZoneTab === 'toda_ciudad'
                 ? 'bg-gradient-to-r from-[#F48138] to-[#B95D0E] text-white shadow-md shadow-orange-950/50'
@@ -292,7 +191,7 @@ export default function LeaderboardModal({
 
           <button
             type="button"
-            onClick={() => setActiveZoneTab('all')}
+            onClick={() => setUserZoneTab('all')}
             className={`py-1.5 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
               activeZoneTab === 'all'
                 ? 'bg-slate-700 text-white shadow-md'
@@ -308,7 +207,7 @@ export default function LeaderboardModal({
         {/* Sorting notice and Best-per-player toggle */}
         <div className="flex items-center justify-between px-1 text-[11px] text-slate-400">
           <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3 text-cyan-400 shrink-0" />
+            <Clock className="w-3 h-3 text-emerald-400 shrink-0" />
             <span>Desempate por velocidad</span>
           </span>
           <label className="flex items-center gap-1.5 cursor-pointer select-none text-slate-400 hover:text-slate-200">
@@ -321,30 +220,6 @@ export default function LeaderboardModal({
             <span>1 por jugador</span>
           </label>
         </div>
-
-        {/* Success message banner */}
-        {successMessage && (
-          <div className="p-2.5 bg-emerald-950/80 border border-emerald-700/60 rounded-xl text-emerald-300 text-xs flex items-center gap-2 animate-fade-in">
-            <CheckCircle className="w-4 h-4 shrink-0" />
-            <span>{successMessage}</span>
-          </div>
-        )}
-
-        {/* Admin Mode Badge */}
-        {adminUnlocked && (
-          <div className="p-2.5 bg-amber-950/50 border border-amber-500/40 rounded-xl flex items-center justify-between text-xs text-amber-300">
-            <div className="flex items-center gap-1.5 font-bold">
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              <span>Modo Moderación Activo</span>
-            </div>
-            <button
-              onClick={() => setAdminUnlocked(false)}
-              className="text-[11px] text-amber-400/80 hover:text-amber-200 underline cursor-pointer"
-            >
-              Salir
-            </button>
-          </div>
-        )}
 
         {/* Scores Table / Motivational Empty State */}
         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
@@ -422,8 +297,6 @@ export default function LeaderboardModal({
                       ? 'bg-slate-950/80 border-slate-700/80'
                       : isThird
                       ? 'bg-slate-950/75 border-amber-900/40'
-                      : adminUnlocked
-                      ? 'bg-slate-950/90 border-slate-800 hover:border-rose-500/50'
                       : 'bg-slate-950/60 border-slate-800/80'
                   }`}
                 >
@@ -486,22 +359,6 @@ export default function LeaderboardModal({
                       </span>
                       <span className="text-[10px] text-slate-500 block">pts</span>
                     </div>
-
-                    {/* Individual Delete Button in Moderation Mode */}
-                    {adminUnlocked && (
-                      <button
-                        onClick={() => handleDeleteSingle(item, idx)}
-                        disabled={deletingIndex === idx}
-                        title={`Eliminar solo a ${item.name}`}
-                        className="p-1.5 rounded-lg bg-rose-950/70 hover:bg-rose-600 border border-rose-800/60 text-rose-300 hover:text-white transition-colors cursor-pointer"
-                      >
-                        {deletingIndex === idx ? (
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    )}
                   </div>
                 </div>
               );
@@ -574,104 +431,12 @@ export default function LeaderboardModal({
           </div>
         )}
 
-        {/* Password Modal Prompt for Moderation Mode */}
-        {showPasswordPrompt && (
-          <form onSubmit={handleUnlockAdmin} className="p-3.5 bg-slate-950/90 border border-amber-900/60 rounded-2xl space-y-2.5 animate-fade-in">
-            <div className="flex items-center justify-between text-xs text-slate-300 font-bold">
-              <span className="flex items-center gap-1.5 text-amber-400">
-                <Lock className="w-3.5 h-3.5" />
-                <span>Acceso Moderador</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowPasswordPrompt(false)}
-                className="text-slate-500 hover:text-slate-300 text-[11px] cursor-pointer"
-              >
-                Cancelar
-              </button>
-            </div>
-
-            <p className="text-[11px] text-slate-400">
-              Ingresá la clave de moderación para borrar registros individuales o vaciar la tabla:
-            </p>
-
-            <div className="space-y-1">
-              <input
-                type="password"
-                value={passwordInput}
-                onChange={(e) => {
-                  setPasswordInput(e.target.value);
-                  if (passwordError) setPasswordError('');
-                }}
-                placeholder="Ingresá la clave de moderador..."
-                autoFocus
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
-              />
-
-              {passwordError && (
-                <p className="text-rose-400 text-[11px] flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 shrink-0" />
-                  <span>{passwordError}</span>
-                </p>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-500 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
-            >
-              <Unlock className="w-3.5 h-3.5" />
-              <span>Desbloquear Moderación</span>
-            </button>
-          </form>
-        )}
-
         {/* Footer actions */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-xs">
-          {!adminUnlocked && !showPasswordPrompt && (
-            <button
-              onClick={handleOpenPrompt}
-              className="text-slate-400 hover:text-amber-400 flex items-center gap-1 cursor-pointer transition-colors px-2 py-1 rounded-lg hover:bg-slate-800/80"
-              title="Moderar tabla (borrar un registro o vaciar)"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>Moderar tabla</span>
-            </button>
-          )}
-
-          {adminUnlocked && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleSendTestScore}
-                disabled={isSendingTest}
-                className="text-amber-300 hover:text-amber-200 flex items-center gap-1 cursor-pointer transition-colors px-2.5 py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 border border-amber-800/60 text-xs font-semibold"
-                title="Crea un registro de prueba en Firestore para inicializar y verificar la colección"
-              >
-                {isSendingTest ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Probando...</span>
-                  </>
-                ) : (
-                  <span>🧪 Crear prueba en Firebase</span>
-                )}
-              </button>
-
-              {scores.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleConfirmClearAll}
-                  disabled={isClearing}
-                  className="text-rose-400 hover:text-rose-300 flex items-center gap-1 cursor-pointer transition-colors px-2 py-1 rounded-lg hover:bg-rose-950/40 border border-rose-900/50"
-                  title="Vaciar toda la tabla"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>{isClearing ? 'Vaciando...' : 'Vaciar todo'}</span>
-                </button>
-              )}
-            </div>
-          )}
+          <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Récords sincronizados en tiempo real</span>
+          </div>
 
           <button
             onClick={onClose}

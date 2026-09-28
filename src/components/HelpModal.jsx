@@ -7,9 +7,9 @@ export default function HelpModal({ onClose }) {
       <div className="w-full max-w-lg bg-slate-900 border border-slate-700/90 rounded-3xl p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-3 shrink-0">
-          <div className="flex items-center gap-2.5 text-cyan-400">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
-              <HelpCircle className="w-5 h-5 text-cyan-400" />
+          <div className="flex items-center gap-2.5 text-[#F48138]">
+            <div className="p-2 rounded-xl bg-[#F48138]/10 border border-[#F48138]/30">
+              <HelpCircle className="w-5 h-5 text-[#F48138]" />
             </div>
             <div>
               <h3 className="font-heading font-black text-lg text-white leading-tight">
@@ -50,14 +50,14 @@ export default function HelpModal({ onClose }) {
             <div>
               <h4 className="font-bold text-white text-xs sm:text-sm">2. El mapa no tiene nombres</h4>
               <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
-                Hacé zoom y desplazate libremente. Orientate por la <span className="text-slate-200 font-semibold">Plaza 25 de Mayo</span>, avenidas diagonales y lagunas. Podés minimizar el panel con el botón <span className="text-cyan-300 font-medium">"Ver mapa"</span>.
+                Hacé zoom y desplazate libremente. Orientate por la <span className="text-slate-200 font-semibold">Plaza 25 de Mayo</span>, avenidas diagonales y lagunas. Podés minimizar el panel con el botón <span className="text-emerald-400 font-medium">"Ver mapa"</span>.
               </p>
             </div>
           </div>
 
           {/* 3. Formas de adivinar */}
           <div className="flex gap-3 p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80">
-            <span className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0 h-fit">
+            <span className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 h-fit">
               <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
             <div>
@@ -139,7 +139,7 @@ export default function HelpModal({ onClose }) {
         <div className="pt-2 shrink-0 border-t border-slate-800">
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white font-bold text-xs sm:text-sm transition-all shadow-lg shadow-emerald-950/50 hover:shadow-cyan-900/40"
+            className="w-full py-3 rounded-xl bg-gradient-to-r from-[#339136] via-[#B95D0E] to-[#F48138] hover:from-[#339136] hover:to-amber-500 text-white font-bold text-xs sm:text-sm transition-all shadow-lg shadow-emerald-950/50 hover:shadow-orange-950/40 cursor-pointer"
           >
             ¡Entendido, a jugar!
           </button>

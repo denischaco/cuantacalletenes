@@ -1,0 +1,31 @@
+{
+  "name": "¿Cuánta Calle Tenés? - Resistencia, Chaco",
+  "short_name": "Cuánta Calle",
+  "description": "El juego urbano de Resistencia, Chaco. Poné a prueba tu conocimiento de las calles chaqueñas sobre un mapa sin nombres. ¡Desafíos 1v1 y ranking en vivo!",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B0F19",
+  "theme_color": "#0B0F19",
+  "lang": "es-AR",
+  "categories": ["games", "trivia", "education"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/sponsors/bacanal.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

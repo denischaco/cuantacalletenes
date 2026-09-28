@@ -1,8 +1,8 @@
 import React from 'react';
-import { ExternalLink, Compass, Heart, Zap } from 'lucide-react';
+import { ExternalLink, Compass, Heart, Zap, Shield } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
 
-export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpenAdvertise, onOpenCredits, currentZoneName, geoboost = null }) {
+export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpenAdvertise, onOpenCredits, onOpenLegal = null, currentZoneName, geoboost = null }) {
   const onlineCount = useOnlineCount();
 
   return (
@@ -11,7 +11,7 @@ export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpe
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Protagonist: Compass Isotype + Game Title */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-cyan-500/20 via-emerald-500/20 to-[#F48138]/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shadow-sm shadow-cyan-950/40">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-[#339136]/20 via-[#F48138]/20 to-[#B95D0E]/20 border border-[#F48138]/40 flex items-center justify-center text-[#F48138] shadow-sm shadow-orange-950/40">
             <Compass className="w-4 h-4 sm:w-4.5 sm:h-4.5 animate-spin-slow" />
           </div>
           <span className="font-heading font-black text-xs sm:text-sm text-white tracking-tight">
@@ -97,6 +97,17 @@ export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpe
             aria-label="Créditos"
           >
             <Heart className="w-3.5 h-3.5 fill-emerald-500/20" />
+          </button>
+        )}
+
+        {onOpenLegal && (
+          <button
+            onClick={onOpenLegal}
+            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-amber-400 hover:text-amber-300 text-xs font-bold transition-colors cursor-pointer"
+            title="Términos & Privacidad (Ley 25.326)"
+            aria-label="Términos y Privacidad"
+          >
+            <Shield className="w-3.5 h-3.5" />
           </button>
         )}
 

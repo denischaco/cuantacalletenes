@@ -4,8 +4,6 @@ import {
   collection,
   addDoc,
   getDoc,
-  getDocs,
-  deleteDoc,
   doc,
   query,
   orderBy,
@@ -17,7 +15,6 @@ import { getAuth, signInAnonymously } from 'firebase/auth';
 
 const STORAGE_KEY = 'cuanta_calle_leaderboard';
 const LEADERBOARD_COLLECTION = 'leaderboard';
-export const ADMIN_CLEAR_PASSWORD = import.meta.env.VITE_ADMIN_CLEAR_PASSWORD || 'matadoresalataque';
 
 // Firebase configuration from environment with reliable client-side fallbacks
 const firebaseConfig = {
@@ -401,70 +398,6 @@ export async function sendTestScoreToFirestore() {
   }
 }
 
-/**
- * Delete a single score entry (requires password: 'matadoresalataque')
- */
-export async function deleteScoreEntry(id, index, password) {
-  if (password !== ADMIN_CLEAR_PASSWORD) {
-    return {
-      success: false,
-      error: 'Contraseña incorrecta'
-    };
-  }
-
-  const firestoreDb = getFirestoreInstance();
-  if (firestoreDb && id) {
-    try {
-      await deleteDoc(doc(firestoreDb, LEADERBOARD_COLLECTION, id));
-    } catch (err) {
-      console.warn('Error eliminando de Firestore:', err.message);
-    }
-  }
-
-  // Update local cache
-  const current = getLocalLeaderboard();
-  const updated = current.filter((item, idx) => {
-    if (id && item.id) return item.id !== id;
-    return idx !== index;
-  });
-  saveLocalLeaderboard(updated);
-
-  return {
-    success: true
-  };
-}
-
-/**
- * Clear the leaderboard (requires password: 'matadoresalataque')
- */
-export async function clearLeaderboardWithPassword(password) {
-  if (password !== ADMIN_CLEAR_PASSWORD) {
-    return {
-      success: false,
-      error: 'Contraseña incorrecta'
-    };
-  }
-
-  // Clear local storage
-  saveLocalLeaderboard([]);
-
-  // Clear Firestore documents if connected
-  const firestoreDb = getFirestoreInstance();
-  if (firestoreDb) {
-    try {
-      const colRef = collection(firestoreDb, LEADERBOARD_COLLECTION);
-      const snapshot = await getDocs(colRef);
-      const deletePromises = snapshot.docs.map((d) => deleteDoc(doc(firestoreDb, LEADERBOARD_COLLECTION, d.id)));
-      await Promise.all(deletePromises);
-    } catch (err) {
-      console.warn('Notice clearing Firestore collection:', err.message);
-    }
-  }
-
-  return {
-    success: true
-  };
-}
 
 /**
  * Save B2B sponsorship inquiry / lead to Firestore

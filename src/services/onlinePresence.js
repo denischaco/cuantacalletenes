@@ -80,12 +80,6 @@ export async function sendHeartbeat() {
           fn(data.online);
         } catch {}
       });
-
-      // Actualizar el DOM si existe el badge
-      const badge = document.getElementById('online-badge');
-      if (badge) {
-        badge.innerText = `🟢 ${data.online} jugando ahora`;
-      }
     }
 
     if (typeof data.monthlyPlayers === 'number' && data.monthlyPlayers > 0) {

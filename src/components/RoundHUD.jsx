@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sparkles, Edit3, ListOrdered, CheckCircle2, ChevronDown, ChevronUp, AlertCircle, Lock, Clock } from 'lucide-react';
 
 const ROUND_TIME_LIMIT = 20; // 20 segundos por ronda
@@ -47,9 +47,24 @@ export default function RoundHUD({
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputError, setInputError] = useState('');
 
+  const hasAutoSubmittedRef = useRef(false);
+
+  const handleSendGuess = useCallback((payload) => {
+    hasAutoSubmittedRef.current = true;
+    const start = startTimeRef.current || Date.now();
+    const elapsedSeconds = Math.min(ROUND_TIME_LIMIT, (Date.now() - start) / 1000);
+    const speedBonus = Math.max(0, Math.floor((ROUND_TIME_LIMIT - elapsedSeconds) * 100));
+    onSubmitGuess({
+      ...payload,
+      elapsedSeconds,
+      speedBonus
+    });
+  }, [onSubmitGuess]);
+
   // Cronómetro regresivo de 20s
   useEffect(() => {
     startTimeRef.current = Date.now();
+    hasAutoSubmittedRef.current = false;
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -63,16 +78,16 @@ export default function RoundHUD({
     return () => clearInterval(interval);
   }, []);
 
-  const handleSendGuess = (payload) => {
-    const start = startTimeRef.current || Date.now();
-    const elapsedSeconds = Math.min(ROUND_TIME_LIMIT, (Date.now() - start) / 1000);
-    const speedBonus = Math.max(0, Math.floor((ROUND_TIME_LIMIT - elapsedSeconds) * 100));
-    onSubmitGuess({
-      ...payload,
-      elapsedSeconds,
-      speedBonus
-    });
-  };
+  // Disparo automático por tiempo agotado al llegar a 0s (0 pts)
+  useEffect(() => {
+    if (timeLeft === 0 && !hasAutoSubmittedRef.current) {
+      hasAutoSubmittedRef.current = true;
+      handleSendGuess({
+        mode: 'timeout',
+        guess: 'Tiempo agotado'
+      });
+    }
+  }, [timeLeft, handleSendGuess]);
 
   // Handle Write Guess Submission
   const handleWriteSubmit = (e) => {

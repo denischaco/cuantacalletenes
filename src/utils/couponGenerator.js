@@ -7,7 +7,7 @@
 /**
  * Genera un ID de cupón único legible con fechahora y 4 dígitos aleatorios
  */
-export function generateUniqueCouponId(sponsorId = '') {
+export function generateUniqueCouponId(_sponsorId = '') {
   const now = new Date();
   const yy = String(now.getFullYear()).slice(-2);
   const mm = String(now.getMonth() + 1).padStart(2, '0');

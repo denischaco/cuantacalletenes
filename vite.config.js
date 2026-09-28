@@ -51,5 +51,34 @@ function apiOnlinePlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), apiOnlinePlugin()]
+  plugins: [react(), apiOnlinePlugin()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/leaflet')) {
+            return 'vendor-leaflet';
+          }
+          if (id.includes('node_modules/@firebase/firestore') || id.includes('node_modules/firebase/firestore')) {
+            return 'vendor-firestore';
+          }
+          if (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('node_modules/canvas-confetti')) {
+            return 'vendor-confetti';
+          }
+          if (id.includes('node_modules/lucide-react')) {
+            return 'vendor-lucide';
+          }
+          if (id.includes('resistenciaStreets.json')) {
+            return 'data-streets';
+          }
+          if (id.includes('esculturasResistencia.json')) {
+            return 'data-sculptures';
+          }
+        }
+      }
+    }
+  }
 });

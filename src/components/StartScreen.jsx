@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import landmarksData from '../data/landmarks.json';
-import { Play, Compass, HelpCircle, MapPin, Heart, Swords, Landmark, Trophy, Zap, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Play, Compass, HelpCircle, MapPin, Heart, Swords, Landmark, Trophy, Zap, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
 import { getAlbumStats } from '../utils/sculptureUtils';
 
@@ -11,6 +11,7 @@ export default function StartScreen({
   onOpenAdvertise,
   onOpenCredits,
   onOpenAlbum,
+  onOpenLegal = null,
   activeChallenge = null,
   isLoadingChallenge = false,
   onDismissChallenge = null,
@@ -18,20 +19,13 @@ export default function StartScreen({
   onSelectZone = null,
   geoboost = null
 }) {
-  const [selectedZoneId, setSelectedZoneId] = useState(activeChallenge?.zoneId || propSelectedZoneId || 'centro');
+  const [userSelectedZoneId, setUserSelectedZoneId] = useState(null);
+  const effectiveZoneId = activeChallenge?.zoneId || userSelectedZoneId || propSelectedZoneId || 'centro';
   const onlineCount = useOnlineCount();
   const albumStats = useMemo(() => getAlbumStats(), []);
 
-  React.useEffect(() => {
-    if (propSelectedZoneId && !activeChallenge) {
-      setSelectedZoneId(propSelectedZoneId);
-    }
-  }, [propSelectedZoneId, activeChallenge]);
-
-  const effectiveZoneId = activeChallenge?.zoneId || selectedZoneId;
-
   const handleZoneSelect = (zoneId) => {
-    setSelectedZoneId(zoneId);
+    setUserSelectedZoneId(zoneId);
     if (onSelectZone) onSelectZone(zoneId);
   };
 
@@ -49,13 +43,13 @@ export default function StartScreen({
       <div className="w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl space-y-4 sm:space-y-5 my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto">
         {/* Game Title and Branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-cyan-500/20 via-emerald-500/20 to-[#F48138]/20 border border-cyan-500/30 text-cyan-400 mb-1">
+          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-[#339136]/20 via-[#F48138]/20 to-[#B95D0E]/20 border border-[#F48138]/40 text-[#F48138] mb-1 shadow-md shadow-orange-950/40">
             <Compass className="w-8 h-8 animate-spin-slow" />
           </div>
           <h1 className="text-3xl sm:text-4xl font-heading font-black text-white tracking-tight">
             ¿Cuánta Calle Tenés?
           </h1>
-          <p className="text-xs sm:text-sm text-cyan-300 font-semibold">
+          <p className="text-xs sm:text-sm text-[#F48138] font-semibold">
             El juego de geografía urbana de Resistencia, Chaco
           </p>
 
@@ -219,6 +213,10 @@ export default function StartScreen({
                     <MapPin className="w-3.5 h-3.5 text-amber-400" />
                     <span>Habilitar Ubicación y Activar 2x</span>
                   </button>
+                  <p className="text-[10px] text-slate-400/90 mt-1.5 flex items-center justify-center gap-1 text-center">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+                    <span>Tu ubicación se procesa 100% en tu dispositivo y nunca se guarda en nuestros servidores.</span>
+                  </p>
                 </div>
               </div>
             )}
@@ -303,20 +301,20 @@ export default function StartScreen({
           <>
             <div className="space-y-2">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-cyan-400" />
+                <MapPin className="w-3.5 h-3.5 text-[#F48138]" />
                 <span>Elegí la Zona o Nivel:</span>
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {landmarksData.map((zone) => {
-                  const isSelected = zone.id === selectedZoneId;
+                  const isSelected = zone.id === effectiveZoneId;
                   return (
                     <button
                       key={zone.id}
                       onClick={() => handleZoneSelect(zone.id)}
-                      className={`p-3 rounded-2xl text-left border transition-all ${
+                      className={`p-3 rounded-2xl text-left border transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-gradient-to-r from-cyan-950/70 to-slate-900 border-cyan-500/80 shadow-md shadow-cyan-950/50 scale-[1.02]'
+                          ? 'bg-gradient-to-r from-emerald-950/70 via-slate-900 to-amber-950/50 border-[#F48138] shadow-md shadow-orange-950/40 scale-[1.02]'
                           : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-950/90'
                       }`}
                     >
@@ -397,21 +395,32 @@ export default function StartScreen({
           </button>
         </div>
 
-        {/* Secondary options (Help & Credits) */}
-        <div className="flex items-center justify-center gap-3 pt-0.5 text-xs text-slate-400">
+        {/* Secondary options (Help, Legal & Credits) */}
+        <div className="flex items-center justify-center gap-2.5 pt-0.5 text-xs text-slate-400 flex-wrap">
           <button
             onClick={onOpenHelp}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-cyan-400 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-slate-800 cursor-pointer"
+            className="flex items-center gap-1.5 text-slate-400 hover:text-emerald-400 transition-colors py-1.5 px-2 rounded-lg hover:bg-slate-800 cursor-pointer"
           >
-            <HelpCircle className="w-3.5 h-3.5 text-cyan-400" />
+            <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
             <span>¿Cómo jugar?</span>
           </button>
+          {onOpenLegal && (
+            <>
+              <span className="text-slate-700">•</span>
+              <button
+                onClick={onOpenLegal}
+                className="flex items-center gap-1.5 text-slate-400 hover:text-amber-400 transition-colors py-1.5 px-2 rounded-lg hover:bg-slate-800 cursor-pointer"
+              >
+                <span>⚖️ Términos & Privacidad</span>
+              </button>
+            </>
+          )}
           {onOpenCredits && (
             <>
               <span className="text-slate-700">•</span>
               <button
                 onClick={onOpenCredits}
-                className="flex items-center gap-1.5 text-slate-400 hover:text-emerald-400 transition-colors py-1.5 px-2.5 rounded-lg hover:bg-slate-800 cursor-pointer"
+                className="flex items-center gap-1.5 text-slate-400 hover:text-emerald-400 transition-colors py-1.5 px-2 rounded-lg hover:bg-slate-800 cursor-pointer"
               >
                 <Heart className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Créditos</span>
