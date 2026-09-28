@@ -35,7 +35,8 @@ export default function RoundHUD({
   options = [],
   onSubmitGuess,
   currentStreet = null,
-  activeChallenge = null
+  activeChallenge = null,
+  geoboost = null
 }) {
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME_LIMIT);
   const startTimeRef = useRef(null);
@@ -127,6 +128,30 @@ export default function RoundHUD({
               : 'bg-slate-900/95 border-slate-700/80'
           }`}
         >
+          {/* Banner Informativo GeoBoost 2x */}
+          {geoboost?.isBoostActive && (
+            <div className="w-full bg-gradient-to-r from-amber-500 via-[#F48138] to-orange-600 text-slate-950 font-heading font-black px-3 py-1.5 rounded-xl shadow-lg flex items-center justify-between animate-pulse text-xs mb-2">
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="text-sm">⚡</span>
+                <span className="truncate">ZONA 2X ACTIVA: ¡Estás en {geoboost.boostSponsor.name}!</span>
+              </div>
+              <span className="bg-slate-950 text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 ml-2">
+                PUNTAJE 2X
+              </span>
+            </div>
+          )}
+
+          {/* Botón de verificación si no está activo y no fue denegado */}
+          {!geoboost?.isBoostActive && geoboost?.geoStatus !== 'denied' && (
+            <button
+              type="button"
+              onClick={geoboost?.checkProximity}
+              className="text-[10px] sm:text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center justify-center gap-1 py-0.5 px-2 w-full bg-slate-900/60 hover:bg-slate-900 rounded-lg border border-amber-500/20 mb-2 transition-all cursor-pointer"
+            >
+              <span>📍 ¿Estás en un local sponsor? Tocá acá para activar Doble Puntaje (2x)</span>
+            </button>
+          )}
+
           {/* Progress bar visual del cronómetro */}
           <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-2">
             <div
@@ -173,6 +198,11 @@ export default function RoundHUD({
               <div className="flex items-center gap-1.5 text-amber-400 bg-amber-950/40 border border-amber-800/40 px-3 py-0.5 rounded-full font-bold text-xs sm:text-sm">
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>{score} / 10 pts</span>
+                {geoboost?.isBoostActive && (
+                  <span className="bg-amber-400 text-slate-950 text-[10px] font-black px-1.5 py-0.2 rounded-full animate-bounce">
+                    2x
+                  </span>
+                )}
               </div>
             </div>
           </div>

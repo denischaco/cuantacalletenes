@@ -356,3 +356,36 @@ export function validateStreetGuess(rawGuess, targetStreet) {
   return { isCorrect: false, missedAccents: false, isExactAddress: false };
 }
 
+/**
+ * Distancia en metros redondeada entre dos coordenadas
+ */
+export function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+  return Math.round(calculateHaversineDistance(lat1, lon1, lat2, lon2));
+}
+
+/**
+ * Evalúa si la posición actual del usuario se encuentra dentro del radio de algún sponsor
+ * @param {number} userLat - Latitud del usuario
+ * @param {number} userLon - Longitud del usuario
+ * @param {Array} sponsors - Lista de sponsors de sponsors.json
+ * @param {number} thresholdMeters - Radio máximo en metros (default: 70m)
+ */
+export function findNearbySponsor(userLat, userLon, sponsors, thresholdMeters = 70) {
+  if (!userLat || !userLon || !Array.isArray(sponsors)) return null;
+
+  for (const sponsor of sponsors) {
+    if (!sponsor.active || !sponsor.coordinates || sponsor.coordinates.length < 2) continue;
+    const [spLat, spLon] = sponsor.coordinates;
+    const distance = calculateDistanceMeters(userLat, userLon, spLat, spLon);
+
+    if (distance <= thresholdMeters) {
+      return {
+        sponsor,
+        distanceMeters: distance
+      };
+    }
+  }
+
+  return null;
+}
+

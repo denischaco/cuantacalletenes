@@ -10,6 +10,8 @@ import HelpModal from './components/HelpModal';
 import AdvertiseModal from './components/AdvertiseModal';
 import CreditsModal from './components/CreditsModal';
 import SculpturesAlbumModal from './components/SculpturesAlbumModal';
+import CouponModal from './components/CouponModal';
+import { useSponsorGeoboost } from './hooks/useSponsorGeoboost';
 
 import landmarksData from './data/landmarks.json';
 import ranksData from './data/ranks.json';
@@ -52,12 +54,16 @@ export default function App() {
     return false;
   });
 
-  // Modals
+  // Modals & Active Coupon
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isAdvertiseOpen, setIsAdvertiseOpen] = useState(false);
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
+  const [activeCouponSponsor, setActiveCouponSponsor] = useState(null);
+
+  // GeoBoost 2x Physical Proximity Engine
+  const geoboost = useSponsorGeoboost();
 
   // Detect 1v1 challenge in URL query parameters (?reto=... or ?duelo=... or ?d=...)
   useEffect(() => {
@@ -184,6 +190,7 @@ export default function App() {
     let missedAccents = false;
     let isExactAddress = false;
     let scoreDelta = 0;
+    const boostMultiplier = geoboost.isBoostActive ? 2 : 1;
 
     if (mode === 'write') {
       const validation = validateStreetGuess(guess, currentStreet);
@@ -192,7 +199,8 @@ export default function App() {
       isExactAddress = Boolean(currentStreet?.isSponsored && validation.isExactAddress);
 
       if (isCorrect) {
-        scoreDelta = isExactAddress ? 4 : 2;
+        const rawPoints = isExactAddress ? 4 : 2;
+        scoreDelta = rawPoints * boostMultiplier;
       } else {
         scoreDelta = totalScore > 0 ? -1 : 0;
       }
@@ -201,7 +209,7 @@ export default function App() {
       isCorrect = (streetId === currentStreet.id) || (guess === currentStreet.name) || (currentStreet.sponsor?.targetStreet?.id === streetId);
 
       if (isCorrect) {
-        scoreDelta = 1;
+        scoreDelta = 1 * boostMultiplier;
       } else {
         scoreDelta = totalScore > 0 ? -1 : 0;
       }
@@ -215,7 +223,9 @@ export default function App() {
       isCorrect,
       scoreDelta,
       streetName: currentStreet.name,
-      isExactAddress
+      isExactAddress,
+      multiplier: boostMultiplier,
+      boostSponsorId: geoboost.isBoostActive ? geoboost.boostSponsor?.id : null
     });
 
     const result = {
@@ -227,7 +237,10 @@ export default function App() {
       userGuess: guess,
       missedAccents,
       elapsedSeconds,
-      speedBonus
+      speedBonus,
+      isBoostActive: geoboost.isBoostActive,
+      boostSponsor: geoboost.boostSponsor,
+      multiplier: boostMultiplier
     };
 
     setLastRoundResult(result);
@@ -259,7 +272,8 @@ export default function App() {
         totalTimeMs: elapsedTotal,
         rankTitle: rank.title,
         rankBadge: rank.badge,
-        zoneName: currentZone.name
+        zoneName: currentZone.name,
+        geoboostSponsorId: geoboost.isBoostActive ? geoboost.boostSponsor?.id : null
       });
       setGameState('game_over');
     }
@@ -315,6 +329,7 @@ export default function App() {
             onSubmitGuess={handleSubmitGuess}
             currentStreet={currentStreet}
             activeChallenge={activeChallenge}
+            geoboost={geoboost}
           />
         )}
 
@@ -326,6 +341,7 @@ export default function App() {
             street={currentStreet}
             result={lastRoundResult}
             onNextRound={handleNextRound}
+            onOpenCouponModal={(sp) => setActiveCouponSponsor(sp)}
           />
         )}
 
@@ -370,6 +386,7 @@ export default function App() {
             onSaveScore={handleSaveScore}
             onOpenAdvertise={() => handleOpenAdvertise('game_over')}
             onOpenCredits={() => setIsCreditsOpen(true)}
+            onOpenCouponModal={(sp) => setActiveCouponSponsor(sp)}
           />
         )}
       </main>
@@ -401,6 +418,14 @@ export default function App() {
 
       {isAlbumOpen && (
         <SculpturesAlbumModal onClose={() => setIsAlbumOpen(false)} />
+      )}
+
+      {/* 7. Dedicated Session Coupon Modal with Unique ID & Terms */}
+      {activeCouponSponsor && (
+        <CouponModal
+          sponsor={activeCouponSponsor}
+          onClose={() => setActiveCouponSponsor(null)}
+        />
       )}
     </div>
   );

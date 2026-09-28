@@ -24,8 +24,17 @@
       "title": "15% OFF en tu Burger",
       "discount": "15% OFF",
       "code": "CALLE-BACANAL",
-      "expiresAt": "2026-12-31",
-      "instructions": "Mostrá esta pantalla o captura en la caja de French 683.",
+      "validityHours": 72,
+      "scope": "individual",
+      "scopeLabel": "Por persona / Comensal individual",
+      "paymentMethods": ["Efectivo", "Transferencia bancaria"],
+      "terms": [
+        "Válido exclusivamente para consumo en el salón de French 683.",
+        "Aplica sobre 1 (una) burger o combo por cada jugador que presente su propio cupón con ID único.",
+        "No acumulable con promociones vigentes ni combos de Happy Hour.",
+        "Presentar la captura en caja antes de pedir la cuenta."
+      ],
+      "instructions": "Mostrá la captura con tu ID único en la caja de French 683 al ordenar.",
       "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-27.448863,-58.977195"
     }
   },
@@ -51,11 +60,20 @@
     },
     "coupon": {
       "active": true,
-      "title": "15% OFF en Café o Consumición",
+      "title": "15% OFF en tu Consumo",
       "discount": "15% OFF",
       "code": "CALLE-FICHITA",
-      "expiresAt": "2026-12-26",
-      "instructions": "Mostrá esta pantalla en la barra de Pellegrini 69.",
+      "validityHours": 48,
+      "scope": "table",
+      "scopeLabel": "Descuento sobre el total de la cuenta de la mesa",
+      "paymentMethods": ["Efectivo", "Transferencia", "Tarjeta de Débito"],
+      "terms": [
+        "Válido en consumiciones del salón en Pellegrini 69.",
+        "Aplica como descuento sobre el valor del ticket de la mesa.",
+        "Válido 1 (un) solo cupón por mesa y por cuenta.",
+        "Presentar la captura con ID único y fecha/hora legible en la barra al pedir la cuenta."
+      ],
+      "instructions": "Mostrá este cupón digital con tu ID único en la barra de Pellegrini 69 al solicitar la cuenta.",
       "googleMapsUrl": "https://www.google.com/maps/search/?api=1&query=-27.452144,-58.984264"
     }
   }

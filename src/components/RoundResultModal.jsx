@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink, Download, Check } from 'lucide-react';
-import { trackSponsorClick } from '../services/analytics';
-import { downloadCouponCard } from '../utils/canvasCards';
+import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink, Download, Check, ShieldAlert } from 'lucide-react';
+import { trackSponsorClick, trackEvent } from '../services/analytics';
+import { getOrCreateSessionCoupon } from '../utils/couponGenerator';
+import { downloadCouponVoucher } from '../utils/voucherCanvas';
 import { findNearbySculpture, unlockSculpture } from '../utils/sculptureUtils';
 import SculptureUnlockCard from './SculptureUnlockCard';
 
@@ -35,7 +36,8 @@ export default function RoundResultModal({
   totalRounds,
   street,
   result,
-  onNextRound
+  onNextRound,
+  onOpenCouponModal = null
 }) {
   const { isCorrect, isExactAddress, scoreDelta = 0, mode = 'write', userGuess = '', missedAccents = false } = result || {};
   const [copiedCode, setCopiedCode] = useState(false);
@@ -53,6 +55,25 @@ export default function RoundResultModal({
     }
     return { isNewUnlock: false };
   });
+
+  // Track coupon unlock event
+  useEffect(() => {
+    if (street?.isSponsored && street?.sponsor?.id) {
+      trackEvent('coupon_unlocked', {
+        sponsor_id: street.sponsor.id,
+        sponsor_name: street.sponsor.name,
+        round_number: currentRound
+      });
+    }
+  }, [street, currentRound]);
+
+  // Cupón persistente de la sesión con ID único y timestamp
+  const sessionCoupon = useMemo(() => {
+    if (street?.isSponsored && street?.sponsor) {
+      return getOrCreateSessionCoupon(street.sponsor);
+    }
+    return null;
+  }, [street]);
 
   // Auto-focus on button and listen for Enter key to advance immediately
   useEffect(() => {
@@ -213,7 +234,7 @@ export default function RoundResultModal({
               </div>
 
               {/* Voucher Ticket Visual Card */}
-              {hasActiveCoupon && (
+              {hasActiveCoupon && sessionCoupon && (
                 <div className="space-y-2.5">
                   <div className="bg-slate-950/90 border-2 border-dashed border-[#F48138]/80 rounded-2xl p-3 text-center space-y-2 shadow-inner">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
@@ -221,50 +242,54 @@ export default function RoundResultModal({
                         Voucher Digital
                       </span>
                       <span className="text-[10px] text-amber-400 font-bold px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
-                        {street.sponsor.coupon?.discount || '15% OFF'}
+                        {sessionCoupon.discount}
                       </span>
                     </div>
 
                     <div>
                       <p className="text-[10px] text-slate-400">Código para el mostrador:</p>
                       <p className="text-lg sm:text-xl font-mono font-black text-amber-400 tracking-wider select-all py-0.5">
-                        {street.sponsor.coupon?.code || 'CALLE-BACANAL'}
+                        {sessionCoupon.code}
                       </p>
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-900 border border-amber-500/30 text-[10px] text-amber-300 font-mono mt-1">
+                        <ShieldAlert className="w-3 h-3 text-amber-400" />
+                        <span>ID Único: {sessionCoupon.uniqueId}</span>
+                      </div>
                     </div>
 
                     <p className="text-[11px] text-slate-300 leading-snug">
-                      {street.sponsor.coupon?.instructions || 'Mostrá esta pantalla o la captura descargada en caja.'}
+                      {sessionCoupon.instructions}
                     </p>
 
                     <div className="flex items-center gap-2 pt-1">
                       <button
                         type="button"
-                        onClick={() => {
-                          trackSponsorClick(street.sponsor.name, 'download_coupon_image');
-                          downloadCouponCard({
-                            sponsorName: street.sponsor.name,
-                            discount: street.sponsor.coupon?.discount || '15% OFF',
-                            code: street.sponsor.coupon?.code || 'CALLE-BACANAL',
-                            address: street.sponsor.address || 'Resistencia, Chaco',
-                            expiresAt: street.sponsor.coupon?.expiresAt || '2026-12-31',
-                            instructions: street.sponsor.coupon?.instructions || 'Mostrá esta imagen en caja.',
-                            title: street.sponsor.coupon?.title || 'Cupón Oficial de Descuento'
+                        onClick={async () => {
+                          trackEvent('coupon_download_voucher', {
+                            sponsor_id: street.sponsor.id,
+                            sponsor_name: street.sponsor.name,
+                            coupon_id: sessionCoupon.uniqueId,
+                            discount: sessionCoupon.discount
                           });
+                          await downloadCouponVoucher(street.sponsor, sessionCoupon);
                           setCopiedCode(true);
                           setTimeout(() => setCopiedCode(false), 2500);
                         }}
                         className="flex-1 py-2 px-3 rounded-xl bg-gradient-to-r from-[#F48138] to-amber-500 hover:from-[#FFA559] hover:to-amber-400 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md shadow-orange-950/40 transition-all cursor-pointer"
-                        title="Descarga la imagen del cupón en tu celular o PC para mostrarla en el local"
+                        title="Descarga la imagen oficial del voucher HD con ID único para mostrarla en el local"
                       >
                         <Download className="w-4 h-4" />
-                        <span>{copiedCode ? '¡Cupón Descargado!' : '📸 Guardar Cupón (Imagen PNG)'}</span>
+                        <span>{copiedCode ? '¡Voucher Guardado!' : '📸 Guardar Voucher (PNG HD)'}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => {
-                          trackSponsorClick(street.sponsor.name, 'copy_coupon');
-                          navigator.clipboard.writeText(street.sponsor.coupon?.code || 'CALLE-BACANAL');
+                          trackEvent('coupon_copy_code', {
+                            sponsor_id: street.sponsor.id,
+                            coupon_code: sessionCoupon.code
+                          });
+                          navigator.clipboard.writeText(sessionCoupon.code);
                           setCopiedCode(true);
                           setTimeout(() => setCopiedCode(false), 2000);
                         }}
@@ -275,6 +300,16 @@ export default function RoundResultModal({
                         <span>{copiedCode ? 'Copiado' : 'Copiar'}</span>
                       </button>
                     </div>
+
+                    {onOpenCouponModal && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenCouponModal(street.sponsor)}
+                        className="text-[11px] text-[#FFA559] hover:text-amber-200 font-semibold underline block mx-auto pt-1 cursor-pointer"
+                      >
+                        Ver cupón completo, alcance y condiciones
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

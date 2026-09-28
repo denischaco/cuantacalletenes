@@ -32,7 +32,8 @@ export default function GameOverScreen({
   onPlayAgain,
   onSaveScore,
   onOpenAdvertise,
-  onOpenCredits
+  onOpenCredits,
+  onOpenCouponModal = null
 }) {
   const [playerName, setPlayerName] = useState('');
   const [saved, setSaved] = useState(false);
@@ -577,19 +578,33 @@ export default function GameOverScreen({
               </div>
             </div>
 
-            {(zoneSponsor.coupon?.googleMapsUrl || zoneSponsor.googleMapsUrl) && (
-              <a
-                href={zoneSponsor.coupon?.googleMapsUrl || zoneSponsor.googleMapsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackSponsorClick(zoneSponsor.name, 'game_over_how_to_get')}
-                className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
-              >
-                <MapPin className="w-3.5 h-3.5 text-[#F48138]" />
-                <span className="hidden sm:inline">Cómo llegar</span>
-                <span className="sm:hidden">Visitar</span>
-              </a>
-            )}
+            <div className="flex items-center gap-2 shrink-0">
+              {zoneSponsor.coupon && zoneSponsor.coupon.active !== false && onOpenCouponModal && (
+                <button
+                  type="button"
+                  onClick={() => onOpenCouponModal(zoneSponsor)}
+                  className="px-2.5 py-2 rounded-xl bg-gradient-to-r from-[#F48138] to-amber-500 hover:from-[#FFA559] hover:to-amber-400 text-white text-[11px] font-bold flex items-center gap-1 shrink-0 transition-colors shadow-sm cursor-pointer"
+                  title="Ver cupón con ID único y condiciones"
+                >
+                  <span>🎟️</span>
+                  <span>Ver Cupón ({zoneSponsor.coupon.discount || '15% OFF'})</span>
+                </button>
+              )}
+
+              {(zoneSponsor.coupon?.googleMapsUrl || zoneSponsor.googleMapsUrl) && (
+                <a
+                  href={zoneSponsor.coupon?.googleMapsUrl || zoneSponsor.googleMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackSponsorClick(zoneSponsor.name, 'game_over_how_to_get')}
+                  className="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white text-[11px] font-bold flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                >
+                  <MapPin className="w-3.5 h-3.5 text-[#F48138]" />
+                  <span className="hidden sm:inline">Cómo llegar</span>
+                  <span className="sm:hidden">Ver</span>
+                </a>
+              )}
+            </div>
           </div>
         )}
 

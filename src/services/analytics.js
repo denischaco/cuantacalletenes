@@ -1,9 +1,15 @@
 /**
- * Google Analytics 4 (gtag.js) Event Tracking Helper
+ * Google Analytics 4 (gtag.js) & B2B Telemetry Hub
  * Measurement ID: G-5QEL8C8RBG
+ * Handles GA4 events and light Firestore sponsor metrics attribution
  */
+import { getFirestoreInstance } from './firebase';
+import { doc, setDoc, increment } from 'firebase/firestore';
 
-export function trackEvent(eventName, params = {}) {
+/**
+ * Registra un evento en Google Analytics 4 / Tag Manager si están presentes
+ */
+const logToGA = (eventName, params = {}) => {
   try {
     if (typeof window !== 'undefined') {
       window.dataLayer = window.dataLayer || [];
@@ -17,12 +23,75 @@ export function trackEvent(eventName, params = {}) {
             };
 
       gtagFn('event', eventName, params);
-      console.log(`[GA4] Evento enviado: "${eventName}"`, params);
     }
   } catch (err) {
-    console.warn('[GA4] Error enviando evento:', err);
+    console.warn('[GA4 Error]:', err);
   }
-}
+};
+
+/**
+ * Incrementa contadores agregados en Firestore para alimentar métricas B2B de sponsors
+ * Sin registrar datos personales, preservando privacidad y bajo costo de lectura/escritura.
+ */
+const incrementSponsorMetric = async (sponsorId, metricField) => {
+  try {
+    const db = getFirestoreInstance();
+    if (!db || !sponsorId) return;
+
+    const currentMonth = new Date().toISOString().slice(0, 7); // Ej: "2026-09"
+    const statsDocRef = doc(db, 'sponsor_stats', `${sponsorId}_${currentMonth}`);
+
+    await setDoc(
+      statsDocRef,
+      {
+        sponsorId,
+        month: currentMonth,
+        [metricField]: increment(1),
+        lastActivity: new Date().toISOString()
+      },
+      { merge: true }
+    );
+  } catch (error) {
+    console.warn(`[Analytics] No se pudo incrementar métrica B2B para ${sponsorId}:`, error);
+  }
+};
+
+/**
+ * Despachador principal de eventos de la aplicación
+ */
+export const trackEvent = (eventName, params = {}) => {
+  try {
+    // 1. Log en consola para entorno de desarrollo
+    if (import.meta.env.DEV) {
+      console.log(`📡 [Analytics Event]: ${eventName}`, params);
+    }
+
+    // 2. Registro en GA4
+    logToGA(eventName, params);
+
+    // 3. Atribución B2B automática según el evento
+    if (params.sponsor_id) {
+      switch (eventName) {
+        case 'coupon_unlocked':
+          incrementSponsorMetric(params.sponsor_id, 'impressions_count');
+          break;
+        case 'coupon_download_voucher':
+          incrementSponsorMetric(params.sponsor_id, 'vouchers_downloaded_count');
+          break;
+        case 'sponsor_maps_navigation':
+          incrementSponsorMetric(params.sponsor_id, 'maps_clicks_count');
+          break;
+        case 'geoboost_game_finished':
+          incrementSponsorMetric(params.sponsor_id, 'geoboost_plays_count');
+          break;
+        default:
+          break;
+      }
+    }
+  } catch (err) {
+    console.error('[Analytics Error]:', err);
+  }
+};
 
 /**
  * Evento cuando un jugador inicia una partida
@@ -36,7 +105,6 @@ export function trackGameStart(zoneId, zoneName) {
 
 /**
  * Evento cuando se abre la ventana de anunciantes/sponsors
- * @param {('header' | 'start_screen' | 'game_over' | 'ribbon')} source - Lugar desde donde se abrió
  */
 export function trackOpenAdvertise(source = 'unknown') {
   trackEvent('open_advertise_modal', {
@@ -59,27 +127,37 @@ export function trackSubmitLead(leadData) {
 /**
  * Evento cuando se responde una ronda
  */
-export function trackRoundAnswer({ roundNumber, mode, isCorrect, scoreDelta, streetName, isExactAddress }) {
+export function trackRoundAnswer({ roundNumber, mode, isCorrect, scoreDelta, streetName, isExactAddress, multiplier = 1, boostSponsorId = null }) {
   trackEvent('round_answer', {
     round_number: roundNumber,
     mode,
     is_correct: isCorrect,
     score_delta: scoreDelta,
     street_name: streetName,
-    is_exact_address: Boolean(isExactAddress)
+    is_exact_address: Boolean(isExactAddress),
+    multiplier,
+    boost_sponsor_id: boostSponsorId
   });
 }
 
 /**
  * Evento cuando se completa una partida de 5 calles
  */
-export function trackGameComplete({ totalScore, rankTitle, rankBadge, zoneName }) {
+export function trackGameComplete({ totalScore, rankTitle, rankBadge, zoneName, geoboostSponsorId = null }) {
   trackEvent('game_complete', {
     score: totalScore,
     rank: rankTitle,
     rank_badge: rankBadge,
-    zone: zoneName
+    zone: zoneName,
+    geoboost_sponsor_id: geoboostSponsorId
   });
+
+  if (geoboostSponsorId) {
+    trackEvent('geoboost_game_finished', {
+      sponsor_id: geoboostSponsorId,
+      final_score: totalScore
+    });
+  }
 }
 
 /**
