@@ -9,29 +9,6 @@ export function useSponsorGeoboost() {
   const [activeBoost, setActiveBoost] = useState(null); // { sponsor, distanceMeters }
   const [geoStatus, setGeoStatus] = useState('idle'); // 'idle' | 'checking' | 'active' | 'out_of_range' | 'denied' | 'unavailable'
 
-  // Verificar si hay simulación forzada por query parameter (ej: ?boost=1 o ?boost=bacanal o ?boost=fichita)
-  useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        const boostParam = params.get('boost');
-        if (boostParam) {
-          const targetSponsor =
-            boostParam === 'fichita' || boostParam === 'pellegrini'
-              ? sponsorsData.find((s) => s.id === 'fichita')
-              : sponsorsData[0]; // Bacanal por defecto
-
-          if (targetSponsor) {
-            setActiveBoost({ sponsor: targetSponsor, distanceMeters: 18, isSimulated: true });
-            setGeoStatus('active');
-          }
-        }
-      }
-    } catch {
-      // Ignorar errores de URL
-    }
-  }, []);
-
   const checkProximity = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setGeoStatus('unavailable');
@@ -72,20 +49,6 @@ export function useSponsorGeoboost() {
     );
   }, []);
 
-  // Permite simular el boosteo para testing, demos o usuarios en desarrollo
-  const simulateBoost = useCallback((sponsorId = 'bacanal') => {
-    if (!sponsorId) {
-      setActiveBoost(null);
-      setGeoStatus('idle');
-      return;
-    }
-    const target = sponsorsData.find((s) => s.id === sponsorId) || sponsorsData[0];
-    if (target) {
-      setActiveBoost({ sponsor: target, distanceMeters: 25, isSimulated: true });
-      setGeoStatus('active');
-    }
-  }, []);
-
   // Comprobar al montar si el usuario ya otorgó permiso de ubicación previamente
   useEffect(() => {
     if (typeof navigator !== 'undefined' && 'permissions' in navigator) {
@@ -108,11 +71,10 @@ export function useSponsorGeoboost() {
     isBoostActive: Boolean(activeBoost),
     boostSponsor: activeBoost?.sponsor || null,
     distanceMeters: activeBoost?.distanceMeters || null,
-    isSimulated: Boolean(activeBoost?.isSimulated),
     geoStatus,
     checkProximity,
-    simulateBoost,
     multiplier: activeBoost ? 2 : 1
   };
 }
+
 

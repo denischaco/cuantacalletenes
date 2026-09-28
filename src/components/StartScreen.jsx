@@ -103,11 +103,6 @@ export default function StartScreen({
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 shadow-sm">
                           2X MULTIPLICADOR
                         </span>
-                        {geoboost.isSimulated && (
-                          <span className="text-[9px] px-1.5 py-0.2 bg-slate-800 text-slate-400 border border-slate-700 rounded-md">
-                            (Modo Demo)
-                          </span>
-                        )}
                       </div>
                       <p className="text-[11px] sm:text-xs text-amber-200/90 mt-0.5 leading-snug">
                         Detectamos que estás en <strong className="text-white font-bold">{geoboost.boostSponsor.name}</strong> ({geoboost.distanceMeters ? `a ~${geoboost.distanceMeters}m` : 'en el local'}). ¡Tus aciertos sumarán <span className="text-white font-bold">Doble Puntaje (+4 / +2 pts)</span>!
@@ -162,17 +157,8 @@ export default function StartScreen({
                     <span>Reintentar</span>
                   </button>
                 </div>
-                <div className="flex items-center justify-between pt-1 border-t border-slate-800/80 text-[10px] text-slate-500 flex-wrap gap-1">
-                  <span>💡 Acercate a French 683 o Pellegrini 69 para duplicar.</span>
-                  {geoboost.simulateBoost && (
-                    <button
-                      type="button"
-                      onClick={() => geoboost.simulateBoost('bacanal')}
-                      className="text-amber-400/90 hover:text-amber-300 underline cursor-pointer"
-                    >
-                      Probar cómo se ve 2x
-                    </button>
-                  )}
+                <div className="pt-1 border-t border-slate-800/80 text-[10px] text-slate-500">
+                  <span>💡 Acercate a French 683 (Bacanal) o Pellegrini 69 (La Fichita) para duplicar.</span>
                 </div>
               </div>
             )}
