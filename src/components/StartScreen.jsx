@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import landmarksData from '../data/landmarks.json';
-import { Play, Compass, HelpCircle, MapPin, Heart, Swords, Landmark, Trophy, Zap, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Play, HelpCircle, MapPin, Heart, Swords, Landmark, Trophy, Zap, RefreshCw, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
 import { getAlbumStats } from '../utils/sculptureUtils';
 
@@ -43,8 +43,14 @@ export default function StartScreen({
       <div className="w-full max-w-lg bg-slate-900 border border-slate-700/80 rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-2xl space-y-4 sm:space-y-5 my-auto max-h-[calc(100dvh-2rem)] overflow-y-auto">
         {/* Game Title and Branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-gradient-to-br from-[#339136]/20 via-[#F48138]/20 to-[#B95D0E]/20 border border-[#F48138]/40 text-[#F48138] mb-1 shadow-md shadow-orange-950/40">
-            <Compass className="w-8 h-8 animate-spin-slow" />
+          <div className="inline-flex items-center justify-center mb-1 group">
+            <div className="relative">
+              <img
+                src="/icons/icon-192.png"
+                alt="¿Cuánta Calle Tenés?"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl shadow-xl shadow-orange-950/50 ring-2 ring-[#F48138]/40 object-cover transform transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
           </div>
           <h1 className="text-3xl sm:text-4xl font-heading font-black text-white tracking-tight">
             ¿Cuánta Calle Tenés?

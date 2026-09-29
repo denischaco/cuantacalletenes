@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Compass, Heart, Zap, Shield } from 'lucide-react';
+import { ExternalLink, Heart, Zap, Shield } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
 
 export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpenAdvertise, onOpenCredits, onOpenLegal = null, currentZoneName, geoboost = null }) {
@@ -7,12 +7,12 @@ export default function DenisRibbonHeader({ onOpenHelp, onOpenLeaderboard, onOpe
 
   return (
     <header className="h-12 w-full bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-800/80 px-2.5 sm:px-4 flex items-center justify-between z-30 shrink-0 select-none">
-      {/* Brand & Project Identity: Compass Isotype & Online Counter */}
+      {/* Brand & Project Identity: Logo & Online Counter */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        {/* Protagonist: Compass Isotype + Game Title */}
+        {/* Protagonist: Logo Isotype + Game Title */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-[#339136]/20 via-[#F48138]/20 to-[#B95D0E]/20 border border-[#F48138]/40 flex items-center justify-center text-[#F48138] shadow-sm shadow-orange-950/40">
-            <Compass className="w-4 h-4 sm:w-4.5 sm:h-4.5 animate-spin-slow" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg overflow-hidden shrink-0 shadow-sm shadow-orange-950/40 ring-1 ring-[#F48138]/40">
+            <img src="/icons/icon-192.png" alt="CCT" className="w-full h-full object-cover" />
           </div>
           <span className="font-heading font-black text-xs sm:text-sm text-white tracking-tight">
             <span className="hidden xs:inline">¿Cuánta Calle Tenés?</span>
