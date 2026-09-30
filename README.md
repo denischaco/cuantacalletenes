@@ -5,8 +5,10 @@
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com/)
+[![PWA Ready](https://img.shields.io/badge/PWA-Installable-339136?style=for-the-badge&logo=pwa&logoColor=white)](https://cuantacalletenes.denischaco.com.ar/)
 [![Upstash Redis](https://img.shields.io/badge/Upstash_Redis-Serverless-00E599?style=for-the-badge&logo=redis&logoColor=black)](https://upstash.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Google Analytics 4](https://img.shields.io/badge/GA4-PWA_Telemetry-E37400?style=for-the-badge&logo=google-analytics&logoColor=white)](https://analytics.google.com/)
 [![Desarrollado por Denis Chaco](https://img.shields.io/badge/Creador-Denis_Chaco-F48138?style=for-the-badge&logo=google-chrome&logoColor=white)](https://denischaco.com.ar)
 
 ---
@@ -154,19 +156,24 @@ Se registra de forma atómica en Firestore para generar reportes mensuales de re
 | `geoboost_activations` | Comensales que jugaron físicamente dentro del local (radio 70m). |
 | `maps_clicks` | Clics en *"Cómo llegar"* redirigiendo a la app de Google Maps. |
 
-#### B) Eventos de Producto en Google Analytics 4 (GA4)
+#### B) Eventos de Producto y Telemetría PWA en Google Analytics 4 (GA4)
+*Measurement ID: `G-5QEL8C8RBG`*. Todos los eventos del juego viajan enriquecidos automáticamente con el parámetro global **`app_mode: 'pwa' | 'browser'`**, permitiendo comparar métricas de engagement y retención entre usuarios que instalaron la app y quienes juegan en el navegador.
+
 | Evento GA4 | Cuándo se dispara | Parámetros Clave |
 |---|---|---|
-| `game_start` | Inicio de partida en una zona | `zone_id`, `zone_name`, `is_challenge` |
-| `round_answer` | Respuesta de cada calle | `round_number`, `mode`, `is_correct`, `score_delta`, `street_name`, `geoboost_active` |
-| `coupon_generated` | Emisión del cupón con ID único | `sponsor_id`, `coupon_id`, `discount_text` |
-| `coupon_download_voucher` | Descarga de imagen PNG del voucher | `sponsor_id`, `coupon_id` |
-| `geoboost_detected` | Activación de proximidad GPS | `sponsor_id`, `distance_meters` |
-| `sponsor_view` | Visualización de ficha de sponsor | `sponsor_id`, `source` |
-| `sculpture_unlocked` | Desbloqueo de obra en el álbum | `sculpture_id`, `sculpture_name` |
-| `challenge_created` | Generación de reto 1v1 para compartir | `zone`, `score` |
-| `challenge_played` | Partida jugada desde un enlace de reto | `challenger_score`, `final_score` |
-| `game_complete` | Finalización de las 5 calles | `score`, `rank`, `time_seconds`, `zone` |
+| `pwa_session_start` | Arranque de sesión en cliente | `app_mode` (`pwa`/`browser`), `display_mode` (`standalone`/`browser_tab`) |
+| `pwa_installed` | Instalación nativa exitosa de la PWA | `method` (`browser_prompt`), `installed_at` |
+| `pwa_install_prompt_eligible` | Navegador ofrece banner de instalación | *(Detección nativa del navegador)* |
+| `game_start` | Inicio de partida en una zona | `zone_id`, `zone_name`, `is_challenge`, `app_mode` |
+| `round_answer` | Respuesta de cada calle | `round_number`, `mode`, `is_correct`, `score_delta`, `street_name`, `geoboost_active`, `app_mode` |
+| `coupon_generated` | Emisión del cupón con ID único | `sponsor_id`, `coupon_id`, `discount_text`, `app_mode` |
+| `coupon_download_voucher` | Descarga de imagen PNG del voucher | `sponsor_id`, `coupon_id`, `app_mode` |
+| `geoboost_detected` | Activación de proximidad GPS | `sponsor_id`, `distance_meters`, `app_mode` |
+| `sponsor_view` | Visualización de ficha de sponsor | `sponsor_id`, `source`, `app_mode` |
+| `sculpture_unlocked` | Desbloqueo de obra en el álbum | `sculpture_id`, `sculpture_name`, `app_mode` |
+| `challenge_created` | Generación de reto 1v1 para compartir | `zone`, `score`, `app_mode` |
+| `challenge_played` | Partida jugada desde un enlace de reto | `challenger_score`, `final_score`, `app_mode` |
+| `game_complete` | Finalización de las 5 calles | `score`, `rank`, `time_seconds`, `zone`, `app_mode` |
 
 ### 7. Sistema de Desafíos 1v1 Asincrónicos
 - Permite competir entre amigos sin necesidad de estar conectados en simultáneo.
@@ -199,7 +206,23 @@ Estrategia comercial orientada a pymes chaqueñas, eliminando la fricción de pa
   - 🟤 **Marrón Chaqueño**: `#321401`
   - 🟠 **Naranja Chaco**: `#F48138`
   - 🔶 **Ámbar / Naranja Oscuro**: `#B95D0E`
+- **Insignia Oficial de Marca**: Isotipo circular oficial con teléfono inteligente, señalética urbana chaqueña y badge de identidad visual @denischaco, integrado en la cabecera del juego ([DenisRibbonHeader.jsx](file:///d:/Localhost/denischaco/CAPSULAS/CuantaCalle/src/components/DenisRibbonHeader.jsx)), la pantalla de bienvenida ([StartScreen.jsx](file:///d:/Localhost/denischaco/CAPSULAS/CuantaCalle/src/components/StartScreen.jsx)) y los metadatos de aplicación.
 - Animaciones fluidas con Tailwind CSS, partículas de confeti con `canvas-confetti`, adaptabilidad móvil completa (mobile-first con navegación accesible con una sola mano) y soporte offline con fallbacks locales.
+
+### 11. Progressive Web App (PWA) e Integración OpenGraph (WhatsApp & Redes)
+- **Instalabilidad Nativa y Comportamiento Standalone**:
+  - Configuración completa en `public/manifest.webmanifest` (`display: standalone`, orientación `portrait`, `theme_color: #0B0F19`, `background_color: #0B0F19`).
+  - Suite integral de íconos en `public/icons/`:
+    - Favicons para navegador: `.ico` multicapa (16, 24, 32, 48, 64, 128, 256 px) y PNGs (16x16, 32x32).
+    - Íconos PWA estándar: 192x192 px y 512x512 px.
+    - Íconos adaptativos Android: `icon-maskable-192.png` y `icon-maskable-512.png` con margen seguro para recortes circulares/squircle.
+    - Ícono para iOS: `apple-touch-icon.png` (180x180 px con barra translúcida `black-translucent`).
+- **Atribución y Detección de Instalación PWA**:
+  - `start_url` parametrizado con `/?utm_source=pwa&utm_medium=standalone&utm_campaign=homescreen`, registrando en GA4 de forma automática qué jugadores abren el juego desde su pantalla de inicio.
+  - Escucha nativa en cliente de `appinstalled` y `beforeinstallprompt` para contabilizar instalaciones día a día.
+- **Optimización de Previsualización en Redes (WhatsApp & Meta)**:
+  - Tarjeta OpenGraph en alta definición (`public/icons/profile-icon.png` y `public/og-preview.png` en 1024x1024 px).
+  - Configuración con `og:image` con control de invalidación de caché (`?v=2`) y `twitter:card: summary` para que WhatsApp, Telegram, X y Facebook generen miniaturas instantáneas y nítidas al compartir partidas o retos 1v1.
 
 ---
 
@@ -210,8 +233,13 @@ cuantacalletenes/
 ├── api/
 │   └── online.js                 # Serverless Function: Heartbeat Redis & HyperLogLog
 ├── public/
-│   ├── favicon.svg               # Ícono oficial del juego
-│   ├── og-cover.jpg              # Portada para OpenGraph / previsualización en redes
+│   ├── favicon.ico               # Favicon multicapa oficial (16px a 256px)
+│   ├── favicon.svg               # Ícono vectorial para navegadores
+│   ├── logo.svg                  # Isotipo SVG oficial
+│   ├── manifest.webmanifest      # Manifiesto PWA con atribución UTM y modo standalone
+│   ├── og-preview.jpg            # Portada OpenGraph optimizada para redes
+│   ├── og-preview.png            # Portada OpenGraph en alta resolución (1024x1024)
+│   ├── icons/                    # Suite de íconos PWA (16, 32, 180, 192, 512 px y maskable)
 │   └── sponsors/                 # Logos de comercios chaqueños auspiciantes
 ├── src/
 │   ├── components/
