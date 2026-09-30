@@ -57,17 +57,35 @@ const incrementSponsorMetric = async (sponsorId, metricField) => {
 };
 
 /**
+ * Detecta si el usuario está ejecutando la aplicación instalada como PWA (modo standalone)
+ */
+export function isPwaMode() {
+  if (typeof window === 'undefined') return false;
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true ||
+    (typeof document !== 'undefined' && document.referrer.includes('android-app://'))
+  );
+}
+
+/**
  * Despachador principal de eventos de la aplicación
  */
 export const trackEvent = (eventName, params = {}) => {
   try {
+    // Enriquecer automáticamente todos los eventos con el modo de ejecución (pwa o browser)
+    const enrichedParams = {
+      app_mode: isPwaMode() ? 'pwa' : 'browser',
+      ...params
+    };
+
     // 1. Log en consola para entorno de desarrollo
     if (import.meta.env.DEV) {
-      console.log(`📡 [Analytics Event]: ${eventName}`, params);
+      console.log(`📡 [Analytics Event]: ${eventName}`, enrichedParams);
     }
 
     // 2. Registro en GA4
-    logToGA(eventName, params);
+    logToGA(eventName, enrichedParams);
 
     // 3. Atribución B2B automática según el evento
     if (params.sponsor_id) {
@@ -191,3 +209,36 @@ export function trackSponsorClick(sponsorName, action = 'view_maps') {
     action
   });
 }
+
+/**
+ * Inicializa escuchas de eventos de instalación y ciclo de vida de la PWA
+ */
+export function initPwaAnalytics() {
+  if (typeof window === 'undefined') return;
+
+  // Registrar sesión inicial indicando si se ejecuta como app instalada o pestaña de navegador
+  const isInstalledPwa = isPwaMode();
+  logToGA('pwa_session_start', {
+    app_mode: isInstalledPwa ? 'pwa' : 'browser',
+    display_mode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser_tab'
+  });
+
+  // Evento nativo cuando el usuario confirma e instala efectivamente la PWA
+  window.addEventListener('appinstalled', () => {
+    trackEvent('pwa_installed', {
+      method: 'browser_prompt',
+      timestamp: new Date().toISOString()
+    });
+  });
+
+  // Evento cuando el navegador evalúa que el usuario califica para instalar la PWA
+  window.addEventListener('beforeinstallprompt', () => {
+    trackEvent('pwa_install_prompt_eligible');
+  });
+}
+
+// Inicialización automática de telemetría PWA al cargar el bundle en cliente
+if (typeof window !== 'undefined') {
+  initPwaAnalytics();
+}
+
