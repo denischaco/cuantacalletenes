@@ -51,7 +51,8 @@ export function getRandomStreetRound({
   count = 5,
   difficulty = null,
   excludeIds = [],
-  includeSponsored = true
+  includeSponsored = true,
+  preferredSponsorId = null
 } = {}) {
   const selectedZone = landmarksData.find(z => z.id === zoneId) || landmarksData[0];
   const [centerLat, centerLon] = selectedZone.center;
@@ -112,7 +113,18 @@ export function getRandomStreetRound({
     });
 
     if (matchingSponsors.length > 0) {
-      const chosenSponsor = matchingSponsors[Math.floor(Math.random() * matchingSponsors.length)];
+      // Si el jugador está físicamente en un sponsor, priorizarlo 100% para que nunca vea a la competencia
+      let chosenSponsor = null;
+      if (preferredSponsorId) {
+        chosenSponsor = matchingSponsors.find(
+          sp => sp.id === preferredSponsorId ||
+                sp.targetStreet?.id === preferredSponsorId ||
+                sp.shortName?.toLowerCase() === String(preferredSponsorId).toLowerCase()
+        );
+      }
+      if (!chosenSponsor) {
+        chosenSponsor = matchingSponsors[Math.floor(Math.random() * matchingSponsors.length)];
+      }
       sponsoredStreet = {
         id: chosenSponsor.targetStreet.id,
         name: chosenSponsor.targetStreet.name,

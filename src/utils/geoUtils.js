@@ -356,6 +356,8 @@ export function validateStreetGuess(rawGuess, targetStreet) {
   return { isCorrect: false, missedAccents: false, isExactAddress: false };
 }
 
+export const GEO_BASE_THRESHOLD_METERS = 130;
+
 /**
  * Distancia en metros redondeada entre dos coordenadas
  */
@@ -364,28 +366,105 @@ export function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
 }
 
 /**
- * Evalúa si la posición actual del usuario se encuentra dentro del radio de algún sponsor
+ * Evalúa si la posición actual del usuario se encuentra dentro del radio de algún sponsor.
+ * Aplica geofencing adaptativo sumando margen si la precisión GPS es atenuada (interiores de edificios).
  * @param {number} userLat - Latitud del usuario
  * @param {number} userLon - Longitud del usuario
  * @param {Array} sponsors - Lista de sponsors de sponsors.json
- * @param {number} thresholdMeters - Radio máximo en metros (default: 70m)
+ * @param {number} thresholdMeters - Radio máximo base en metros (default: 130m)
+ * @param {number} accuracy - Precisión reportada por el dispositivo en metros (opcional)
  */
-export function findNearbySponsor(userLat, userLon, sponsors, thresholdMeters = 70) {
+export function findNearbySponsor(userLat, userLon, sponsors, thresholdMeters = GEO_BASE_THRESHOLD_METERS, accuracy = 0) {
   if (!userLat || !userLon || !Array.isArray(sponsors)) return null;
+
+  // Tolerancia adaptativa: si la señal es débil en interiores (accuracy > 25m), concede hasta 40m adicionales
+  const adaptiveMargin = accuracy > 25 ? Math.min(Math.round((accuracy - 20) * 0.5), 40) : 0;
+  const effectiveThreshold = thresholdMeters + adaptiveMargin;
+
+  let bestMatch = null;
+  let minDistance = Infinity;
 
   for (const sponsor of sponsors) {
     if (!sponsor.active || !sponsor.coordinates || sponsor.coordinates.length < 2) continue;
     const [spLat, spLon] = sponsor.coordinates;
     const distance = calculateDistanceMeters(userLat, userLon, spLat, spLon);
 
-    if (distance <= thresholdMeters) {
-      return {
+    if (distance <= effectiveThreshold && distance < minDistance) {
+      minDistance = distance;
+      bestMatch = {
+        sponsor,
+        distanceMeters: distance,
+        effectiveThreshold
+      };
+    }
+  }
+
+  return bestMatch;
+}
+
+/**
+ * Rangos cualitativos de proximidad respecto a locales sponsors:
+ * - EnElLugar: Dentro del local o su umbral (<= 130m o margen adaptativo)
+ * - CasiEnElLugar: A la vuelta / misma cuadra (> 130m y <= 250m)
+ * - Cerca: A pocas cuadras (> 250m y <= 650m)
+ * - MedioCerca: En la zona (> 650m y <= 1500m)
+ * - Lejos: Fuera del área o en otra parte de la ciudad (> 1500m)
+ */
+export const PROXIMITY_TIERS = {
+  EN_EL_LUGAR: 'EnElLugar',
+  CASI_EN_EL_LUGAR: 'CasiEnElLugar',
+  CERCA: 'Cerca',
+  MEDIO_CERCA: 'MedioCerca',
+  LEJOS: 'Lejos'
+};
+
+/**
+ * Retorna el rango cualitativo según la distancia en metros
+ */
+export function getProximityTier(distanceMeters, thresholdMeters = GEO_BASE_THRESHOLD_METERS) {
+  if (distanceMeters == null || typeof distanceMeters !== 'number') return PROXIMITY_TIERS.LEJOS;
+  if (distanceMeters <= thresholdMeters) return PROXIMITY_TIERS.EN_EL_LUGAR;
+  if (distanceMeters <= 250) return PROXIMITY_TIERS.CASI_EN_EL_LUGAR;
+  if (distanceMeters <= 650) return PROXIMITY_TIERS.CERCA;
+  if (distanceMeters <= 1500) return PROXIMITY_TIERS.MEDIO_CERCA;
+  return PROXIMITY_TIERS.LEJOS;
+}
+
+/**
+ * Encuentra el sponsor más cercano y clasifica el rango de proximidad (CasiEnElLugar, Cerca, MedioCerca, Lejos).
+ * Si el usuario se encuentra a más de 1.5 km (rango Lejos), no se vincula un sponsor individual para evitar confusiones.
+ * @param {number} userLat - Latitud del usuario
+ * @param {number} userLon - Longitud del usuario
+ * @param {Array} sponsors - Lista de sponsors de sponsors.json
+ */
+export function findClosestSponsor(userLat, userLon, sponsors) {
+  if (!userLat || !userLon || !Array.isArray(sponsors)) return null;
+
+  let closest = null;
+  let minDistance = Infinity;
+
+  for (const sponsor of sponsors) {
+    if (!sponsor.active || !sponsor.coordinates || sponsor.coordinates.length < 2) continue;
+    const [spLat, spLon] = sponsor.coordinates;
+    const distance = calculateDistanceMeters(userLat, userLon, spLat, spLon);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closest = {
         sponsor,
         distanceMeters: distance
       };
     }
   }
 
-  return null;
+  if (!closest) return null;
+
+  const tier = getProximityTier(closest.distanceMeters);
+
+  return {
+    sponsor: tier === PROXIMITY_TIERS.LEJOS ? null : closest.sponsor,
+    distanceMeters: closest.distanceMeters,
+    tier
+  };
 }
 

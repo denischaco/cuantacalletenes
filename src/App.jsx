@@ -13,6 +13,7 @@ const CreditsModal = lazy(() => import('./components/CreditsModal'));
 const SculpturesAlbumModal = lazy(() => import('./components/SculpturesAlbumModal'));
 const CouponModal = lazy(() => import('./components/CouponModal'));
 const LegalModal = lazy(() => import('./components/LegalModal'));
+const GeoBoostModal = lazy(() => import('./components/GeoBoostModal'));
 import { useSponsorGeoboost } from './hooks/useSponsorGeoboost';
 
 import landmarksData from './data/landmarks.json';
@@ -63,6 +64,7 @@ export default function App() {
   const [isCreditsOpen, setIsCreditsOpen] = useState(false);
   const [isAlbumOpen, setIsAlbumOpen] = useState(false);
   const [isLegalOpen, setIsLegalOpen] = useState(false);
+  const [isGeoBoostOpen, setIsGeoBoostOpen] = useState(false);
   const [activeCouponSponsor, setActiveCouponSponsor] = useState(null);
 
   // GeoBoost 2x Physical Proximity Engine
@@ -147,6 +149,8 @@ export default function App() {
         .map(getStreetById)
         .filter(Boolean);
 
+      const preferredSponsorId = geoboost.boostSponsor?.id || geoboost.nearestSponsor?.id || null;
+
       if (matchedStreets.length >= TOTAL_ROUNDS) {
         streets = matchedStreets.slice(0, TOTAL_ROUNDS);
       } else {
@@ -154,14 +158,17 @@ export default function App() {
         const filler = getRandomStreetRound({
           zoneId: targetZoneId,
           count: remainingNeeded,
-          excludeIds: matchedStreets.map((s) => s.id)
+          excludeIds: matchedStreets.map((s) => s.id),
+          preferredSponsorId
         });
         streets = [...matchedStreets, ...filler];
       }
     } else {
+      const preferredSponsorId = geoboost.boostSponsor?.id || geoboost.nearestSponsor?.id || null;
       streets = getRandomStreetRound({
         zoneId: targetZoneId,
-        count: TOTAL_ROUNDS
+        count: TOTAL_ROUNDS,
+        preferredSponsorId
       });
     }
 
@@ -312,6 +319,7 @@ export default function App() {
         onOpenAdvertise={() => handleOpenAdvertise('header')}
         onOpenCredits={() => setIsCreditsOpen(true)}
         onOpenLegal={() => setIsLegalOpen(true)}
+        onOpenGeoBoost={() => setIsGeoBoostOpen(true)}
         currentZoneName={gameState !== 'start' ? currentZone.shortName : null}
         geoboost={geoboost}
       />
@@ -368,6 +376,7 @@ export default function App() {
             onOpenCredits={() => setIsCreditsOpen(true)}
             onOpenAlbum={() => setIsAlbumOpen(true)}
             onOpenLegal={() => setIsLegalOpen(true)}
+            onOpenGeoBoost={() => setIsGeoBoostOpen(true)}
             activeChallenge={activeChallenge}
             isLoadingChallenge={isLoadingChallenge}
             onDismissChallenge={handleDismissChallenge}
@@ -440,6 +449,14 @@ export default function App() {
           <CouponModal
             sponsor={activeCouponSponsor}
             onClose={() => setActiveCouponSponsor(null)}
+          />
+        )}
+
+        {/* 8. Dedicated GeoBoost 2X Proximity & In-App Browser Modal */}
+        {isGeoBoostOpen && (
+          <GeoBoostModal
+            geoboost={geoboost}
+            onClose={() => setIsGeoBoostOpen(false)}
           />
         )}
       </Suspense>

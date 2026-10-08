@@ -94,7 +94,7 @@ export default function LegalModal({ onClose }) {
                   <span>2. Beneficios Comerciales & Cupones</span>
                 </h4>
                 <p className="text-slate-400">
-                  Los cupones y beneficios promocionales ofrecidos por comercios amigos (ej: Bacanal Burgers, La Fichita Bar) son emitidos por los respectivos establecimientos auspiciantes.
+                  Los cupones y beneficios promocionales ofrecidos por comercios amigos adheridos son emitidos por los respectivos establecimientos auspiciantes.
                 </p>
                 <p className="text-slate-400">
                   Cada cupón cuenta con un código e identificador temporal de sesión. Su canje efectivo está sujeto a los términos particulares, días, horarios y modalidades de pago definidas por cada comercio.

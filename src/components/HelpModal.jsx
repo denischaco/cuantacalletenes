@@ -90,7 +90,7 @@ export default function HelpModal({ onClose }) {
             <div>
               <h4 className="font-bold text-white text-xs sm:text-sm">5. 🎟️ Comercios Amigos y Cupones Reales</h4>
               <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
-                Si la calle es sede de un local auspiciante (ej: <em>Bacanal Burgers</em> o <em>La Fichita</em>), acertar te otorga un <span className="text-orange-300 font-semibold">cupón de descuento exclusivo</span> con ID único temporal antifraude y voucher HD descargable para usar en el mostrador.
+                Si la calle es sede de un comercio o bar auspiciante, acertar te otorga un <span className="text-orange-300 font-semibold">cupón de descuento exclusivo</span> con ID único temporal antifraude y voucher HD descargable para usar en el mostrador.
               </p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function HelpModal({ onClose }) {
             <div>
               <h4 className="font-bold text-white text-xs sm:text-sm">6. ⚡ Multiplicador GeoBoost 2x</h4>
               <p className="text-slate-400 text-xs mt-0.5 leading-relaxed">
-                ¿Estás en el local comiendo o tomando algo? Si el juego detecta por GPS que estás a menos de 70 metros de un sponsor, ¡se activa el <span className="text-amber-300 font-semibold">GeoBoost 2x</span> y duplicás los puntos ganados en esa ronda!
+                ¿Estás consumiendo en un comercio adherido? Si el juego detecta por GPS que estás jugando desde el salón del local, ¡se activa el <span className="text-amber-300 font-semibold">GeoBoost 2x</span> y duplicás los puntos ganados en esa ronda!
               </p>
             </div>
           </div>

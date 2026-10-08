@@ -36,7 +36,7 @@ El proyecto combina cartografía de precisión, gamificación barrial con chiste
 3. **Sistema de Puntuación**:
    - ✍️ **Escribir el Nombre Exacto (+2 puntos)**: Demostrá maestría escribiendo la calle con tildes y diéresis (ej. *Güemes*, *Julio A. Roca*, *Marcelo T. de Alvear*).
    - 💡 **4 Opciones Múltiples (+1 punto / -1 punto)**: Elegí entre alternativas verosímiles del mismo sector urbano (+1 si acertás, -1 si errás).
-   - ⚡ **Multiplicador GeoBoost 2x**: Si estás jugando físicamente en o cerca de un comercio auspiciante (radio de 70 metros), ¡los aciertos suman **Doble Puntaje (+4 pts / +2 pts)**!
+   - ⚡ **Multiplicador GeoBoost 2x**: Si estás jugando físicamente desde el salón de un comercio auspiciante adherido (radio base de 130 metros con tolerancia adaptativa indoor), ¡tus aciertos suman **Doble Puntaje (+4 pts / +2 pts)** en el ranking!
 
 4. **🏛️ Colección Patrimonial: Álbum de Esculturas**:
    - Resistencia cuenta con más de 650 obras a cielo abierto que le valieron el título de **Capital Nacional de las Esculturas**.
@@ -129,18 +129,33 @@ Diseñado para que los comercios locales reciban clientes presenciales reales si
   - Generación en cliente sin dependencias de servidor: mediante la API nativa de **HTML5 Canvas**, compone un voucher digital de alta fidelidad exportable a PNG.
   - Incluye: fondo con degradados de identidad visual de la marca, microtexturas decorativas, isotipo del sponsor, código de barras/QR de verificación visual, ID temporal en tipografía monoespaciada de alta legibilidad, fecha y hora exacta de emisión, alcance comercial y cláusula de autenticidad para que el personal del local valide el cupón en segundos.
 
-### 5. Motor "GeoBoost 2x" de Proximidad Física (Geofencing O2O)
+### 5. Motor "GeoBoost 2x" de Proximidad Física (Geofencing O2O & Resiliencia Indoor)
 Un puente tecnológico directo entre la experiencia lúdica digital y el consumo gastronómico presencial:
-- **Geolocalización en Tiempo Real**:
-  - Implementado en el hook `useSponsorGeoboost.js` mediante la API nativa `navigator.geolocation.getCurrentPosition`.
+- **Geolocalización Adaptativa en Tiempo Real**:
+  - Implementado en el hook `src/hooks/useSponsorGeoboost.js` mediante la API nativa `navigator.geolocation.getCurrentPosition`.
+  - **Doble Intento con Fallback Automático**: En interiores (techos de hormigón/chapa o primer piso), el GPS satelital puro suele demorar o atenuarse. El hook ejecuta un primer intento de alta precisión con timeout de 15s; si no responde, dispara automáticamente un segundo intento con `enableHighAccuracy: false` (triangulación inmediata por Wi-Fi/celda) antes de reportar error.
+  - **Invalidación de Caché (`maximumAge: 0`)**: Al pulsar "Reintentar" o actualizar desde la interfaz, se fuerza la solicitud de coordenadas frescas para evitar reutilizar lecturas de cuando el usuario venía caminando por la calle.
 - **Cálculo Geodésico con Fórmula de Haversine** (`src/utils/geoUtils.js`):
   $$\text{distancia} = 2 R \cdot \arcsin\left(\sqrt{\sin^2\left(\frac{\Delta \varphi}{2}\right) + \cos(\varphi_1) \cos(\varphi_2) \sin^2\left(\frac{\Delta \lambda}{2}\right)}\right)$$
   Donde $R = 6,371,000\text{ m}$ (radio terrestre).
-- **Radio de Activación de 70 Metros**:
-  - Cubre con precisión el salón comercial, mesas sobre la vereda y estacionamiento inmediato del local auspiciante.
-- **Mecánica Lúdica**:
-  - Si el jugador se encuentra dentro del perímetro del sponsor y le toca adivinar la calle del mismo, el juego despliega una alerta visual interactiva: `⚡ GeoBoost 2x Activo - Jugando en [Comercio]`.
-  - Al acertar la calle, la puntuación de esa ronda se duplica automáticamente (+4 pts en escritura directa, +2 pts en múltiple opción), incentivando que grupos de amigos jueguen en la sobremesa del bar.
+- **Radio Base de 130 Metros y Tolerancia Indoor**:
+  - Umbral base aumentado a **130 metros** (`GEO_BASE_THRESHOLD_METERS = 130`, equivalente a una cuadra completa de Resistencia).
+  - **Tolerancia adaptativa**: Si la precisión reportada por el dispositivo es débil (`accuracy > 25m`), el sistema suma un margen adaptativo de hasta +40 metros (`effectiveThreshold` de hasta 170m) para garantizar que los clientes sentados en el fondo o en un 1° piso queden cubiertos.
+- **Rangos Cualitativos de Proximidad (UI Humana)**:
+  - Se eliminó el despliegue de distancias en metros crudos (`~110832m`, `~85m`) en favor de 4 categorías amigables:
+    - 📍 `EnElLugar`: Dentro del salón del local auspiciante (⚡ 2X Activo).
+    - 🚶 `CasiEnElLugar` (≤250m): A pasitos / en la misma cuadra del local.
+    - 🧭 `Cerca` (250m - 650m): A pocas cuadras de un comercio amigo.
+    - 🏙️ `MedioCerca` (650m - 1500m): En la zona del sponsor.
+    - 🌐 `Lejos` (>1500m): Fuera del radio de auspiciantes (puntaje estándar 1X, sin atribuir sponsors arbitrarios).
+- **Modal Dedicado "Quiero Duplicar Puntos" ([GeoBoostModal.jsx](file:///d:/Localhost/denischaco/CAPSULAS/CuantaCalle/src/components/GeoBoostModal.jsx))**:
+  - Diseñado para no generar ansiedad ni fricción: el 95% de los jugadores en casa juegan con puntaje normal (1X) sin ver alertas técnicas molestas.
+  - El modal aclara que el juego y los cupones son universales para todos los jugadores, y que el 2X es una modalidad opcional para ranking competitivo.
+  - **Detección de In-App Browsers ([browserDetection.js](file:///d:/Localhost/denischaco/CAPSULAS/CuantaCalle/src/utils/browserDetection.js))**: Si el usuario abre desde Instagram, TikTok o Facebook, detecta el visor interno y le advierte abrir en Chrome o Safari para evitar bloqueos de GPS impuestos por Meta.
+- **Priorización 100% del Sponsor Local en Rondas ([streetRandomizer.js](file:///d:/Localhost/denischaco/CAPSULAS/CuantaCalle/src/utils/streetRandomizer.js))**:
+  - `getRandomStreetRound` recibe `preferredSponsorId`: si el jugador está en **La Fichita Bar**, la ronda 3 es 100% garantizada para **Pellegrini 69 y su cupón exclusivo**, evitando que el juego promocione a un competidor en su propia mesa.
+- **Modo QA Bypass**:
+  - Soporte de parámetro `?geoboost=fichita` o `?geoboost=bacanal` para emular el multiplicador 2x instantáneamente durante pruebas de desarrollo y auditorías comerciales sin desplazarse físicamente.
 
 ### 6. Telemetría Dual y Atribución Comercial B2B
 El proyecto combina análisis de producto general con métricas comerciales auditables para los sponsors locales:
@@ -212,6 +227,9 @@ Estrategia comercial orientada a pymes chaqueñas, eliminando la fricción de pa
 ### 11. Progressive Web App (PWA) e Integración OpenGraph (WhatsApp & Redes)
 - **Instalabilidad Nativa y Comportamiento Standalone**:
   - Configuración completa en `public/manifest.webmanifest` (`display: standalone`, orientación `portrait`, `theme_color: #0B0F19`, `background_color: #0B0F19`).
+  - **Soporte Multiplataforma Completo (PC & Celular)**:
+    - **En PC (Windows / Mac / Linux)**: Instalable en Google Chrome, Microsoft Edge y Brave como aplicación de escritorio independiente con ventana propia sin barras de navegación y acceso directo en el escritorio/barra de tareas.
+    - **En Celular (Android & iOS)**: En Android ofrece instalación de 1 clic mediante el evento nativo `beforeinstallprompt` (`src/utils/pwaInstall.js`); en iPhone/iPad guía el guardado desde Safari (*Compartir ➔ Agregar al Inicio*).
   - Suite integral de íconos en `public/icons/`:
     - Favicons para navegador: `.ico` multicapa (16, 24, 32, 48, 64, 128, 256 px) y PNGs (16x16, 32x32).
     - Íconos PWA estándar: 192x192 px y 512x512 px.
@@ -245,11 +263,13 @@ cuantacalletenes/
 │   ├── components/
 │   │   ├── AdvertiseModal.jsx    # Tarifario de sponsors B2B y contacto a WhatsApp
 │   │   ├── CouponModal.jsx       # Modal de cupón de descuento con ID único y descarga HD
-│   │   ├── DenisRibbonHeader.jsx # Barra superior, contador en vivo y accesos
+│   │   ├── DenisRibbonHeader.jsx # Barra superior, menú hamburguesa, contador en vivo y accesos
 │   │   ├── GameOverScreen.jsx    # Podio final, Rango Chaqueño, retos 1v1 y compartir
+│   │   ├── GeoBoostModal.jsx     # Modal educativo 2X, diagnóstico GPS, alerta Instagram y PWA
 │   │   ├── HelpModal.jsx         # Guía de juego, cupones, GeoBoost y esculturas
 │   │   ├── LeaderboardModal.jsx  # Podio histórico por zona con desempate por tiempo
-│   │   ├── RoundHUD.jsx          # Panel de adivinanza (escritura, 4 opciones y badge GeoBoost)
+│   │   ├── LegalModal.jsx        # Términos, bases y protección de datos (Ley 25.326)
+│   │   ├── RoundHUD.jsx          # Panel de adivinanza (escritura, 4 opciones y teclado móvil responsive)
 │   │   ├── RoundResultModal.jsx  # Resultado por ronda, cupones y trivia
 │   │   ├── SculptureModal.jsx    # Ficha de escultura desbloqueada en la ronda
 │   │   ├── SculpturesAlbumModal.jsx # Álbum coleccionable de 30 esculturas
@@ -264,16 +284,18 @@ cuantacalletenes/
 │   │   ├── sponsorPlans.json     # Tarifario y paquetes comerciales trimestrales
 │   │   └── sponsors.json         # Comercios auspiciantes y términos de cupones
 │   ├── hooks/
-│   │   └── useSponsorGeoboost.js # Hook de geolocalización y detección de radio de 70m
+│   │   └── useSponsorGeoboost.js # Hook de geolocalización indoor (130m), fallback Wi-Fi y tiers
 │   ├── services/
 │   │   ├── analytics.js          # Telemetría GA4 y atribución en Firestore (`sponsor_stats`)
 │   │   ├── firebase.js           # Conexión Firestore para records y métricas
 │   │   └── onlinePresence.js     # Heartbeat en vivo con Page Visibility API
 │   ├── utils/
+│   │   ├── browserDetection.js   # Detección de In-App Browsers (Instagram/TikTok) y entorno PC
 │   │   ├── couponGenerator.js    # Generador de ID temporal único antifraude
-│   │   ├── geoUtils.js           # Normalización de strings, tildes y fórmula Haversine
+│   │   ├── geoUtils.js           # Normalización de strings, tildes, Haversine y tiers de proximidad
+│   │   ├── pwaInstall.js         # Gestor nativo del evento beforeinstallprompt (1 clic en PC y móvil)
 │   │   ├── sculptureUtils.js     # Asociación espacial de esculturas y progreso del álbum
-│   │   ├── streetRandomizer.js   # Generación de rondas y distractoras realistas
+│   │   ├── streetRandomizer.js   # Generación de rondas y priorización 100% de sponsor local
 │   │   └── voucherCanvas.js      # Renderizador cliente de voucher gráfico HD (1080x1440 PNG)
 │   ├── App.jsx                   # Máquina de estados principal y routing de modales
 │   ├── index.css                 # Estilos globales y tokens Tailwind

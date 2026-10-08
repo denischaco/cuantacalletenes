@@ -46,6 +46,7 @@ export default function RoundHUD({
   const [selectedOptionId, setSelectedOptionId] = useState(null);
   const [isMinimized, setIsMinimized] = useState(false);
   const [inputError, setInputError] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   const hasAutoSubmittedRef = useRef(false);
 
@@ -121,6 +122,7 @@ export default function RoundHUD({
     setActiveTab('options');
     setHasSeenOptions(true);
     setInputError('');
+    setIsInputFocused(false);
   };
 
   // Barra de progreso visual
@@ -134,8 +136,14 @@ export default function RoundHUD({
 
   return (
     <>
-      {/* 1. Top Banner: Round status, Timer & Score */}
-      <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-20 w-[95%] max-w-lg pointer-events-auto">
+      {/* 1. Top Banner: Round status, Timer & Score (Fades out when input is focused on mobile to maximize map visibility) */}
+      <div
+        className={`absolute top-2 sm:top-3 left-1/2 -translate-x-1/2 z-20 w-[95%] max-w-lg pointer-events-auto transition-all duration-200 ${
+          isInputFocused
+            ? 'opacity-0 pointer-events-none -translate-y-2 sm:opacity-100 sm:pointer-events-auto sm:translate-y-0'
+            : 'opacity-100 translate-y-0'
+        }`}
+      >
         <div
           className={`glass-panel border rounded-2xl p-2.5 sm:p-3.5 shadow-2xl backdrop-blur-md ${
             currentStreet?.isSponsored
@@ -157,10 +165,10 @@ export default function RoundHUD({
           )}
 
           {/* Botón de verificación si no está activo y no fue denegado */}
-          {!geoboost?.isBoostActive && geoboost?.geoStatus !== 'denied' && (
+          {!geoboost?.isBoostActive && geoboost?.geoStatus !== 'denied' && geoboost?.geoStatus !== 'permission_denied' && (
             <button
               type="button"
-              onClick={geoboost?.checkProximity}
+              onClick={() => geoboost?.checkProximity(true)}
               className="text-[10px] sm:text-[11px] text-amber-400 hover:text-amber-300 font-semibold flex items-center justify-center gap-1 py-0.5 px-2 w-full bg-slate-900/60 hover:bg-slate-900 rounded-lg border border-amber-500/20 mb-2 transition-all cursor-pointer"
             >
               <span>📍 ¿Estás en un local sponsor? Tocá acá para activar Doble Puntaje (2x)</span>
@@ -271,10 +279,14 @@ export default function RoundHUD({
       {/* 3. Bottom Interactive Guess Panel */}
       {!isMinimized && (
         <div className="absolute bottom-2 sm:bottom-4 left-1/2 -translate-x-1/2 z-20 w-[95%] max-w-lg pointer-events-auto pb-[env(safe-area-inset-bottom,0px)] animate-slide-up">
-          <div className="glass-panel bg-slate-900/95 border border-slate-700/80 rounded-2xl sm:rounded-3xl p-3 sm:p-5 shadow-2xl backdrop-blur-xl max-h-[calc(100dvh-5.5rem)] overflow-y-auto">
-            {/* Header with Mode Tabs and Minimize button */}
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2 sm:pb-3 mb-2 sm:mb-3">
-              <div className="flex items-center gap-1.5 sm:gap-2">
+          <div
+            className={`glass-panel bg-slate-900/95 border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl backdrop-blur-xl max-h-[calc(100dvh-5rem)] overflow-y-auto transition-all ${
+              isInputFocused ? 'p-2 sm:p-4' : 'p-3 sm:p-5'
+            }`}
+          >
+            {/* Header with Mode Tabs, Realtime Timer/Score & Minimize button */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2 sm:pb-3 sm:mb-3 gap-1">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {/* Tab 1: Escribir (disabled once user views the options) */}
                 <button
                   type="button"
@@ -285,7 +297,7 @@ export default function RoundHUD({
                       setInputError('');
                     }
                   }}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all ${
                     hasSeenOptions
                       ? 'opacity-35 cursor-not-allowed text-slate-500 bg-slate-950/40 border border-slate-800'
                       : activeTab === 'write'
@@ -299,53 +311,93 @@ export default function RoundHUD({
                   }
                 >
                   {hasSeenOptions ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <Edit3 className="w-3.5 h-3.5" />}
-                  <span>{currentStreet?.isSponsored ? 'Escribir (+2 / +4 pts)' : 'Escribir (+2 pts)'}</span>
-                  {hasSeenOptions && <span className="text-[10px] text-amber-400/80 font-normal">(Bloqueado)</span>}
+                  <span>{currentStreet?.isSponsored ? 'Escribir (+4)' : 'Escribir (+2)'}</span>
+                  {hasSeenOptions && <span className="text-[10px] text-amber-400/80 font-normal hidden xs:inline">(Bloqueado)</span>}
                 </button>
 
                 {/* Tab 2: 4 Opciones */}
                 <button
                   type="button"
                   onClick={handleSwitchToOptions}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`flex items-center gap-1 sm:gap-1.5 px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     activeTab === 'options'
                       ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-sm'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
                   <ListOrdered className="w-3.5 h-3.5" />
-                  <span>4 Opciones (+1 pt)</span>
+                  <span>4 Opciones (+1)</span>
                 </button>
               </div>
 
-              {/* Minimize button to inspect map freely */}
-              <button
-                onClick={() => setIsMinimized(true)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-xs flex items-center gap-1 cursor-pointer"
-                title="Minimizar panel para ver el mapa completo"
-              >
-                <span className="hidden xs:inline text-[11px]">Ver mapa</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
+              {/* Right side: Realtime Countdown & Score (always visible directly above keyboard in mobile) */}
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                {/* Live Countdown Pill */}
+                <div
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[11px] sm:text-xs border transition-colors ${
+                    timeLeft > 10
+                      ? 'bg-emerald-950/70 text-emerald-400 border-emerald-500/40'
+                      : timeLeft > 5
+                      ? 'bg-amber-950/70 text-amber-400 border-amber-500/40'
+                      : 'bg-rose-950/80 text-rose-400 border-rose-500/60 animate-pulse'
+                  }`}
+                  title={`Tiempo restante: ${timeLeft}s`}
+                >
+                  <Clock className="w-3 h-3 shrink-0" />
+                  <span>{timeLeft}s</span>
+                </div>
+
+                {/* Live Score Pill */}
+                <div className="hidden xs:flex items-center gap-1 text-amber-400 bg-amber-950/50 border border-amber-800/40 px-2 py-0.5 rounded-full font-bold text-[11px]">
+                  <Sparkles className="w-3 h-3 shrink-0" />
+                  <span>{score} pts</span>
+                  {geoboost?.isBoostActive && (
+                    <span className="bg-amber-400 text-slate-950 text-[9px] font-black px-1 rounded-full">
+                      2x
+                    </span>
+                  )}
+                </div>
+
+                {/* Minimize button */}
+                <button
+                  type="button"
+                  onClick={() => setIsMinimized(true)}
+                  className="p-1 sm:p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors text-xs flex items-center cursor-pointer"
+                  title="Minimizar panel para ver el mapa completo"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Visual Progress Bar inside the bottom panel */}
+            <div className="w-full h-1 bg-slate-800/90 rounded-full overflow-hidden mb-2">
+              <div
+                className={`h-full transition-all duration-1000 ${barColor}`}
+                style={{ width: `${progressPercent}%` }}
+              />
             </div>
 
             {/* TAB 1: WRITE EXACT NAME (+2 / +4 PTS) */}
             {activeTab === 'write' && (
-              <form onSubmit={handleWriteSubmit} className="space-y-2.5 sm:space-y-3">
-                {currentStreet?.isSponsored ? (
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-[#2a1305]/60 to-slate-900 border border-[#F48138]/60 text-amber-200 text-[11px] sm:text-xs flex items-start gap-2">
-                    <span className="text-sm sm:text-base">⭐</span>
-                    <p className="leading-snug">
-                      <strong className="text-[#FFA559]">¡Desafío Sponsor!</strong> Adiviná la calle (<span className="text-emerald-400 font-bold">+2 pts</span>) o acertá la dirección exacta con número (<span className="text-[#FFA559] font-black">+4 pts</span>).
-                    </p>
-                  </div>
-                ) : (
-                  <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-800/30 text-emerald-300 text-[11px] sm:text-xs flex items-start gap-2">
-                    <span className="text-sm sm:text-base">✍️</span>
-                    <p className="leading-snug">
-                      <strong className="text-white">¡Ganá 2 puntos!</strong> Ingresá el nombre completo respetando acentos y diéresis (ej: <em>Güemes</em>, <em>Julio A. Roca</em>, <em>9 de Julio</em>).
-                    </p>
-                  </div>
+              <form onSubmit={handleWriteSubmit} className="space-y-2 sm:space-y-2.5">
+                {/* Descriptive banner (Hidden during input focus on mobile to give full room to map and pin) */}
+                {!isInputFocused && (
+                  currentStreet?.isSponsored ? (
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-[#2a1305]/60 to-slate-900 border border-[#F48138]/60 text-amber-200 text-[11px] sm:text-xs flex items-start gap-2">
+                      <span className="text-sm sm:text-base">⭐</span>
+                      <p className="leading-snug">
+                        <strong className="text-[#FFA559]">¡Desafío Sponsor!</strong> Adiviná la calle (<span className="text-emerald-400 font-bold">+2 pts</span>) o acertá la dirección exacta con número (<span className="text-[#FFA559] font-black">+4 pts</span>).
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-2 sm:p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-800/30 text-emerald-300 text-[11px] sm:text-xs flex items-start gap-2">
+                      <span className="text-sm sm:text-base">✍️</span>
+                      <p className="leading-snug">
+                        <strong className="text-white">¡Ganá 2 puntos!</strong> Ingresá el nombre completo respetando acentos y diéresis (ej: <em>Güemes</em>, <em>Julio A. Roca</em>, <em>9 de Julio</em>).
+                      </p>
+                    </div>
+                  )
                 )}
 
                 <div className="space-y-1">
@@ -357,9 +409,13 @@ export default function RoundHUD({
                         setWrittenGuess(e.target.value);
                         if (inputError) setInputError('');
                       }}
-                      placeholder={currentStreet?.isSponsored ? "Escribí la calle o dirección exacta (ej: French 683)..." : "Escribí el nombre exacto de la calle..."}
-                      className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 sm:py-3 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none transition-colors"
-                      autoFocus
+                      onFocus={() => {
+                        setIsInputFocused(true);
+                        if (typeof window !== 'undefined') window.scrollTo(0, 0);
+                      }}
+                      onBlur={() => setIsInputFocused(false)}
+                      placeholder={currentStreet?.isSponsored ? "Escribí el nombre de la calle o dirección..." : "Escribí el nombre exacto de la calle..."}
+                      className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 rounded-xl px-3.5 py-2 sm:py-2.5 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none transition-colors"
                     />
                   </div>
 
@@ -374,7 +430,7 @@ export default function RoundHUD({
                 <div className="flex gap-2 pt-0.5">
                   <button
                     type="submit"
-                    className="flex-1 py-2.5 sm:py-3 px-4 rounded-xl bg-gradient-to-r from-[#339136] to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-heading font-bold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 border border-emerald-400/30 flex items-center justify-center gap-2 transition-transform active:scale-98 cursor-pointer"
+                    className="flex-1 py-2 sm:py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#339136] to-emerald-600 hover:from-emerald-500 hover:to-teal-500 text-white font-heading font-bold text-xs sm:text-sm shadow-lg shadow-emerald-950/40 border border-emerald-400/30 flex items-center justify-center gap-2 transition-transform active:scale-98 cursor-pointer"
                   >
                     <span>{currentStreet?.isSponsored ? 'Confirmar Respuesta (+2 o +4 pts)' : 'Confirmar Nombre (+2 pts)'}</span>
                   </button>
