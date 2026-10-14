@@ -13,6 +13,7 @@ import {
   orderBy,
   limit,
   onSnapshot,
+  deleteDoc,
   serverTimestamp,
   increment
 } from 'firebase/firestore';
@@ -687,7 +688,7 @@ export function subscribeSponsorCoupons(sponsorId, callback) {
 }
 
 /**
- * Obtiene los sponsors (de Firestore o fallback)
+ * Obtiene los sponsors (de Firestore o fallback local)
  */
 export async function fetchSponsorsFromDb(fallbackSponsors = []) {
   const firestoreDb = getFirestoreInstance();
@@ -695,7 +696,11 @@ export async function fetchSponsorsFromDb(fallbackSponsors = []) {
     try {
       const snap = await getDocs(collection(firestoreDb, 'sponsors'));
       if (!snap.empty) {
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const remote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        try {
+          localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(remote));
+        } catch (e) {}
+        return remote;
       } else if (fallbackSponsors.length > 0) {
         // Inicializar la colección en Firestore con los sponsors base
         for (const sp of fallbackSponsors) {
@@ -706,6 +711,10 @@ export async function fetchSponsorsFromDb(fallbackSponsors = []) {
             expiresAt: sp.expiresAt || new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString()
           }, { merge: true });
         }
+        try {
+          localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(fallbackSponsors));
+        } catch (e) {}
+        return fallbackSponsors;
       }
     } catch (err) {
       console.warn('Error reading sponsors from Firestore:', err);
@@ -719,6 +728,130 @@ export async function fetchSponsorsFromDb(fallbackSponsors = []) {
   } catch (e) {}
 
   return fallbackSponsors;
+}
+
+/**
+ * Guarda o actualiza un sponsor completo (usado por Root Superadmin)
+ */
+export async function saveOrUpdateSponsor(sponsorData) {
+  const firestoreDb = getFirestoreInstance();
+
+  // Generar o normalizar ID seguro
+  const rawId = (sponsorData.id || sponsorData.shortName || sponsorData.name || 'comercio')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9_-]/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const sponsorId = rawId || `sponsor-${Date.now()}`;
+
+  const cleanSponsor = {
+    ...sponsorData,
+    id: sponsorId,
+    name: sponsorData.name || 'Nuevo Sponsor',
+    shortName: sponsorData.shortName || sponsorData.name || 'Sponsor',
+    rubro: sponsorData.rubro || 'Comercio Local',
+    address: sponsorData.address || 'Resistencia, Chaco',
+    coordinates: Array.isArray(sponsorData.coordinates) && sponsorData.coordinates.length === 2
+      ? [Number(sponsorData.coordinates[0]), Number(sponsorData.coordinates[1])]
+      : [-27.45105, -58.98648],
+    active: sponsorData.active !== undefined ? Boolean(sponsorData.active) : true,
+    ownerPin: sponsorData.ownerPin ? String(sponsorData.ownerPin).slice(0, 4) : '1984',
+    plan: sponsorData.plan || 'sponsor_zona',
+    zoneId: sponsorData.zoneId || 'centro',
+    badge: sponsorData.badge || '',
+    logoBg: sponsorData.logoBg || '#FFFFFF',
+    expiresAt: sponsorData.expiresAt || new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString(),
+    targetStreet: sponsorData.targetStreet || {
+      id: `${sponsorId}-target`,
+      name: sponsorData.address || sponsorData.name,
+      shortStreet: sponsorData.address || sponsorData.name,
+      number: '',
+      aliases: [sponsorId, (sponsorData.shortName || '').toLowerCase()]
+    },
+    coupon: sponsorData.coupon || {
+      active: true,
+      title: '15% OFF en tu Consumo',
+      discount: '15% OFF',
+      code: `CALLE-${sponsorId.toUpperCase()}`,
+      validityHours: 48,
+      scope: 'individual',
+      scopeLabel: 'Por persona / Comensal individual',
+      paymentMethods: ['Efectivo', 'Transferencia bancaria'],
+      terms: ['Presentar la captura en caja antes de pedir la cuenta.', 'No acumulable con otras promociones.'],
+      instructions: 'Mostrá tu cupón con ID único en caja al pedir la cuenta.'
+    },
+    updatedAt: new Date().toISOString()
+  };
+
+  // 1. Guardar en Firestore
+  if (firestoreDb) {
+    try {
+      const docRef = doc(firestoreDb, 'sponsors', sponsorId);
+      await setDoc(docRef, {
+        ...cleanSponsor,
+        serverUpdatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.warn('Error saving sponsor in Firestore:', err);
+    }
+  }
+
+  // 2. Actualizar caché local inmediata
+  try {
+    const raw = localStorage.getItem(LOCAL_SPONSORS_KEY);
+    let list = raw ? JSON.parse(raw) : [];
+    const idx = list.findIndex(s => s.id === sponsorId);
+    if (idx >= 0) {
+      list[idx] = cleanSponsor;
+    } else {
+      list.push(cleanSponsor);
+    }
+    localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(list));
+  } catch (e) {}
+
+  // 3. Registrar auditoría interna
+  await addAdminNotification({
+    type: 'sponsor_saved',
+    sponsorId,
+    sponsorName: cleanSponsor.name,
+    message: `Sponsor "${cleanSponsor.name}" (${sponsorId}) guardado y sincronizado por Denis (Root).`
+  });
+
+  return { success: true, sponsor: cleanSponsor };
+}
+
+/**
+ * Elimina un sponsor permanentemente (usado por Root Superadmin)
+ */
+export async function deleteSponsor(sponsorId, sponsorName = '') {
+  const firestoreDb = getFirestoreInstance();
+
+  if (firestoreDb) {
+    try {
+      await deleteDoc(doc(firestoreDb, 'sponsors', sponsorId));
+    } catch (err) {
+      console.warn('Error deleting sponsor in Firestore:', err);
+    }
+  }
+
+  // Actualizar caché local
+  try {
+    const raw = localStorage.getItem(LOCAL_SPONSORS_KEY);
+    if (raw) {
+      const list = JSON.parse(raw).filter(s => s.id !== sponsorId);
+      localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(list));
+    }
+  } catch (e) {}
+
+  await addAdminNotification({
+    type: 'sponsor_deleted',
+    sponsorId,
+    sponsorName: sponsorName || sponsorId,
+    message: `El sponsor "${sponsorName || sponsorId}" fue eliminado por Denis (Root).`
+  });
+
+  return { success: true };
 }
 
 /**

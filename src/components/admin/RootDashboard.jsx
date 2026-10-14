@@ -17,21 +17,66 @@ import {
   Sparkles,
   KeyRound,
   Eye,
-  Check
+  Check,
+  Plus,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import {
   extendSponsorSubscription,
   subscribeAdminNotifications,
   subscribeSponsorCoupons,
   getCouponById,
-  redeemCoupon
+  redeemCoupon,
+  saveOrUpdateSponsor,
+  deleteSponsor
 } from '../../services/firebase';
+import SponsorModal from './SponsorModal';
 
 export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor, onRefreshSponsors }) {
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [extendingId, setExtendingId] = useState(null);
   const [extensionNotice, setExtensionNotice] = useState('');
+
+  // Modal para Crear / Editar Sponsor
+  const [isSponsorModalOpen, setIsSponsorModalOpen] = useState(false);
+  const [editingSponsor, setEditingSponsor] = useState(null);
+
+  const handleOpenCreateSponsor = () => {
+    setEditingSponsor(null);
+    setIsSponsorModalOpen(true);
+  };
+
+  const handleOpenEditSponsor = (sp) => {
+    setEditingSponsor(sp);
+    setIsSponsorModalOpen(true);
+  };
+
+  const handleSaveSponsor = async (sponsorPayload) => {
+    const res = await saveOrUpdateSponsor(sponsorPayload);
+    if (res.success) {
+      setExtensionNotice(`¡Sponsor "${res.sponsor.name}" guardado exitosamente en Firestore!`);
+      if (onRefreshSponsors) onRefreshSponsors();
+      setTimeout(() => setExtensionNotice(''), 4500);
+    }
+  };
+
+  const handleDeleteSponsor = async (sp) => {
+    const confirm = window.confirm(`¿Estás seguro de que deseas eliminar permanentemente a "${sp.name}"? Esta acción removerá el comercio del mapa.`);
+    if (!confirm) return;
+
+    try {
+      const res = await deleteSponsor(sp.id, sp.name);
+      if (res.success) {
+        setExtensionNotice(`El sponsor "${sp.name}" fue eliminado.`);
+        if (onRefreshSponsors) onRefreshSponsors();
+        setTimeout(() => setExtensionNotice(''), 4500);
+      }
+    } catch (err) {
+      alert('Error eliminando sponsor: ' + err.message);
+    }
+  };
 
   // Métricas globales
   const [globalStats, setGlobalStats] = useState({
@@ -255,14 +300,24 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
 
         {/* Sección: Administración de Sponsors y Habilitaciones */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 className="font-heading font-black text-white text-base sm:text-lg flex items-center gap-2">
-              <Store className="w-5 h-5 text-amber-400" />
-              <span>Sponsors Comerciales & Habilitaciones</span>
-            </h2>
-            <span className="text-xs text-slate-400 font-medium">
-              Vigencia por períodos de 3 meses
-            </span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="font-heading font-black text-white text-base sm:text-lg flex items-center gap-2">
+                <Store className="w-5 h-5 text-amber-400" />
+                <span>Sponsors Comerciales & Habilitaciones</span>
+              </h2>
+              <p className="text-xs text-slate-400 font-medium">
+                Vigencia por períodos de 3 meses • Configuración GPS, esquinas y cupones
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleOpenCreateSponsor}
+              className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#F48138] to-amber-500 hover:from-[#FFA559] hover:to-amber-400 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-orange-950/40 cursor-pointer transition-all self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Nuevo Sponsor</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -303,16 +358,27 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
                         </div>
                       </div>
 
-                      {/* Badge de Estado */}
-                      <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        isExpired
-                          ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                          : isExpiringSoon
-                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
-                          : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                      }`}>
-                        {isExpired ? 'Vencido' : isExpiringSoon ? 'Vence Pronto' : 'Activo'}
-                      </span>
+                      {/* Badge de Estado y Botón Eliminar */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          isExpired
+                            ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                            : isExpiringSoon
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
+                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        }`}>
+                          {isExpired ? 'Vencido' : isExpiringSoon ? 'Vence Pronto' : 'Activo'}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSponsor(sp)}
+                          className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                          title="Eliminar sponsor permanentemente"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     {/* Habilitación / Cuenta Regresiva */}
@@ -353,26 +419,39 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
                   </div>
 
                   {/* Botones de Gestión */}
-                  <div className="pt-2 border-t border-slate-800/80 grid grid-cols-2 gap-2">
+                  <div className="pt-2 border-t border-slate-800/80 grid grid-cols-3 gap-2">
+                    {/* Botón Editar Datos */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditSponsor(sp)}
+                      className="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer border border-amber-500/30"
+                      title="Editar datos del sponsor, coordenadas y beneficios"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Editar</span>
+                    </button>
+
                     {/* Botón +3 Meses */}
                     <button
                       type="button"
                       disabled={extendingId === sp.id}
                       onClick={() => handleExtendSubscription(sp)}
-                      className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow transition-all cursor-pointer disabled:opacity-50"
+                      className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow transition-all cursor-pointer disabled:opacity-50"
+                      title="Extender habilitación 90 días"
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
-                      <span>{extendingId === sp.id ? 'Extendiendo...' : '+ 3 Meses'}</span>
+                      <span>{extendingId === sp.id ? '...' : '+ 3 Meses'}</span>
                     </button>
 
                     {/* Botón Administrar / Ver como Sponsor */}
                     <button
                       type="button"
                       onClick={() => onImpersonateSponsor(sp)}
-                      className="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                      className="py-2.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                      title="Ver panel del comercio"
                     >
-                      <Eye className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Ver Panel Local</span>
+                      <Eye className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Panel Local</span>
                     </button>
                   </div>
                 </div>
@@ -455,6 +534,14 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
           )}
         </div>
       </main>
+
+      {/* Modal para Crear y Editar Sponsors */}
+      <SponsorModal
+        isOpen={isSponsorModalOpen}
+        onClose={() => setIsSponsorModalOpen(false)}
+        sponsorToEdit={editingSponsor}
+        onSave={handleSaveSponsor}
+      />
     </div>
   );
 }
