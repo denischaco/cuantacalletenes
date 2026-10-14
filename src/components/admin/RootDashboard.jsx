@@ -133,7 +133,7 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-16">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-32">
       {/* Header Maestro */}
       <header className="bg-slate-900 border-b border-amber-500/30 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 px-4 py-3 shadow-lg shadow-black/40">
         <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">

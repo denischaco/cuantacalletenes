@@ -190,13 +190,13 @@ export default function AdminPanel({ onBackToGame }) {
   // 2. Vista de Panel Sponsor
   if (currentUser?.role === 'sponsor' && currentUser.sponsor) {
     return (
-      <div>
+      <div className="w-full min-h-screen bg-slate-950 text-slate-100 flex flex-col">
         {currentUser.isImpersonating && (
-          <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between sticky top-0 z-50">
+          <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between sticky top-0 z-50 shadow-md">
             <span>👑 Estás viendo el panel como el comercio: {currentUser.sponsor.name}</span>
             <button
               onClick={() => setCurrentUser({ email: 'root@cuantacalletenes.ar', role: 'root' })}
-              className="bg-slate-950 text-white px-2.5 py-1 rounded-lg text-[11px] cursor-pointer"
+              className="bg-slate-950 text-white px-2.5 py-1 rounded-lg text-[11px] cursor-pointer hover:bg-slate-900 transition-colors"
             >
               ← Volver a Root
             </button>
@@ -213,7 +213,7 @@ export default function AdminPanel({ onBackToGame }) {
 
   // 3. Pantalla de Login / Autenticación
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 font-sans relative py-8">
       {/* Elementos decorativos de fondo con colores de marca */}
       <div className="absolute -top-32 -left-32 w-80 h-80 bg-[#F48138]/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-[#339136]/15 rounded-full blur-3xl pointer-events-none" />

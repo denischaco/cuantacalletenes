@@ -94,8 +94,19 @@
     </script>
     
     <title>¿Cuánta Calle Tenés? | Resistencia, Chaco</title>
+    <script>
+      (function() {
+        try {
+          var p = window.location.pathname;
+          var s = window.location.search;
+          if (p.indexOf('/admin') !== -1 || s.indexOf('admin') !== -1 || s.indexOf('redeem') !== -1 || s.indexOf('sponsors') !== -1) {
+            document.documentElement.classList.add('admin-mode');
+          }
+        } catch(e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-[#0B0F19] text-slate-100 font-['Inter',sans-serif] antialiased overflow-hidden select-none">
+  <body class="bg-[#0B0F19] text-slate-100 font-['Inter',sans-serif] antialiased select-none">
     <div id="root" class="h-full min-h-[100dvh] w-full flex flex-col"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

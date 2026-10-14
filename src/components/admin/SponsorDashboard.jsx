@@ -194,7 +194,7 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-12">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-32">
       {/* Barra Superior */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
