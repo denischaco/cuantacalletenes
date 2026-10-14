@@ -137,7 +137,7 @@ export function downloadChallengeCard({
 
   ctx.fillStyle = '#F48138';
   ctx.font = '800 32px system-ui, -apple-system, sans-serif';
-  ctx.fillText('cuantacalletenes.denischaco.com.ar', 540, 1190);
+  ctx.fillText('cuantacalletenes.ar', 540, 1190);
 
   ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
   ctx.font = '500 20px system-ui, -apple-system, sans-serif';
@@ -289,7 +289,7 @@ export function downloadCouponCard({
   // Footer brand
   ctx.fillStyle = '#64748B';
   ctx.font = '600 18px system-ui, -apple-system, sans-serif';
-  ctx.fillText('Juego de Geografía Urbana • cuantacalletenes.denischaco.com.ar', 500, 595);
+  ctx.fillText('Juego de Geografía Urbana • cuantacalletenes.ar', 500, 595);
 
   // Trigger download
   const safeName = sponsorName.toLowerCase().replace(/[^a-z0-9]/g, '-');

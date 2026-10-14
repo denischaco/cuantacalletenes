@@ -4,6 +4,7 @@
  */
 
 import QRCode from 'qrcode';
+import { getCanonicalAdminUrl } from './couponGenerator';
 
 export async function downloadCouponVoucher(sponsor, couponData) {
   if (typeof document === 'undefined') return;
@@ -14,10 +15,10 @@ export async function downloadCouponVoucher(sponsor, couponData) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  // Generar QR para validación instantánea en local
+  // Generar QR para validación instantánea en local con dominio oficial canónico
   let qrImg = null;
   try {
-    const redeemTarget = couponData.redeemUrl || `https://cuantacalletenes.ar/admin?redeem=${couponData.uniqueId}`;
+    const redeemTarget = getCanonicalAdminUrl(couponData.uniqueId);
     const qrDataUrl = await QRCode.toDataURL(redeemTarget, {
       margin: 1,
       width: 200,
@@ -160,7 +161,7 @@ export async function downloadCouponVoucher(sponsor, couponData) {
   ctx.fillStyle = '#64748B';
   ctx.font = 'italic 20px system-ui, sans-serif';
   ctx.fillText('El local se reserva el derecho de verificar la validez del ID en su registro interno.', 540, 1345);
-  ctx.fillText('Desarrollado por cuantacalletenes.denischaco.com.ar', 540, 1380);
+  ctx.fillText('Desarrollado para cuantacalletenes.ar', 540, 1380);
 
   // 9. Descarga automática en PNG
   const dataUrl = canvas.toDataURL('image/png');

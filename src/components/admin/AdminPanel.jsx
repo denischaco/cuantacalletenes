@@ -264,7 +264,7 @@ export default function AdminPanel({ onBackToGame }) {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="ej: bacanal@cuantacalletenes.ar"
+                placeholder="ejemplo@correo.com"
                 className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#F48138]"
               />
               <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />

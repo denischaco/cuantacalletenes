@@ -78,7 +78,7 @@ export default function GameOverScreen({
         await navigator.share({
           title: '¿Cuánta Calle Tenés? - Resistencia, Chaco',
           text,
-          url: 'https://cuantacalletenes.denischaco.com.ar/'
+          url: 'https://cuantacalletenes.ar/'
         });
       } catch {
         // user cancelled or share failed
@@ -612,7 +612,7 @@ export default function GameOverScreen({
         <div className="space-y-2 pt-1">
           <a
             href={`https://wa.me/?text=${encodeURIComponent(
-              `¡Hice ${totalScore} de 10 puntos${totalTimeMs > 0 ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : ''} en "¿Cuánta Calle Tenés?" (Resistencia, Chaco)! Rango: ${rank.title} ${rank.badge}. ¿Te animás a superarme?\n\nJugá acá 👉 https://cuantacalletenes.denischaco.com.ar/`
+              `¡Hice ${totalScore} de 10 puntos${totalTimeMs > 0 ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : ''} en "¿Cuánta Calle Tenés?" (Resistencia, Chaco)! Rango: ${rank.title} ${rank.badge}. ¿Te animás a superarme?\n\nJugá acá 👉 https://cuantacalletenes.ar/`
             )}`}
             target="_blank"
             rel="noopener noreferrer"

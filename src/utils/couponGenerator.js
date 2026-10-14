@@ -26,6 +26,16 @@ import { saveGeneratedCoupon } from '../services/firebase';
 /**
  * Obtiene o crea un cupón persistente para la sesión actual del usuario
  */
+/**
+ * Obtiene la URL canónica del panel de canje para el cupón.
+ * Fuerza siempre https://cuantacalletenes.ar (salvo en entorno de desarrollo local).
+ */
+export function getCanonicalAdminUrl(uniqueId) {
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const baseDomain = isLocal ? window.location.origin : 'https://cuantacalletenes.ar';
+  return `${baseDomain}/admin?redeem=${uniqueId}`;
+}
+
 export function getOrCreateSessionCoupon(sponsor) {
   if (!sponsor) return null;
 
@@ -34,7 +44,10 @@ export function getOrCreateSessionCoupon(sponsor) {
     const existing = sessionStorage.getItem(storageKey);
     if (existing) {
       try {
-        return JSON.parse(existing);
+        const parsed = JSON.parse(existing);
+        // Garantizar que siempre use cuantacalletenes.ar y no dominios anteriores (ej: denischaco.com.ar)
+        parsed.redeemUrl = getCanonicalAdminUrl(parsed.uniqueId);
+        return parsed;
       } catch {
         // Si falla, se regenera
       }
@@ -46,9 +59,8 @@ export function getOrCreateSessionCoupon(sponsor) {
   const expiresAt = new Date(issuedAt.getTime() + validityHours * 60 * 60 * 1000);
   const uniqueId = generateUniqueCouponId(sponsor.id);
 
-  // Deep Link para validación directa en local
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cuantacalletenes.ar';
-  const redeemUrl = `${origin}/admin?redeem=${uniqueId}`;
+  // Deep Link canónico para validación directa en salón
+  const redeemUrl = getCanonicalAdminUrl(uniqueId);
 
   const newCouponData = {
     uniqueId,

@@ -12,7 +12,7 @@ import {
   Sparkles,
   QrCode as QrIcon
 } from 'lucide-react';
-import { getOrCreateSessionCoupon } from '../utils/couponGenerator';
+import { getOrCreateSessionCoupon, getCanonicalAdminUrl } from '../utils/couponGenerator';
 import { downloadCouponVoucher } from '../utils/voucherCanvas';
 import { trackEvent } from '../services/analytics';
 
@@ -28,7 +28,7 @@ export default function CouponModal({ sponsor, onClose }) {
 
   useEffect(() => {
     if (couponData?.uniqueId) {
-      const url = couponData.redeemUrl || `https://cuantacalletenes.ar/admin?redeem=${couponData.uniqueId}`;
+      const url = getCanonicalAdminUrl(couponData.uniqueId);
       QRCode.toDataURL(url, {
         margin: 1,
         width: 160,
