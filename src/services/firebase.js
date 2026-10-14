@@ -995,3 +995,53 @@ export function subscribeAdminNotifications(callback) {
   }
 }
 
+/**
+ * Elimina una notificación individual del panel Root
+ */
+export async function deleteAdminNotification(notificationId) {
+  if (!notificationId) return { success: false };
+
+  // 1. LocalStorage
+  try {
+    const local = JSON.parse(localStorage.getItem(LOCAL_NOTIFS_KEY) || '[]');
+    const filtered = local.filter(n => n.id !== notificationId);
+    localStorage.setItem(LOCAL_NOTIFS_KEY, JSON.stringify(filtered));
+  } catch (e) {}
+
+  // 2. Firestore
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      await deleteDoc(doc(firestoreDb, 'admin_notifications', notificationId));
+    } catch (err) {
+      console.warn('Error deleting admin notification from Firestore:', err);
+    }
+  }
+
+  return { success: true };
+}
+
+/**
+ * Borra todo el historial de notificaciones de Root
+ */
+export async function clearAllAdminNotifications() {
+  // 1. LocalStorage
+  try {
+    localStorage.setItem(LOCAL_NOTIFS_KEY, '[]');
+  } catch (e) {}
+
+  // 2. Firestore
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const snap = await getDocs(collection(firestoreDb, 'admin_notifications'));
+      const deletes = snap.docs.map(d => deleteDoc(d.ref));
+      await Promise.all(deletes);
+    } catch (err) {
+      console.warn('Error clearing all admin notifications in Firestore:', err);
+    }
+  }
+
+  return { success: true };
+}
+

@@ -20,7 +20,8 @@ import {
   Check,
   Plus,
   Edit3,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react';
 import {
   extendSponsorSubscription,
@@ -29,7 +30,9 @@ import {
   getCouponById,
   redeemCoupon,
   saveOrUpdateSponsor,
-  deleteSponsor
+  deleteSponsor,
+  deleteAdminNotification,
+  clearAllAdminNotifications
 } from '../../services/firebase';
 import SponsorModal from './SponsorModal';
 
@@ -76,6 +79,20 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
     } catch (err) {
       alert('Error eliminando sponsor: ' + err.message);
     }
+  };
+
+  // Eliminar una notificación individual
+  const handleDeleteNotification = async (notifId, e) => {
+    if (e) e.stopPropagation();
+    setNotifications(prev => prev.filter(n => n.id !== notifId));
+    await deleteAdminNotification(notifId);
+  };
+
+  // Limpiar todas las notificaciones
+  const handleClearAllNotifications = async () => {
+    if (!window.confirm('¿Deseas eliminar todo el historial de notificaciones?')) return;
+    setNotifications([]);
+    await clearAllAdminNotifications();
   };
 
   // Métricas globales
@@ -228,7 +245,19 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
                       <Bell className="w-4 h-4 text-amber-400" />
                       <span>Auditoría de Actividad</span>
                     </h4>
-                    <span className="text-[11px] text-slate-400">{notifications.length} eventos</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-slate-400">{notifications.length} eventos</span>
+                      {notifications.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearAllNotifications}
+                          className="text-[10px] text-rose-400 hover:text-rose-300 hover:underline font-bold cursor-pointer"
+                          title="Eliminar todas las notificaciones"
+                        >
+                          Limpiar todo
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {notifications.length === 0 ? (
@@ -236,11 +265,21 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
                   ) : (
                     <div className="divide-y divide-slate-800 max-h-72 overflow-y-auto space-y-2 pr-1">
                       {notifications.map((n) => (
-                        <div key={n.id} className="pt-2 text-xs space-y-0.5">
-                          <p className="font-medium text-slate-200">{n.message}</p>
-                          <span className="text-[10px] text-slate-500 block">
-                            {new Date(n.createdAt).toLocaleString('es-AR')}
-                          </span>
+                        <div key={n.id} className="pt-2 text-xs flex items-start justify-between gap-2 group">
+                          <div className="space-y-0.5 min-w-0">
+                            <p className="font-medium text-slate-200">{n.message}</p>
+                            <span className="text-[10px] text-slate-500 block">
+                              {new Date(n.createdAt).toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteNotification(n.id, e)}
+                            className="p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
+                            title="Eliminar esta notificación"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       ))}
                     </div>

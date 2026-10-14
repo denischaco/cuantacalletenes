@@ -4,6 +4,22 @@ import sponsorsData from '../data/sponsors.json';
 import { calculateHaversineDistance } from './geoUtils.js';
 
 /**
+ * Obtiene la lista activa de sponsors (con caché sincronizada desde Firestore)
+ */
+export function getLoadedSponsors() {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const cached = localStorage.getItem('cct_sponsors_db');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+  }
+  return sponsorsData;
+}
+
+/**
  * Resolves a street by ID, checking both regular streets and sponsor target streets.
  * Essential for 1v1 challenges where a sponsored street was in the round.
  */
@@ -15,8 +31,9 @@ export function getStreetById(id) {
   if (regular) return regular;
 
   // 2. Check sponsor streets
-  if (Array.isArray(sponsorsData)) {
-    const sp = sponsorsData.find(
+  const loadedSponsors = getLoadedSponsors();
+  if (Array.isArray(loadedSponsors)) {
+    const sp = loadedSponsors.find(
       (s) => s.targetStreet?.id === id || s.id === id
     );
     if (sp && sp.targetStreet) {
@@ -101,19 +118,61 @@ export function getRandomStreetRound({
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
 
+/**
+ * Selecciona un sponsor mediante Rotación Equitativa Inteligente.
+ * Alterna de manera balanceada entre todos los comercios activos para que
+ * ninguno quede relegado ni monopolice las partidas.
+ */
+function pickRotatedSponsor(matchingSponsors) {
+  if (!matchingSponsors || matchingSponsors.length === 0) return null;
+  if (matchingSponsors.length === 1) return matchingSponsors[0];
+
+  try {
+    const lastId = typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('cct_last_shown_sponsor')
+      : null;
+
+    // Priorizar sponsors que no fueron el último mostrado en esta sesión para evitar repetición
+    let candidates = matchingSponsors;
+    if (lastId && matchingSponsors.length > 1) {
+      const nonRecent = matchingSponsors.filter(s => s.id !== lastId);
+      if (nonRecent.length > 0) {
+        candidates = nonRecent;
+      }
+    }
+
+    // Round-robin continuo guardado en sessionStorage
+    const currentIdxStr = typeof sessionStorage !== 'undefined'
+      ? sessionStorage.getItem('cct_sponsor_rr_index')
+      : null;
+    let nextIdx = currentIdxStr !== null ? (parseInt(currentIdxStr, 10) + 1) : Math.floor(Math.random() * candidates.length);
+    const chosen = candidates[nextIdx % candidates.length];
+
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('cct_last_shown_sponsor', chosen.id);
+      sessionStorage.setItem('cct_sponsor_rr_index', String(nextIdx % candidates.length));
+    }
+
+    return chosen;
+  } catch (e) {
+    return matchingSponsors[Math.floor(Math.random() * matchingSponsors.length)];
+  }
+}
+
   // Check for applicable sponsor for this zone (Brand Guardian: exactly 1 per 5 rounds)
   let sponsoredStreet = null;
-  if (includeSponsored && Array.isArray(sponsorsData) && sponsorsData.length > 0) {
-    const matchingSponsors = sponsorsData.filter(sp => {
+  const availableSponsors = getLoadedSponsors();
+  if (includeSponsored && Array.isArray(availableSponsors) && availableSponsors.length > 0) {
+    const matchingSponsors = availableSponsors.filter(sp => {
       if (sp.active === false) return false;
       // 'pase_barrial' only appears on the map, not in guessing rounds
       if (sp.plan === 'pase_barrial') return false;
       if (zoneId === 'toda_ciudad' || zoneId === 'macrocentro') return true;
-      return sp.zoneId === zoneId;
+      return !sp.zoneId || sp.zoneId === 'all' || sp.zoneId === zoneId;
     });
 
     if (matchingSponsors.length > 0) {
-      // Si el jugador está físicamente en un sponsor, priorizarlo 100% para que nunca vea a la competencia
+      // 1. Si el jugador está físicamente dentro del local con GeoBoost activo, priorizarlo 100%
       let chosenSponsor = null;
       if (preferredSponsorId) {
         chosenSponsor = matchingSponsors.find(
@@ -122,24 +181,29 @@ export function getRandomStreetRound({
                 sp.shortName?.toLowerCase() === String(preferredSponsorId).toLowerCase()
         );
       }
+
+      // 2. Si juega fuera del local (desktop, casa, calle), rotación equitativa inteligente
       if (!chosenSponsor) {
-        chosenSponsor = matchingSponsors[Math.floor(Math.random() * matchingSponsors.length)];
+        chosenSponsor = pickRotatedSponsor(matchingSponsors);
       }
-      sponsoredStreet = {
-        id: chosenSponsor.targetStreet.id,
-        name: chosenSponsor.targetStreet.name,
-        shortName: chosenSponsor.targetStreet.shortStreet || chosenSponsor.targetStreet.name,
-        number: chosenSponsor.targetStreet.number || '683',
-        aliases: chosenSponsor.targetStreet.aliases || [],
-        trivia: chosenSponsor.targetStreet.trivia || '',
-        center: chosenSponsor.coordinates,
-        path: [
-          chosenSponsor.coordinates,
-          [chosenSponsor.coordinates[0] + 0.00015, chosenSponsor.coordinates[1] + 0.00015]
-        ],
-        isSponsored: true,
-        sponsor: chosenSponsor
-      };
+
+      if (chosenSponsor && chosenSponsor.targetStreet) {
+        sponsoredStreet = {
+          id: chosenSponsor.targetStreet.id,
+          name: chosenSponsor.targetStreet.name,
+          shortName: chosenSponsor.targetStreet.shortStreet || chosenSponsor.targetStreet.name,
+          number: chosenSponsor.targetStreet.number || '683',
+          aliases: chosenSponsor.targetStreet.aliases || [],
+          trivia: chosenSponsor.targetStreet.trivia || '',
+          center: chosenSponsor.coordinates,
+          path: [
+            chosenSponsor.coordinates,
+            [chosenSponsor.coordinates[0] + 0.00015, chosenSponsor.coordinates[1] + 0.00015]
+          ],
+          isSponsored: true,
+          sponsor: chosenSponsor
+        };
+      }
     }
   }
 

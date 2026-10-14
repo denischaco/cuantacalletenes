@@ -185,7 +185,7 @@ export default function App() {
         .map(getStreetById)
         .filter(Boolean);
 
-      const preferredSponsorId = geoboost.boostSponsor?.id || geoboost.nearestSponsor?.id || null;
+      const preferredSponsorId = geoboost.boostSponsor?.id || null;
 
       if (matchedStreets.length >= TOTAL_ROUNDS) {
         streets = matchedStreets.slice(0, TOTAL_ROUNDS);
@@ -200,7 +200,7 @@ export default function App() {
         streets = [...matchedStreets, ...filler];
       }
     } else {
-      const preferredSponsorId = geoboost.boostSponsor?.id || geoboost.nearestSponsor?.id || null;
+      const preferredSponsorId = geoboost.boostSponsor?.id || null;
       streets = getRandomStreetRound({
         zoneId: targetZoneId,
         count: TOTAL_ROUNDS,

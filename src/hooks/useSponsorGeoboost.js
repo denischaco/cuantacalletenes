@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import sponsorsData from '../data/sponsors.json';
+import { getLoadedSponsors } from '../utils/streetRandomizer';
 import { findNearbySponsor, findClosestSponsor, GEO_BASE_THRESHOLD_METERS } from '../utils/geoUtils';
 import { trackEvent } from '../services/analytics';
 
@@ -17,13 +18,14 @@ function getQaBypassSponsor() {
     if (!qaParam) return null;
 
     const normalized = qaParam.toLowerCase().trim();
+    const sponsors = getLoadedSponsors();
     const sponsor =
-      sponsorsData.find(
+      sponsors.find(
         (s) =>
           s.id.toLowerCase() === normalized ||
           s.name.toLowerCase().includes(normalized) ||
           s.shortName?.toLowerCase().includes(normalized)
-      ) || sponsorsData.find((s) => s.active);
+      ) || sponsors.find((s) => s.active);
 
     return sponsor || null;
   } catch {
@@ -64,7 +66,8 @@ export function useSponsorGeoboost() {
   const handlePositionSuccess = useCallback((position, isFallback = false) => {
     if (!isMountedRef.current) return;
     const { latitude, longitude, accuracy } = position.coords;
-    const match = findNearbySponsor(latitude, longitude, sponsorsData, GEO_THRESHOLD_METERS, accuracy);
+    const sponsors = getLoadedSponsors();
+    const match = findNearbySponsor(latitude, longitude, sponsors, GEO_THRESHOLD_METERS, accuracy);
 
     if (match) {
       setActiveBoost({
@@ -86,7 +89,7 @@ export function useSponsorGeoboost() {
         is_fallback_network: isFallback
       });
     } else {
-      const closest = findClosestSponsor(latitude, longitude, sponsorsData);
+      const closest = findClosestSponsor(latitude, longitude, sponsors);
       setActiveBoost(null);
       setNearestSponsorInfo(closest);
       setGeoStatus('out_of_range');
