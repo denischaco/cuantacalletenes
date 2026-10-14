@@ -4,14 +4,25 @@ import {
   collection,
   addDoc,
   getDoc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  where,
   doc,
   query,
   orderBy,
   limit,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  increment
 } from 'firebase/firestore';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+import {
+  getAuth,
+  signInAnonymously,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from 'firebase/auth';
 
 const STORAGE_KEY = 'cuanta_calle_leaderboard';
 const LEADERBOARD_COLLECTION = 'leaderboard';
@@ -54,6 +65,13 @@ if (firebaseConfig.apiKey) {
  */
 export function getFirestoreInstance() {
   return isFirebaseAvailable ? db : null;
+}
+
+/**
+ * Access Auth instance safely
+ */
+export function getAuthInstance() {
+  return isFirebaseAvailable ? auth : null;
 }
 
 /**
@@ -440,3 +458,407 @@ export async function saveSponsorshipLead(leadData) {
 
   return { success: true, localOnly: true };
 }
+
+// ============================================================================
+// SPONSOR & COUPON BACKEND ENGINE
+// ============================================================================
+
+const LOCAL_COUPONS_KEY = 'cct_coupons_registry';
+const LOCAL_NOTIFS_KEY = 'cct_admin_notifications';
+const LOCAL_SPONSORS_KEY = 'cct_sponsors_db';
+
+/**
+ * Guarda un cupón generado por un jugador en Firestore
+ */
+export async function saveGeneratedCoupon(couponData) {
+  if (!couponData || !couponData.uniqueId) return { success: false };
+
+  const couponDoc = {
+    id: couponData.uniqueId,
+    sponsorId: couponData.sponsorId || 'general',
+    sponsorName: couponData.sponsorName || 'Sponsor Oficial',
+    title: couponData.title || 'Cupón Oficial',
+    discount: couponData.discount || '15% OFF',
+    code: couponData.code || 'CALLE-DESCUENTO',
+    scope: couponData.scope || 'individual',
+    scopeLabel: couponData.scopeLabel || 'Por persona',
+    paymentMethods: couponData.paymentMethods || ['Efectivo', 'Transferencia'],
+    terms: couponData.terms || [],
+    status: 'pending', // 'pending' | 'redeemed' | 'expired'
+    issuedAt: couponData.issuedAt || new Date().toISOString(),
+    expiresAt: couponData.expiresAt || new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+    redeemedAt: null,
+    redeemedBy: null
+  };
+
+  // 1. Guardar en caché local
+  try {
+    const local = JSON.parse(localStorage.getItem(LOCAL_COUPONS_KEY) || '{}');
+    local[couponDoc.id] = couponDoc;
+    localStorage.setItem(LOCAL_COUPONS_KEY, JSON.stringify(local));
+  } catch (e) {
+    console.warn('Error saving local coupon fallback:', e);
+  }
+
+  // 2. Guardar en Firestore
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const docRef = doc(firestoreDb, 'coupons', couponDoc.id);
+      await setDoc(docRef, {
+        ...couponDoc,
+        createdAt: serverTimestamp()
+      }, { merge: true });
+      return { success: true, id: couponDoc.id };
+    } catch (err) {
+      console.warn('Error saving coupon to Firestore (operando con fallback local):', err);
+    }
+  }
+
+  return { success: true, localOnly: true, id: couponDoc.id };
+}
+
+/**
+ * Busca un cupón por su ID único (desde Firestore o fallback local)
+ */
+export async function getCouponById(couponId) {
+  if (!couponId) return null;
+  const cleanId = String(couponId).trim();
+
+  // 1. Consultar Firestore
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const docRef = doc(firestoreDb, 'coupons', cleanId);
+      const snap = await getDoc(docRef);
+      if (snap.exists()) {
+        return snap.data();
+      }
+    } catch (err) {
+      console.warn('Error reading coupon from Firestore:', err);
+    }
+  }
+
+  // 2. Fallback local
+  try {
+    const local = JSON.parse(localStorage.getItem(LOCAL_COUPONS_KEY) || '{}');
+    if (local[cleanId]) {
+      return local[cleanId];
+    }
+  } catch (e) {
+    console.warn('Error reading local coupon:', e);
+  }
+
+  return null;
+}
+
+/**
+ * Realiza el canje de un cupón en el local (Mozo / Cajero)
+ */
+export async function redeemCoupon(couponId, redeemedBy = 'Caja 1') {
+  if (!couponId) return { success: false, error: 'ID de cupón no provisto' };
+  const cleanId = String(couponId).trim();
+
+  // 1. Obtener cupón
+  const coupon = await getCouponById(cleanId);
+  if (!coupon) {
+    return { success: false, notFound: true, error: 'Cupón no encontrado en el sistema.' };
+  }
+
+  // 2. Verificar si ya fue canjeado
+  if (coupon.status === 'redeemed') {
+    return {
+      success: false,
+      alreadyRedeemed: true,
+      coupon,
+      error: `Este cupón ya fue canjeado el ${new Date(coupon.redeemedAt).toLocaleString('es-AR')} por ${coupon.redeemedBy || 'Caja'}.`
+    };
+  }
+
+  // 3. Verificar expiración
+  const now = new Date();
+  if (coupon.expiresAt && new Date(coupon.expiresAt) < now) {
+    return {
+      success: false,
+      expired: true,
+      coupon,
+      error: 'Este cupón ha superado su plazo de validez y está expirado.'
+    };
+  }
+
+  // 4. Marcar como canjeado
+  const updatedData = {
+    ...coupon,
+    status: 'redeemed',
+    redeemedAt: now.toISOString(),
+    redeemedBy: redeemedBy || 'Caja 1'
+  };
+
+  // Actualizar local
+  try {
+    const local = JSON.parse(localStorage.getItem(LOCAL_COUPONS_KEY) || '{}');
+    local[cleanId] = updatedData;
+    localStorage.setItem(LOCAL_COUPONS_KEY, JSON.stringify(local));
+  } catch (e) {
+    console.warn('Error updating local coupon:', e);
+  }
+
+  // Actualizar Firestore
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const docRef = doc(firestoreDb, 'coupons', cleanId);
+      await updateDoc(docRef, {
+        status: 'redeemed',
+        redeemedAt: updatedData.redeemedAt,
+        redeemedBy: updatedData.redeemedBy
+      });
+
+      // Incrementar métrica mensual en sponsor_stats
+      if (coupon.sponsorId) {
+        const currentMonth = now.toISOString().slice(0, 7);
+        const statsRef = doc(firestoreDb, 'sponsor_stats', `${coupon.sponsorId}_${currentMonth}`);
+        await setDoc(statsRef, {
+          sponsorId: coupon.sponsorId,
+          month: currentMonth,
+          coupons_redeemed_count: increment(1),
+          lastRedemption: updatedData.redeemedAt
+        }, { merge: true });
+      }
+    } catch (err) {
+      console.warn('Error saving redemption to Firestore (guardado localmente):', err);
+    }
+  }
+
+  return { success: true, coupon: updatedData };
+}
+
+/**
+ * Escucha en tiempo real los cupones de un sponsor para métricas
+ */
+export function subscribeSponsorCoupons(sponsorId, callback) {
+  const computeStats = (couponsList) => {
+    const totalGenerated = couponsList.length;
+    const redeemedList = couponsList.filter(c => c.status === 'redeemed');
+    const totalRedeemed = redeemedList.length;
+    const pendingList = couponsList.filter(c => c.status === 'pending');
+    const conversionRate = totalGenerated > 0 ? ((totalRedeemed / totalGenerated) * 100).toFixed(1) : '0';
+
+    return {
+      totalGenerated,
+      totalRedeemed,
+      pendingCount: pendingList.length,
+      conversionRate,
+      coupons: couponsList
+    };
+  };
+
+  // 1. Respuesta inmediata con caché local
+  try {
+    const local = JSON.parse(localStorage.getItem(LOCAL_COUPONS_KEY) || '{}');
+    const filtered = Object.values(local).filter(c => !sponsorId || sponsorId === 'all' || c.sponsorId === sponsorId);
+    callback(computeStats(filtered));
+  } catch (e) {
+    console.warn('Local coupons stats error:', e);
+  }
+
+  const firestoreDb = getFirestoreInstance();
+  if (!firestoreDb) return () => {};
+
+  try {
+    const colRef = collection(firestoreDb, 'coupons');
+    let q;
+    if (!sponsorId || sponsorId === 'all') {
+      q = query(colRef, limit(200));
+    } else {
+      q = query(colRef, where('sponsorId', '==', sponsorId), limit(200));
+    }
+
+    return onSnapshot(q, (snap) => {
+      const remote = snap.docs.map(d => d.data());
+      callback(computeStats(remote));
+    }, (err) => {
+      console.warn('Firestore coupons subscription error:', err);
+    });
+  } catch (e) {
+    console.warn('Error setting coupons snapshot listener:', e);
+    return () => {};
+  }
+}
+
+/**
+ * Obtiene los sponsors (de Firestore o fallback)
+ */
+export async function fetchSponsorsFromDb(fallbackSponsors = []) {
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const snap = await getDocs(collection(firestoreDb, 'sponsors'));
+      if (!snap.empty) {
+        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } else if (fallbackSponsors.length > 0) {
+        // Inicializar la colección en Firestore con los sponsors base
+        for (const sp of fallbackSponsors) {
+          const docRef = doc(firestoreDb, 'sponsors', sp.id);
+          await setDoc(docRef, {
+            ...sp,
+            ownerPin: sp.id === 'bacanal' ? '1984' : '2026',
+            expiresAt: sp.expiresAt || new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString()
+          }, { merge: true });
+        }
+      }
+    } catch (err) {
+      console.warn('Error reading sponsors from Firestore:', err);
+    }
+  }
+
+  // Fallback local
+  try {
+    const cached = localStorage.getItem(LOCAL_SPONSORS_KEY);
+    if (cached) return JSON.parse(cached);
+  } catch (e) {}
+
+  return fallbackSponsors;
+}
+
+/**
+ * Actualiza el cupón de un sponsor y emite notificación para Root
+ */
+export async function updateSponsorCoupon(sponsorId, couponUpdate, sponsorName = '') {
+  const firestoreDb = getFirestoreInstance();
+  const notifMessage = `${sponsorName || sponsorId} modificó su cupón: "${couponUpdate.title || ''}" (${couponUpdate.discount || ''})`;
+
+  // 1. Guardar notificación
+  await addAdminNotification({
+    type: 'coupon_updated',
+    sponsorId,
+    sponsorName: sponsorName || sponsorId,
+    message: notifMessage
+  });
+
+  // 2. Actualizar en Firestore
+  if (firestoreDb) {
+    try {
+      const docRef = doc(firestoreDb, 'sponsors', sponsorId);
+      await updateDoc(docRef, {
+        coupon: couponUpdate,
+        updatedAt: serverTimestamp()
+      });
+      return { success: true };
+    } catch (err) {
+      console.warn('Error updating sponsor coupon in Firestore:', err);
+    }
+  }
+
+  return { success: true, localOnly: true };
+}
+
+/**
+ * Extiende la suscripción de un sponsor sumando meses
+ */
+export async function extendSponsorSubscription(sponsorId, monthsToAdd = 3, sponsorName = '') {
+  const firestoreDb = getFirestoreInstance();
+  let currentExpiresAt = null;
+
+  if (firestoreDb) {
+    try {
+      const snap = await getDoc(doc(firestoreDb, 'sponsors', sponsorId));
+      if (snap.exists()) {
+        currentExpiresAt = snap.data().expiresAt;
+      }
+    } catch (e) {}
+  }
+
+  const baseDate = currentExpiresAt && new Date(currentExpiresAt) > new Date()
+    ? new Date(currentExpiresAt)
+    : new Date();
+
+  const newExpiresAt = new Date(baseDate.getTime() + monthsToAdd * 30 * 24 * 3600 * 1000).toISOString();
+
+  // Guardar en Firestore
+  if (firestoreDb) {
+    try {
+      const docRef = doc(firestoreDb, 'sponsors', sponsorId);
+      await updateDoc(docRef, {
+        expiresAt: newExpiresAt,
+        active: true,
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.warn('Error extending sponsor in Firestore:', err);
+    }
+  }
+
+  // Notificación de auditoría
+  await addAdminNotification({
+    type: 'subscription_extended',
+    sponsorId,
+    sponsorName: sponsorName || sponsorId,
+    message: `Sponsoreo extendido por ${monthsToAdd} meses. Nuevo vencimiento: ${new Date(newExpiresAt).toLocaleDateString('es-AR')}`
+  });
+
+  return { success: true, newExpiresAt };
+}
+
+/**
+ * Añade una notificación interna para el usuario Root
+ */
+export async function addAdminNotification({ type, sponsorId, sponsorName, message }) {
+  const notif = {
+    id: `notif_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+    type: type || 'general',
+    sponsorId: sponsorId || '',
+    sponsorName: sponsorName || '',
+    message: message || '',
+    read: false,
+    createdAt: new Date().toISOString()
+  };
+
+  // Local cache
+  try {
+    const local = JSON.parse(localStorage.getItem(LOCAL_NOTIFS_KEY) || '[]');
+    localStorage.setItem(LOCAL_NOTIFS_KEY, JSON.stringify([notif, ...local.slice(0, 49)]));
+  } catch (e) {}
+
+  const firestoreDb = getFirestoreInstance();
+  if (firestoreDb) {
+    try {
+      const colRef = collection(firestoreDb, 'admin_notifications');
+      await addDoc(colRef, {
+        ...notif,
+        timestamp: serverTimestamp()
+      });
+    } catch (e) {
+      console.warn('Error writing admin notification:', e);
+    }
+  }
+
+  return notif;
+}
+
+/**
+ * Escucha notificaciones para el panel Root
+ */
+export function subscribeAdminNotifications(callback) {
+  try {
+    const local = JSON.parse(localStorage.getItem(LOCAL_NOTIFS_KEY) || '[]');
+    callback(local);
+  } catch (e) {}
+
+  const firestoreDb = getFirestoreInstance();
+  if (!firestoreDb) return () => {};
+
+  try {
+    const colRef = collection(firestoreDb, 'admin_notifications');
+    const q = query(colRef, orderBy('timestamp', 'desc'), limit(30));
+    return onSnapshot(q, (snap) => {
+      const remote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      callback(remote);
+    }, (err) => {
+      console.warn('Error in notifications subscription:', err);
+    });
+  } catch (e) {
+    return () => {};
+  }
+}
+

@@ -21,6 +21,8 @@ export function generateUniqueCouponId(_sponsorId = '') {
   return `${yy}${mm}${dd}-${hh}${min}-${randomSuffix}`;
 }
 
+import { saveGeneratedCoupon } from '../services/firebase';
+
 /**
  * Obtiene o crea un cupón persistente para la sesión actual del usuario
  */
@@ -42,9 +44,15 @@ export function getOrCreateSessionCoupon(sponsor) {
   const issuedAt = new Date();
   const validityHours = sponsor.coupon?.validityHours || 48; // 48 horas por defecto
   const expiresAt = new Date(issuedAt.getTime() + validityHours * 60 * 60 * 1000);
+  const uniqueId = generateUniqueCouponId(sponsor.id);
+
+  // Deep Link para validación directa en local
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://cuantacalletenes.ar';
+  const redeemUrl = `${origin}/admin?redeem=${uniqueId}`;
 
   const newCouponData = {
-    uniqueId: generateUniqueCouponId(sponsor.id),
+    uniqueId,
+    redeemUrl,
     sponsorId: sponsor.id,
     sponsorName: sponsor.name,
     discount: sponsor.coupon?.discount || '15% OFF',
@@ -75,6 +83,11 @@ export function getOrCreateSessionCoupon(sponsor) {
       minute: '2-digit'
     })
   };
+
+  // Guardar en Firestore para que el local pueda validarlo
+  saveGeneratedCoupon(newCouponData).catch((err) => {
+    console.warn('Notice saving coupon to Firestore:', err);
+  });
 
   if (typeof sessionStorage !== 'undefined') {
     try {

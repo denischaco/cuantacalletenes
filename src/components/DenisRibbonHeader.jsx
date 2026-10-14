@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ExternalLink, Heart, Zap, Shield, Menu, X, Trophy, HelpCircle } from 'lucide-react';
+import { ExternalLink, Heart, Zap, Shield, Menu, X, Trophy, HelpCircle, KeyRound } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
 
 export default function DenisRibbonHeader({
@@ -9,6 +9,7 @@ export default function DenisRibbonHeader({
   onOpenCredits,
   onOpenLegal = null,
   onOpenGeoBoost = null,
+  onOpenAdmin = null,
   currentZoneName,
   geoboost = null
 }) {
@@ -311,6 +312,24 @@ export default function DenisRibbonHeader({
                         Términos & Privacidad
                       </span>
                       <span className="text-[10px] text-slate-400 block">Protección de datos (Ley 25.326)</span>
+                    </div>
+                  </button>
+                )}
+
+                {onOpenAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => handleAction(onOpenAdmin)}
+                    className="w-full p-2.5 rounded-xl bg-slate-950/70 hover:bg-slate-800 border border-[#F48138]/40 hover:border-[#F48138] text-left flex items-center gap-3 transition-all cursor-pointer group"
+                  >
+                    <div className="p-2 rounded-lg bg-[#F48138]/15 text-[#FFA559] group-hover:bg-[#F48138] group-hover:text-slate-950 transition-colors shrink-0">
+                      <KeyRound className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <span className="font-heading font-bold text-xs text-white block group-hover:text-[#FFA559] transition-colors">
+                        Portal Sponsors & Admin
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">Gestión y validación de cupones</span>
                     </div>
                   </button>
                 )}

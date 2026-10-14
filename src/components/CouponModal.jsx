@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import QRCode from 'qrcode';
 import {
   X,
   Download,
@@ -8,7 +9,8 @@ import {
   CheckCircle2,
   Users,
   Check,
-  Sparkles
+  Sparkles,
+  QrCode as QrIcon
 } from 'lucide-react';
 import { getOrCreateSessionCoupon } from '../utils/couponGenerator';
 import { downloadCouponVoucher } from '../utils/voucherCanvas';
@@ -17,11 +19,25 @@ import { trackEvent } from '../services/analytics';
 export default function CouponModal({ sponsor, onClose }) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState('');
 
   // Obtiene o genera el cupón con ID único para esta sesión
   const couponData = useMemo(() => {
     return getOrCreateSessionCoupon(sponsor);
   }, [sponsor]);
+
+  useEffect(() => {
+    if (couponData?.uniqueId) {
+      const url = couponData.redeemUrl || `https://cuantacalletenes.ar/admin?redeem=${couponData.uniqueId}`;
+      QRCode.toDataURL(url, {
+        margin: 1,
+        width: 160,
+        color: { dark: '#0F172A', light: '#FFFFFF' }
+      })
+        .then(setQrDataUrl)
+        .catch(console.warn);
+    }
+  }, [couponData]);
 
   if (!sponsor || !couponData) return null;
 
@@ -124,26 +140,36 @@ export default function CouponModal({ sponsor, onClose }) {
           </p>
         </div>
 
-        {/* Bloque de Verificación de Seguridad con ID Único */}
+        {/* Bloque de Verificación de Seguridad con ID Único y QR */}
         <div className="p-3.5 rounded-2xl bg-slate-950 border border-amber-500/40 space-y-2.5">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-amber-400 flex items-center gap-1.5">
               <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>ID ÚNICO DE CANJE:</span>
+              <span>VALIDACIÓN EN SALÓN:</span>
             </span>
-            <span className="font-mono font-black text-white text-xs sm:text-sm bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700 tracking-wider">
+            <span className="font-mono font-black text-white text-xs bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700 tracking-wider">
               {couponData.uniqueId}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-400 border-t border-slate-800 pt-2">
-            <div className="space-y-0.5">
-              <span className="block text-[10px] uppercase font-bold text-slate-500">Emitido</span>
-              <span className="text-slate-300 font-medium">{couponData.formattedIssuedAt} hs</span>
-            </div>
-            <div className="space-y-0.5 text-right">
-              <span className="block text-[10px] uppercase font-bold text-amber-500">Válido hasta</span>
-              <span className="text-amber-300 font-bold">{couponData.formattedExpiresAt} hs</span>
+          <div className="flex items-center gap-3 pt-1 border-t border-slate-800/80">
+            {qrDataUrl && (
+              <div className="bg-white p-1 rounded-xl shrink-0 shadow-md">
+                <img src={qrDataUrl} alt="QR Validación" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
+              </div>
+            )}
+            <div className="space-y-1 text-[11px] text-slate-400 min-w-0 flex-1">
+              <div>
+                <span className="block text-[10px] uppercase font-bold text-slate-500">Emitido</span>
+                <span className="text-slate-300 font-medium">{couponData.formattedIssuedAt} hs</span>
+              </div>
+              <div>
+                <span className="block text-[10px] uppercase font-bold text-amber-500">Válido hasta</span>
+                <span className="text-amber-300 font-bold">{couponData.formattedExpiresAt} hs</span>
+              </div>
+              <p className="text-[10px] text-slate-400 italic pt-0.5">
+                El mozo o cajero puede escanear este QR para validar tu descuento.
+              </p>
             </div>
           </div>
         </div>

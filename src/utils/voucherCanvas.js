@@ -3,6 +3,8 @@
  * Genera una tarjeta de beneficio digital con ID único, timestamp de emisión y términos.
  */
 
+import QRCode from 'qrcode';
+
 export async function downloadCouponVoucher(sponsor, couponData) {
   if (typeof document === 'undefined') return;
 
@@ -11,6 +13,28 @@ export async function downloadCouponVoucher(sponsor, couponData) {
   canvas.height = 1440; // Proporción vertical óptima para smartphones y estados de WhatsApp
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
+
+  // Generar QR para validación instantánea en local
+  let qrImg = null;
+  try {
+    const redeemTarget = couponData.redeemUrl || `https://cuantacalletenes.ar/admin?redeem=${couponData.uniqueId}`;
+    const qrDataUrl = await QRCode.toDataURL(redeemTarget, {
+      margin: 1,
+      width: 200,
+      color: {
+        dark: '#0F172A',
+        light: '#FFFFFF'
+      }
+    });
+    qrImg = new Image();
+    await new Promise((resolve) => {
+      qrImg.onload = resolve;
+      qrImg.onerror = resolve;
+      qrImg.src = qrDataUrl;
+    });
+  } catch (err) {
+    console.warn('Could not generate QR for voucher:', err);
+  }
 
   // 1. Fondo Oscuro Principal con degradé premium
   const bgGrad = ctx.createLinearGradient(0, 0, 0, 1440);
@@ -74,7 +98,7 @@ export async function downloadCouponVoucher(sponsor, couponData) {
   ctx.font = 'bold 30px system-ui, sans-serif';
   ctx.fillText(couponData.title || sponsor.coupon?.title || 'Descuento Exclusivo', 540, 560);
 
-  // 6. Tarjeta de Verificación de Seguridad (ID Único + Timestamp)
+  // 6. Tarjeta de Verificación de Seguridad (ID Único + Timestamp + QR)
   ctx.fillStyle = '#0F172A';
   ctx.beginPath();
   ctx.roundRect(100, 640, 880, 240, 24);
@@ -89,13 +113,22 @@ export async function downloadCouponVoucher(sponsor, couponData) {
   ctx.fillText('DATOS DE VALIDACIÓN EN CAJA (UN SOLO USO):', 140, 690);
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = '900 42px monospace';
-  ctx.fillText(`ID: ${couponData.uniqueId}`, 140, 750);
+  ctx.font = '900 40px monospace';
+  ctx.fillText(`ID: ${couponData.uniqueId}`, 140, 745);
 
   ctx.fillStyle = '#CBD5E1';
-  ctx.font = '24px system-ui, sans-serif';
-  ctx.fillText(`Emitido: ${couponData.formattedIssuedAt} hs`, 140, 800);
-  ctx.fillText(`Vence:   ${couponData.formattedExpiresAt} hs`, 140, 840);
+  ctx.font = '22px system-ui, sans-serif';
+  ctx.fillText(`Emitido: ${couponData.formattedIssuedAt} hs`, 140, 795);
+  ctx.fillText(`Vence:   ${couponData.formattedExpiresAt} hs`, 140, 835);
+
+  // Dibujar contenedor y QR a la derecha
+  if (qrImg) {
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.roundRect(750, 655, 210, 210, 16);
+    ctx.fill();
+    ctx.drawImage(qrImg, 760, 665, 190, 190);
+  }
 
   // 7. Alcance y Términos Comerciales Aclaratorios
   ctx.textAlign = 'left';

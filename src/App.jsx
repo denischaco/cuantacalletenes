@@ -14,6 +14,7 @@ const SculpturesAlbumModal = lazy(() => import('./components/SculpturesAlbumModa
 const CouponModal = lazy(() => import('./components/CouponModal'));
 const LegalModal = lazy(() => import('./components/LegalModal'));
 const GeoBoostModal = lazy(() => import('./components/GeoBoostModal'));
+const AdminPanel = lazy(() => import('./components/admin/AdminPanel'));
 import { useSponsorGeoboost } from './hooks/useSponsorGeoboost';
 
 import landmarksData from './data/landmarks.json';
@@ -66,6 +67,17 @@ export default function App() {
   const [isLegalOpen, setIsLegalOpen] = useState(false);
   const [isGeoBoostOpen, setIsGeoBoostOpen] = useState(false);
   const [activeCouponSponsor, setActiveCouponSponsor] = useState(null);
+
+  // Portal de Sponsors y Gestión Admin
+  const [isAdminOpen, setIsAdminOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search);
+      const isPathAdmin = window.location.pathname.startsWith('/admin');
+      const isParamAdmin = Boolean(p.get('admin') || p.get('panel') || p.get('sponsors') || p.get('redeem'));
+      return isPathAdmin || isParamAdmin;
+    }
+    return false;
+  });
 
   // GeoBoost 2x Physical Proximity Engine
   const geoboost = useSponsorGeoboost();
@@ -310,6 +322,30 @@ export default function App() {
     return getRankForScore(totalScore, ranksData);
   }, [totalScore]);
 
+  // Si el usuario ingresa al Portal de Sponsors o Gestión Admin
+  if (isAdminOpen) {
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-3 font-sans">
+            <div className="w-8 h-8 border-2 border-[#F48138] border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs font-bold text-slate-400">Cargando Portal de Sponsors...</p>
+          </div>
+        }
+      >
+        <AdminPanel
+          onBackToGame={() => {
+            setIsAdminOpen(false);
+            if (window.history?.replaceState) {
+              const newUrl = window.location.pathname.startsWith('/admin') ? '/' : window.location.pathname;
+              window.history.replaceState({}, document.title, newUrl);
+            }
+          }}
+        />
+      </Suspense>
+    );
+  }
+
   return (
     <div className="relative w-full h-full flex flex-col bg-[#0B0F19] text-slate-100 overflow-hidden select-none">
       {/* 1. Denis Ribbon Header */}
@@ -320,6 +356,7 @@ export default function App() {
         onOpenCredits={() => setIsCreditsOpen(true)}
         onOpenLegal={() => setIsLegalOpen(true)}
         onOpenGeoBoost={() => setIsGeoBoostOpen(true)}
+        onOpenAdmin={() => setIsAdminOpen(true)}
         currentZoneName={gameState !== 'start' ? currentZone.shortName : null}
         geoboost={geoboost}
       />
