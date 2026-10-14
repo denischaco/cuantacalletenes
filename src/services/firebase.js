@@ -556,7 +556,7 @@ export async function getCouponById(couponId) {
 /**
  * Realiza el canje de un cupón en el local (Mozo / Cajero)
  */
-export async function redeemCoupon(couponId, redeemedBy = 'Caja 1') {
+export async function redeemCoupon(couponId, redeemedBy = 'Caja 1', expectedSponsorId = null) {
   if (!couponId) return { success: false, error: 'ID de cupón no provisto' };
   const cleanId = String(couponId).trim();
 
@@ -566,7 +566,17 @@ export async function redeemCoupon(couponId, redeemedBy = 'Caja 1') {
     return { success: false, notFound: true, error: 'Cupón no encontrado en el sistema.' };
   }
 
-  // 2. Verificar si ya fue canjeado
+  // 2. Verificar pertenencia de sponsor si no es root
+  if (expectedSponsorId && coupon.sponsorId && coupon.sponsorId !== expectedSponsorId) {
+    return {
+      success: false,
+      wrongSponsor: true,
+      coupon,
+      error: `Este cupón pertenece a ${coupon.sponsorName || coupon.sponsorId} y no puede ser canjeado aquí.`
+    };
+  }
+
+  // 3. Verificar si ya fue canjeado
   if (coupon.status === 'redeemed') {
     return {
       success: false,
@@ -576,7 +586,7 @@ export async function redeemCoupon(couponId, redeemedBy = 'Caja 1') {
     };
   }
 
-  // 3. Verificar expiración
+  // 4. Verificar expiración
   const now = new Date();
   if (coupon.expiresAt && new Date(coupon.expiresAt) < now) {
     return {

@@ -105,6 +105,10 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
     const code = (codeToSearch || couponSearchInput).trim();
     if (!code) return;
 
+    if (codeToSearch) {
+      setCouponSearchInput(codeToSearch);
+    }
+
     setSearchingCoupon(true);
     setSearchError('');
     setSearchedCoupon(null);
@@ -115,11 +119,20 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
       if (result) {
         // Verificar si pertenece a este sponsor
         if (result.sponsorId && result.sponsorId !== sponsor.id) {
-          setSearchError(`Este cupón corresponde a otro comercio (${result.sponsorName || result.sponsorId}).`);
-          setSearchedCoupon(result);
-        } else {
-          setSearchedCoupon(result);
+          setSearchError(`Este cupón corresponde a otro comercio (${result.sponsorName || result.sponsorId}). No es válido para ser canjeado en ${sponsor.shortName || sponsor.name}.`);
+          setSearchedCoupon(null);
+          return;
         }
+
+        // Verificar si está expirado
+        const now = new Date();
+        if (result.expiresAt && new Date(result.expiresAt) < now) {
+          setSearchError(`Este cupón venció el ${new Date(result.expiresAt).toLocaleString('es-AR')}. Ya no es válido para canje.`);
+          setSearchedCoupon(result);
+          return;
+        }
+
+        setSearchedCoupon(result);
       } else {
         setSearchError('No se encontró ningún cupón con ese ID en el sistema.');
       }
@@ -134,12 +147,17 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
   const handleConfirmRedeem = async () => {
     if (!searchedCoupon?.id) return;
 
+    if (searchedCoupon.sponsorId && searchedCoupon.sponsorId !== sponsor.id) {
+      setSearchError(`Operación bloqueada: Este cupón pertenece a ${searchedCoupon.sponsorName || searchedCoupon.sponsorId}.`);
+      return;
+    }
+
     setRedeeming(true);
     setRedeemSuccessMsg('');
     setSearchError('');
 
     try {
-      const res = await redeemCoupon(searchedCoupon.id, `${sponsor.shortName || sponsor.name} (Salón)`);
+      const res = await redeemCoupon(searchedCoupon.id, `${sponsor.shortName || sponsor.name} (Salón)`, sponsor.id);
       if (res.success) {
         setRedeemedCouponState(res.coupon);
         setRedeemSuccessMsg('¡Cupón canjeado exitosamente en el sistema!');
@@ -451,6 +469,16 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
                         <XCircle className="w-3.5 h-3.5 text-rose-400" />
                         <span>Ya Canjeado</span>
                       </span>
+                    ) : searchedCoupon.expiresAt && new Date(searchedCoupon.expiresAt) < new Date() ? (
+                      <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black uppercase flex items-center gap-1.5">
+                        <Clock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Cupón Vencido</span>
+                      </span>
+                    ) : searchedCoupon.sponsorId && searchedCoupon.sponsorId !== sponsor.id ? (
+                      <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-black uppercase flex items-center gap-1.5">
+                        <XCircle className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Otro Comercio</span>
+                      </span>
                     ) : (
                       <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-black uppercase flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
@@ -496,8 +524,10 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
                   </div>
                 )}
 
-                {/* Botón de Canjear */}
-                {searchedCoupon.status !== 'redeemed' && (
+                {/* Botón de Canjear (Solo disponible si pertenece a este comercio y está vigente) */}
+                {searchedCoupon.status !== 'redeemed' &&
+                 !(searchedCoupon.expiresAt && new Date(searchedCoupon.expiresAt) < new Date()) &&
+                 !(searchedCoupon.sponsorId && searchedCoupon.sponsorId !== sponsor.id) && (
                   <button
                     type="button"
                     onClick={handleConfirmRedeem}
