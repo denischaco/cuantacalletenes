@@ -323,11 +323,30 @@ export default function AdminPanel({ onBackToGame }) {
           </button>
         </form>
 
-        {/* Nota de Acceso Restringido */}
-        <div className="border-t border-slate-800 pt-4 text-center">
+        {/* Nota de Acceso Restringido y Forzar Recarga de PWA */}
+        <div className="border-t border-slate-800 pt-4 text-center space-y-2">
           <p className="text-[11px] text-slate-500">
             Acceso restringido a comercios adheridos y administración.
           </p>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                if ('caches' in window) {
+                  const keys = await caches.keys();
+                  await Promise.all(keys.map(k => caches.delete(k)));
+                }
+                if (navigator.serviceWorker) {
+                  const regs = await navigator.serviceWorker.getRegistrations();
+                  await Promise.all(regs.map(r => r.unregister()));
+                }
+              } catch (e) {}
+              window.location.href = window.location.pathname + '?v=' + Date.now();
+            }}
+            className="text-[10px] text-slate-500 hover:text-amber-400 underline transition-colors cursor-pointer block mx-auto"
+          >
+            🔄 ¿Usás PWA instalada? Tocá acá para actualizar a la última versión
+          </button>
         </div>
       </div>
     </div>
