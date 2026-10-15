@@ -113,21 +113,23 @@ export default function AdminPanel({ onBackToGame }) {
       }
     }
 
-    // Fallback de contingencia (desarrollo / validación por PIN del comercio)
+    // Fallback de contingencia con verificación estricta de contraseña
     const cleanEmail = email.toLowerCase().trim();
-    const isDev = Boolean(import.meta.env.DEV);
+    const adminSecret = import.meta.env.VITE_ADMIN_PASSWORD || import.meta.env.VITE_ADMIN_CLEAR_PASSWORD;
 
-    if (cleanEmail.includes('root') || cleanEmail.includes('admin') || cleanEmail.includes('denis')) {
-      if (isDev || (password && password.length >= 6)) {
-        setCurrentUser({ email: cleanEmail, role: 'root' });
-        setIsSubmitting(false);
-        return;
-      }
-    } else if (cleanEmail.includes('bacanal') || cleanEmail.includes('fichita')) {
-      const sp = sponsorsList.find(s => cleanEmail.includes(s.id)) || sponsorsList[0];
-      const validPin = sp?.ownerPin || (sp?.id === 'bacanal' ? '1984' : '2026');
-      if (isDev || password === validPin) {
-        setCurrentUser({ email: cleanEmail, role: 'sponsor', sponsorId: sp?.id, sponsor: sp });
+    // Root solo puede ingresar si coincide la contraseña maestra configurada
+    if (adminSecret && password === adminSecret && (cleanEmail.includes('root') || cleanEmail.includes('admin') || cleanEmail.includes('denis'))) {
+      setCurrentUser({ email: cleanEmail, role: 'root' });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Sponsors solo pueden ingresar si la contraseña coincide exactamente con su PIN secreto
+    const sp = sponsorsList.find(s => cleanEmail.includes(s.id));
+    if (sp) {
+      const validPin = sp.ownerPin || (sp.id === 'bacanal' ? '1984' : '2026');
+      if (password === validPin) {
+        setCurrentUser({ email: cleanEmail, role: 'sponsor', sponsorId: sp.id, sponsor: sp });
         setIsSubmitting(false);
         return;
       }
