@@ -137,9 +137,9 @@ export default function AdminPanel({ onBackToGame }) {
         console.warn('Error al conectar con /api/admin-auth:', err.message);
       }
 
-      // 2b. Fallback local para desarrollo si está configurado en .env
+      // 2b. Fallback / Verificación directa con variable de entorno Vite
       const adminSecret = import.meta.env.VITE_ADMIN_PASSWORD || import.meta.env.VITE_ADMIN_CLEAR_PASSWORD;
-      if (adminSecret && password === adminSecret) {
+      if (adminSecret && String(password).trim() === String(adminSecret).trim()) {
         setCurrentUser({ email: cleanEmail, role: 'root' });
         setIsSubmitting(false);
         return;
