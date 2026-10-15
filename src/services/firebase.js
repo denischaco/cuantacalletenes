@@ -709,6 +709,9 @@ export async function fetchSponsorsFromDb(fallbackSponsors = []) {
         const remote = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         try {
           localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(remote));
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('cct_sponsors_updated', { detail: { type: 'sponsors_loaded', sponsors: remote } }));
+          }
         } catch (e) {}
         return remote;
       } else if (fallbackSponsors.length > 0) {
@@ -820,6 +823,10 @@ export async function saveOrUpdateSponsor(sponsorData) {
     localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(list));
   } catch (e) {}
 
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cct_sponsors_updated', { detail: { type: 'sponsor_saved', sponsor: cleanSponsor } }));
+  }
+
   // 3. Registrar auditoría interna
   await addAdminNotification({
     type: 'sponsor_saved',
@@ -854,6 +861,10 @@ export async function deleteSponsor(sponsorId, sponsorName = '') {
     }
   } catch (e) {}
 
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cct_sponsors_updated', { detail: { type: 'sponsor_deleted', sponsorId } }));
+  }
+
   await addAdminNotification({
     type: 'sponsor_deleted',
     sponsorId,
@@ -879,7 +890,36 @@ export async function updateSponsorCoupon(sponsorId, couponUpdate, sponsorName =
     message: notifMessage
   });
 
-  // 2. Actualizar en Firestore
+  // 2. Actualizar caché local inmediata (cct_sponsors_db)
+  try {
+    const raw = localStorage.getItem(LOCAL_SPONSORS_KEY);
+    let list = raw ? JSON.parse(raw) : [];
+    const idx = list.findIndex(s => s.id === sponsorId);
+    if (idx >= 0) {
+      list[idx] = {
+        ...list[idx],
+        coupon: couponUpdate,
+        updatedAt: new Date().toISOString()
+      };
+    } else {
+      list.push({
+        id: sponsorId,
+        name: sponsorName || sponsorId,
+        coupon: couponUpdate,
+        updatedAt: new Date().toISOString()
+      });
+    }
+    localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.warn('Error updating local sponsor coupon cache:', e);
+  }
+
+  // 3. Notificar a componentes en tiempo real
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('cct_sponsors_updated', { detail: { type: 'coupon_updated', sponsorId, coupon: couponUpdate } }));
+  }
+
+  // 4. Actualizar en Firestore
   if (firestoreDb) {
     try {
       const docRef = doc(firestoreDb, 'sponsors', sponsorId);

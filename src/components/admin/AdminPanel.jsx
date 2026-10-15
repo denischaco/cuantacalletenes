@@ -206,6 +206,10 @@ export default function AdminPanel({ onBackToGame }) {
           sponsor={currentUser.sponsor}
           onLogout={handleLogout}
           initialRedeemCode={redeemCode}
+          onUpdateSponsor={(updatedSponsor) => {
+            setCurrentUser(prev => prev ? { ...prev, sponsor: updatedSponsor } : prev);
+            setSponsorsList(prev => prev.map(s => s.id === updatedSponsor.id ? updatedSponsor : s));
+          }}
         />
       </div>
     );

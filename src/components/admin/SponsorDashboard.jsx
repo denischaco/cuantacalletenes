@@ -27,7 +27,7 @@ import {
   updateSponsorCoupon
 } from '../../services/firebase';
 
-export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode = '' }) {
+export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode = '', onUpdateSponsor }) {
   const [activeTab, setActiveTab] = useState('redeem'); // 'redeem' | 'stats' | 'settings'
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
@@ -61,6 +61,25 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
   });
   const [savingCoupon, setSavingCoupon] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+
+  // Mantener sincronizado si cambian las props del sponsor
+  useEffect(() => {
+    if (sponsor?.coupon) {
+      setCouponForm({
+        active: sponsor.coupon.active !== false,
+        title: sponsor.coupon.title || '',
+        discount: sponsor.coupon.discount || '15% OFF',
+        validityHours: sponsor.coupon.validityHours || 48,
+        scopeLabel: sponsor.coupon.scopeLabel || 'Por persona / Comensal individual',
+        paymentMethods: Array.isArray(sponsor.coupon.paymentMethods)
+          ? sponsor.coupon.paymentMethods.join(', ')
+          : (sponsor.coupon.paymentMethods || 'Efectivo, Transferencia'),
+        termsText: Array.isArray(sponsor.coupon.terms)
+          ? sponsor.coupon.terms.join('\n')
+          : (sponsor.coupon.terms || '')
+      });
+    }
+  }, [sponsor?.coupon]);
 
   // Escuchar cupones en tiempo real
   useEffect(() => {
@@ -187,7 +206,7 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
     setSaveSuccessMsg('');
 
     const updatedCoupon = {
-      active: couponForm.active,
+      active: Boolean(couponForm.active),
       title: couponForm.title.trim(),
       discount: couponForm.discount.trim(),
       code: sponsor?.coupon?.code || `CALLE-${sponsor.id.toUpperCase()}`,
@@ -202,6 +221,9 @@ export default function SponsorDashboard({ sponsor, onLogout, initialRedeemCode 
 
     try {
       await updateSponsorCoupon(sponsor.id, updatedCoupon, sponsor.name);
+      if (onUpdateSponsor) {
+        onUpdateSponsor({ ...sponsor, coupon: updatedCoupon });
+      }
       setSaveSuccessMsg('¡Promoción y condiciones actualizadas exitosamente en el juego!');
       setTimeout(() => setSaveSuccessMsg(''), 4000);
     } catch (err) {

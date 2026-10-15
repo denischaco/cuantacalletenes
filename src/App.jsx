@@ -21,7 +21,7 @@ import landmarksData from './data/landmarks.json';
 import ranksData from './data/ranks.json';
 import streetsData from './data/resistenciaStreets.json';
 import sponsorsData from './data/sponsors.json';
-import { getRandomStreetRound, getRankForScore, generateRoundOptions, getStreetById } from './utils/streetRandomizer';
+import { getRandomStreetRound, getRankForScore, generateRoundOptions, getStreetById, getLoadedSponsors } from './utils/streetRandomizer';
 import { getRandomNonIntersectionPoint, validateStreetGuess } from './utils/geoUtils';
 import { saveScoreEntry, getChallenge } from './services/firebase';
 import {
@@ -141,6 +141,19 @@ export default function App() {
     }
   };
 
+  const [sponsorsRevision, setSponsorsRevision] = useState(0);
+
+  // Escuchar cambios en sponsors y cupones en tiempo real
+  useEffect(() => {
+    const handleSponsorsUpdate = () => {
+      setSponsorsRevision((r) => r + 1);
+    };
+    window.addEventListener('cct_sponsors_updated', handleSponsorsUpdate);
+    return () => {
+      window.removeEventListener('cct_sponsors_updated', handleSponsorsUpdate);
+    };
+  }, []);
+
   // Active Zone metadata
   const currentZone = useMemo(() => {
     return landmarksData.find(z => z.id === selectedZoneId) || landmarksData[0];
@@ -148,8 +161,9 @@ export default function App() {
 
   // Active Zone Sponsor (Sponsors with plan: 'sponsor_zona')
   const zoneSponsor = useMemo(() => {
+    const loadedSponsors = getLoadedSponsors();
     return (
-      sponsorsData.find(
+      loadedSponsors.find(
         (s) =>
           s.active !== false &&
           s.plan === 'sponsor_zona' &&
@@ -157,10 +171,10 @@ export default function App() {
             s.zoneId === 'all' ||
             selectedZoneId === 'toda_ciudad' ||
             !s.zoneId ||
-            sponsorsData.filter((x) => x.active !== false && x.plan === 'sponsor_zona').length === 1)
+            loadedSponsors.filter((x) => x.active !== false && x.plan === 'sponsor_zona').length === 1)
       ) || null
     );
-  }, [selectedZoneId]);
+  }, [selectedZoneId, sponsorsRevision]);
 
   // Current street to guess
   const currentStreet = roundStreets[currentRoundIndex] || null;

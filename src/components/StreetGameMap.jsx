@@ -1,10 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Target, Landmark, Layers, Moon } from 'lucide-react';
 
 import defaultReferencePoints from '../data/referencePoints.json';
 import { findNearbySculpture } from '../utils/sculptureUtils';
+import { getLoadedSponsors } from '../utils/streetRandomizer';
 
 // Helper to check if an icon value represents an image URL or path
 function isImageIcon(iconStr, iconImage) {
@@ -36,6 +37,48 @@ export default function StreetGameMap({
   const landmarksLayerRef = useRef(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [mapMode, setMapMode] = useState('dark'); // 'dark' | 'satellite'
+  const [sponsorsRevision, setSponsorsRevision] = useState(0);
+
+  // Escuchar actualizaciones de sponsors en tiempo real
+  useEffect(() => {
+    const handleSponsorsUpdate = () => {
+      setSponsorsRevision((r) => r + 1);
+    };
+    window.addEventListener('cct_sponsors_updated', handleSponsorsUpdate);
+    return () => {
+      window.removeEventListener('cct_sponsors_updated', handleSponsorsUpdate);
+    };
+  }, []);
+
+  // Combinar puntos de referencia públicos con los sponsors activos de la base de datos
+  const effectiveLandmarks = useMemo(() => {
+    // 1. Puntos públicos (plazas, parques, lagunas, domo). Excluir comerciales estáticos
+    const basePublic = (referencePoints || defaultReferencePoints).filter(
+      (p) => !p.isSponsored && p.type !== 'commercial' && p.id !== 'bacanal_burgers' && p.id !== 'fichita_bar'
+    );
+
+    // 2. Sponsors activos dinámicos
+    const dynamicSponsors = getLoadedSponsors();
+    const activeCommercials = dynamicSponsors
+      .filter((s) => s.active !== false && Array.isArray(s.coordinates) && s.coordinates.length === 2)
+      .map((sp) => ({
+        id: `sponsor_${sp.id}`,
+        name: sp.name,
+        pos: sp.coordinates,
+        icon: sp.badge || '🍔',
+        iconImage: sp.badge || null,
+        logoBg: sp.logoBg || '#FFFFFF',
+        type: 'commercial',
+        category: sp.rubro || 'Comercio Destacado',
+        address: sp.address,
+        color: '#F48138',
+        enabled: true,
+        isSponsored: true,
+        description: sp.name
+      }));
+
+    return [...basePublic, ...activeCommercials];
+  }, [referencePoints, sponsorsRevision]);
 
   // Helper to attach appropriate tile layer based on mapMode
   const setTileLayer = (map, mode) => {
@@ -130,13 +173,13 @@ export default function StreetGameMap({
       landmarksLayerRef.current = null;
     }
 
-    if (!Array.isArray(referencePoints) || referencePoints.length === 0) {
+    if (!Array.isArray(effectiveLandmarks) || effectiveLandmarks.length === 0) {
       return;
     }
 
     const landmarksGroup = L.layerGroup();
 
-    referencePoints.forEach((lm) => {
+    effectiveLandmarks.forEach((lm) => {
       // Ignore if explicitly disabled
       if (lm.enabled === false) return;
 
@@ -220,7 +263,7 @@ export default function StreetGameMap({
         landmarksLayerRef.current = null;
       }
     };
-  }, [isMapReady, referencePoints, isRevealed]);
+  }, [isMapReady, effectiveLandmarks, isRevealed]);
 
   // 2. Switch tile layer when mapMode changes
   useEffect(() => {

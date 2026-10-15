@@ -40,6 +40,22 @@ export function getOrCreateSessionCoupon(sponsor) {
   if (!sponsor) return null;
 
   const storageKey = `cct_coupon_${sponsor.id}`;
+
+  // Si el sponsor está deshabilitado o su promoción fue desactivada, limpiar y no emitir
+  const isCouponActive = sponsor.active !== false &&
+    sponsor.hasCoupon !== false &&
+    sponsor.coupon?.active !== false &&
+    sponsor.coupon?.enabled !== false;
+
+  if (!isCouponActive) {
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.removeItem(storageKey);
+      } catch (e) {}
+    }
+    return null;
+  }
+
   if (typeof sessionStorage !== 'undefined') {
     const existing = sessionStorage.getItem(storageKey);
     if (existing) {

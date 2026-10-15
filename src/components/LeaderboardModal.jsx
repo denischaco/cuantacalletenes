@@ -13,7 +13,7 @@ import {
 import {
   subscribeLeaderboard
 } from '../services/firebase';
-import sponsorsData from '../data/sponsors.json';
+import { getLoadedSponsors } from '../utils/streetRandomizer';
 
 export default function LeaderboardModal({
   onClose,
@@ -25,8 +25,8 @@ export default function LeaderboardModal({
   const activeZoneTab = userZoneTab || (initialZoneId === 'toda_ciudad' ? 'toda_ciudad' : initialZoneId === 'all' ? 'all' : 'centro');
   const [onlyBestPerPlayer, setOnlyBestPerPlayer] = useState(false);
 
-  // Level 3 Sponsors (Tier: sponsor_zona)
-  const level3Sponsors = sponsorsData.filter(
+  // Level 3 Sponsors (Tier: sponsor_zona) - Solo activos
+  const level3Sponsors = getLoadedSponsors().filter(
     (s) => s.active !== false && (s.plan === 'sponsor_zona' || s.tier === 3 || s.level === 3)
   );
 

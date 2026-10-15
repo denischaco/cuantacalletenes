@@ -34,7 +34,7 @@ export function getStreetById(id) {
   const loadedSponsors = getLoadedSponsors();
   if (Array.isArray(loadedSponsors)) {
     const sp = loadedSponsors.find(
-      (s) => s.targetStreet?.id === id || s.id === id
+      (s) => s.active !== false && (s.targetStreet?.id === id || s.id === id)
     );
     if (sp && sp.targetStreet) {
       return {

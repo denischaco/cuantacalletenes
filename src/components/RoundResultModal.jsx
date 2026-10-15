@@ -202,7 +202,7 @@ export default function RoundResultModal({
         </div>
 
         {/* Geo-Activated Sponsor Card */}
-        {street?.isSponsored && street?.sponsor && (() => {
+        {street?.isSponsored && street?.sponsor && street?.sponsor?.active !== false && (() => {
           const hasActiveCoupon = Boolean(
             street.sponsor.coupon &&
             street.sponsor.hasCoupon !== false &&
