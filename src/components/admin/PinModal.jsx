@@ -123,10 +123,6 @@ export default function PinModal({ isOpen, onClose, onUnlock, expectedPin = '198
             ← Borrar
           </button>
         </div>
-
-        <p className="text-[10px] text-center text-slate-500 pt-1">
-          (PIN por defecto de prueba: <span className="font-mono text-amber-400 font-bold">{expectedPin}</span>)
-        </p>
       </div>
     </div>
   );

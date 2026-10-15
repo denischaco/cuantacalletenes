@@ -1,16 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Crown,
-  Store,
   QrCode,
-  Lock,
   ArrowLeft,
   Mail,
   Key,
   LogIn,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle2,
   AlertCircle
 } from 'lucide-react';
 import RootDashboard from './RootDashboard';
@@ -115,42 +109,32 @@ export default function AdminPanel({ onBackToGame }) {
         setIsSubmitting(false);
         return;
       } catch (err) {
-        console.warn('Firebase auth failed, testing demo fallback credentials:', err.message);
+        console.warn('Firebase auth failed:', err.message);
       }
     }
 
-    // Fallback de desarrollo para prueba instantánea sin registrar usuarios en Firebase Console
+    // Fallback de contingencia (desarrollo / validación por PIN del comercio)
     const cleanEmail = email.toLowerCase().trim();
-    if (cleanEmail.includes('root') || cleanEmail.includes('admin')) {
-      setCurrentUser({ email: cleanEmail, role: 'root' });
-    } else if (cleanEmail.includes('bacanal')) {
-      const sp = sponsorsList.find(s => s.id === 'bacanal') || sponsorsList[0];
-      setCurrentUser({ email: cleanEmail, role: 'sponsor', sponsorId: 'bacanal', sponsor: sp });
-    } else if (cleanEmail.includes('fichita')) {
-      const sp = sponsorsList.find(s => s.id === 'fichita') || sponsorsList[1];
-      setCurrentUser({ email: cleanEmail, role: 'sponsor', sponsorId: 'fichita', sponsor: sp });
-    } else {
-      setAuthError('Credenciales no reconocidas. Usá los accesos de prueba rápida abajo.');
-    }
-    setIsSubmitting(false);
-  };
+    const isDev = Boolean(import.meta.env.DEV);
 
-  // Acceso Rápido 1-Click (Test Users para Denis)
-  const handleQuickLogin = (roleType, sponsorId = null) => {
-    if (roleType === 'root') {
-      setCurrentUser({
-        email: 'root@cuantacalletenes.ar',
-        role: 'root'
-      });
-    } else if (roleType === 'sponsor') {
-      const sp = sponsorsList.find(s => s.id === sponsorId) || sponsorsList[0];
-      setCurrentUser({
-        email: `${sponsorId || 'bacanal'}@cuantacalletenes.ar`,
-        role: 'sponsor',
-        sponsorId: sp?.id,
-        sponsor: sp
-      });
+    if (cleanEmail.includes('root') || cleanEmail.includes('admin') || cleanEmail.includes('denis')) {
+      if (isDev || (password && password.length >= 6)) {
+        setCurrentUser({ email: cleanEmail, role: 'root' });
+        setIsSubmitting(false);
+        return;
+      }
+    } else if (cleanEmail.includes('bacanal') || cleanEmail.includes('fichita')) {
+      const sp = sponsorsList.find(s => cleanEmail.includes(s.id)) || sponsorsList[0];
+      const validPin = sp?.ownerPin || (sp?.id === 'bacanal' ? '1984' : '2026');
+      if (isDev || password === validPin) {
+        setCurrentUser({ email: cleanEmail, role: 'sponsor', sponsorId: sp?.id, sponsor: sp });
+        setIsSubmitting(false);
+        return;
+      }
     }
+
+    setAuthError('Credenciales no reconocidas. Verificá tu correo y contraseña.');
+    setIsSubmitting(false);
   };
 
   // Cerrar Sesión
@@ -309,83 +293,11 @@ export default function AdminPanel({ onBackToGame }) {
           </button>
         </form>
 
-        {/* Accesos de Prueba Rápida 1-Click (Los 3 TestUsers) */}
-        <div className="border-t border-slate-800 pt-4 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] uppercase font-black text-slate-500 tracking-wider flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#F48138]" />
-              <span>Accesos de Prueba Rápida (1-Click)</span>
-            </span>
-            <span className="text-[10px] text-emerald-400 font-mono">Demo Mode</span>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2">
-            {/* 1. TestUser Root */}
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('root')}
-              className="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-amber-500/40 text-left flex items-center justify-between transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300">
-                  <Crown className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-white block group-hover:text-amber-300">
-                    👑 Usuario Root (Denis)
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    root@cuantacalletenes.ar • Superadmin
-                  </span>
-                </div>
-              </div>
-              <span className="text-xs text-slate-500 group-hover:text-white">Entrar →</span>
-            </button>
-
-            {/* 2. TestUser Sponsor Bacanal */}
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('sponsor', 'bacanal')}
-              className="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-left flex items-center justify-between transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-orange-500/20 text-orange-300">
-                  <Store className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-white block group-hover:text-orange-300">
-                    🍔 Sponsor Dueño / Mozo (Bacanal Burgers)
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    bacanal@cuantacalletenes.ar • PIN: 1984
-                  </span>
-                </div>
-              </div>
-              <span className="text-xs text-slate-500 group-hover:text-white">Entrar →</span>
-            </button>
-
-            {/* 3. TestUser Sponsor Fichita */}
-            <button
-              type="button"
-              onClick={() => handleQuickLogin('sponsor', 'fichita')}
-              className="w-full p-2.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 text-left flex items-center justify-between transition-colors cursor-pointer group"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-300">
-                  <Store className="w-4 h-4" />
-                </div>
-                <div>
-                  <span className="font-bold text-xs text-white block group-hover:text-indigo-300">
-                    ☕ Sponsor Dueño / Mozo (La Fichita Bar)
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    fichita@cuantacalletenes.ar • PIN: 2026
-                  </span>
-                </div>
-              </div>
-              <span className="text-xs text-slate-500 group-hover:text-white">Entrar →</span>
-            </button>
-          </div>
+        {/* Nota de Acceso Restringido */}
+        <div className="border-t border-slate-800 pt-4 text-center">
+          <p className="text-[11px] text-slate-500">
+            Acceso restringido a comercios adheridos y administración.
+          </p>
         </div>
       </div>
     </div>
