@@ -101,6 +101,9 @@ export default function AdminPanel({ onBackToGame }) {
     setIsSubmitting(true);
     setAuthError('');
 
+    const cleanEmail = email.toLowerCase().trim();
+
+    // 1. Intentar primero con Firebase Auth si está disponible
     const auth = getAuthInstance();
     if (auth) {
       try {
@@ -113,18 +116,37 @@ export default function AdminPanel({ onBackToGame }) {
       }
     }
 
-    // Fallback de contingencia con verificación estricta de contraseña
-    const cleanEmail = email.toLowerCase().trim();
-    const adminSecret = import.meta.env.VITE_ADMIN_PASSWORD || import.meta.env.VITE_ADMIN_CLEAR_PASSWORD;
+    // 2. Si el usuario intenta entrar como Superadmin / Root:
+    if (cleanEmail.includes('root') || cleanEmail.includes('admin') || cleanEmail.includes('denis')) {
+      // 2a. Validar contra el servidor Cloudflare / Vercel (/api/admin-auth)
+      try {
+        const res = await fetch('/api/admin-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: cleanEmail, password })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok) {
+            setCurrentUser({ email: cleanEmail, role: 'root' });
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Error al conectar con /api/admin-auth:', err.message);
+      }
 
-    // Root solo puede ingresar si coincide la contraseña maestra configurada
-    if (adminSecret && password === adminSecret && (cleanEmail.includes('root') || cleanEmail.includes('admin') || cleanEmail.includes('denis'))) {
-      setCurrentUser({ email: cleanEmail, role: 'root' });
-      setIsSubmitting(false);
-      return;
+      // 2b. Fallback local para desarrollo si está configurado en .env
+      const adminSecret = import.meta.env.VITE_ADMIN_PASSWORD || import.meta.env.VITE_ADMIN_CLEAR_PASSWORD;
+      if (adminSecret && password === adminSecret) {
+        setCurrentUser({ email: cleanEmail, role: 'root' });
+        setIsSubmitting(false);
+        return;
+      }
     }
 
-    // Sponsors solo pueden ingresar si la contraseña coincide exactamente con su PIN secreto
+    // 3. Sponsors: solo pueden ingresar si la contraseña coincide exactamente con su PIN secreto
     const sp = sponsorsList.find(s => cleanEmail.includes(s.id));
     if (sp) {
       const validPin = sp.ownerPin || (sp.id === 'bacanal' ? '1984' : '2026');
