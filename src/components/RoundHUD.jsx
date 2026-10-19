@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sparkles, Edit3, ListOrdered, CheckCircle2, ChevronDown, ChevronUp, AlertCircle, Lock, Clock } from 'lucide-react';
+import { isSponsorCouponActive } from '../utils/couponGenerator';
+import { getLiveSponsorById } from '../utils/streetRandomizer';
 
 const ROUND_TIME_LIMIT = 20; // 20 segundos por ronda
 
@@ -236,15 +238,16 @@ export default function RoundHUD({
                 <span>⭐ Desafío Gastronómico Local</span>
               </div>
               <h2 className="text-sm sm:text-lg md:text-xl font-heading font-black text-white tracking-tight drop-shadow flex items-center justify-center gap-1.5">
-                {renderSponsorBadge(currentStreet.sponsor?.badge, currentStreet.sponsor?.name, currentStreet.sponsor?.logoBg)}
-                <span>¿En qué calle queda {currentStreet.sponsor?.name || 'este local'}?</span>
+                {renderSponsorBadge(
+                  (getLiveSponsorById(currentStreet.sponsor?.id) || currentStreet.sponsor)?.badge,
+                  (getLiveSponsorById(currentStreet.sponsor?.id) || currentStreet.sponsor)?.name,
+                  (getLiveSponsorById(currentStreet.sponsor?.id) || currentStreet.sponsor)?.logoBg
+                )}
+                <span>¿En qué calle queda {(getLiveSponsorById(currentStreet.sponsor?.id) || currentStreet.sponsor)?.name || 'este local'}?</span>
               </h2>
               <p className="text-[10px] sm:text-[11px] text-amber-200/90 mt-0.5 font-medium">
                 📍 Adiviná la calle (+2 pts) o la dirección exacta con número (+4 pts){
-                  currentStreet?.sponsor?.coupon &&
-                  currentStreet.sponsor.hasCoupon !== false &&
-                  currentStreet.sponsor.coupon.active !== false &&
-                  currentStreet.sponsor.coupon.enabled !== false
+                  isSponsorCouponActive(getLiveSponsorById(currentStreet.sponsor?.id) || currentStreet.sponsor)
                     ? ' y desbloqueá tu cupón con descuento.'
                     : '.'
                 }

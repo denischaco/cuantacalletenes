@@ -12,7 +12,8 @@ import {
   Sparkles,
   QrCode as QrIcon
 } from 'lucide-react';
-import { getOrCreateSessionCoupon, getCanonicalAdminUrl } from '../utils/couponGenerator';
+import { getOrCreateSessionCoupon, getCanonicalAdminUrl, isSponsorCouponActive } from '../utils/couponGenerator';
+import { getLiveSponsorById } from '../utils/streetRandomizer';
 import { downloadCouponVoucher } from '../utils/voucherCanvas';
 import { trackEvent } from '../services/analytics';
 
@@ -21,10 +22,27 @@ export default function CouponModal({ sponsor, onClose }) {
   const [downloading, setDownloading] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
 
+  // Resolver la versión viva más reciente del sponsor
+  const liveSponsor = useMemo(() => {
+    return getLiveSponsorById(sponsor?.id) || sponsor;
+  }, [sponsor]);
+
+  const isCouponActive = useMemo(() => {
+    return isSponsorCouponActive(liveSponsor);
+  }, [liveSponsor]);
+
+  // Si el cupón fue desactivado mientras el modal estaba abierto, cerrarlo de inmediato
+  useEffect(() => {
+    if (!isCouponActive && onClose) {
+      onClose();
+    }
+  }, [isCouponActive, onClose]);
+
   // Obtiene o genera el cupón con ID único para esta sesión
   const couponData = useMemo(() => {
-    return getOrCreateSessionCoupon(sponsor);
-  }, [sponsor]);
+    if (!isCouponActive) return null;
+    return getOrCreateSessionCoupon(liveSponsor);
+  }, [liveSponsor, isCouponActive]);
 
   useEffect(() => {
     if (couponData?.uniqueId) {
@@ -39,19 +57,19 @@ export default function CouponModal({ sponsor, onClose }) {
     }
   }, [couponData]);
 
-  if (!sponsor || !couponData) return null;
+  if (!liveSponsor || !couponData || !isCouponActive) return null;
 
   const handleDownload = async () => {
     setDownloading(true);
     trackEvent('coupon_download_voucher', {
-      sponsor_id: sponsor.id,
-      sponsor_name: sponsor.name,
+      sponsor_id: liveSponsor.id,
+      sponsor_name: liveSponsor.name,
       coupon_id: couponData.uniqueId,
       discount: couponData.discount
     });
 
     try {
-      await downloadCouponVoucher(sponsor, couponData);
+      await downloadCouponVoucher(liveSponsor, couponData);
     } catch (e) {
       console.warn('Error downloading voucher:', e);
     }
@@ -61,7 +79,7 @@ export default function CouponModal({ sponsor, onClose }) {
   const handleCopyCode = () => {
     navigator.clipboard.writeText(couponData.code);
     trackEvent('coupon_copy_code', {
-      sponsor_id: sponsor.id,
+      sponsor_id: liveSponsor.id,
       coupon_code: couponData.code
     });
     setCopiedCode(true);
@@ -70,14 +88,14 @@ export default function CouponModal({ sponsor, onClose }) {
 
   const handleOpenMaps = () => {
     trackEvent('sponsor_maps_navigation', {
-      sponsor_id: sponsor.id,
-      sponsor_address: sponsor.address
+      sponsor_id: liveSponsor.id,
+      sponsor_address: liveSponsor.address
     });
     const url =
-      sponsor.coupon?.googleMapsUrl ||
-      sponsor.googleMapsUrl ||
-      (sponsor.coordinates
-        ? `https://www.google.com/maps/search/?api=1&query=${sponsor.coordinates[0]},${sponsor.coordinates[1]}`
+      liveSponsor.coupon?.googleMapsUrl ||
+      liveSponsor.googleMapsUrl ||
+      (liveSponsor.coordinates
+        ? `https://www.google.com/maps/search/?api=1&query=${liveSponsor.coordinates[0]},${liveSponsor.coordinates[1]}`
         : null);
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
@@ -93,13 +111,13 @@ export default function CouponModal({ sponsor, onClose }) {
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center gap-2.5 min-w-0">
             <div
-              style={{ backgroundColor: sponsor.logoBg || '#FFFFFF' }}
+              style={{ backgroundColor: liveSponsor.logoBg || '#FFFFFF' }}
               className="w-10 h-10 rounded-xl p-1 border border-[#F48138]/50 shadow flex items-center justify-center shrink-0 overflow-hidden"
             >
-              {sponsor.badge ? (
+              {liveSponsor.badge ? (
                 <img
-                  src={sponsor.badge}
-                  alt={sponsor.name}
+                  src={liveSponsor.badge}
+                  alt={liveSponsor.name}
                   className="w-full h-full object-contain"
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
@@ -114,7 +132,7 @@ export default function CouponModal({ sponsor, onClose }) {
                 Cupón de Beneficio Exclusivo
               </h3>
               <p className="text-xs text-slate-400 truncate">
-                {sponsor.name} • {sponsor.address}
+                {liveSponsor.name} • {liveSponsor.address}
               </p>
             </div>
           </div>

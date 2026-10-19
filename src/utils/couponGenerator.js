@@ -22,10 +22,35 @@ export function generateUniqueCouponId(_sponsorId = '') {
 }
 
 import { saveGeneratedCoupon } from '../services/firebase';
+import { getLiveSponsorById } from './streetRandomizer';
 
 /**
- * Obtiene o crea un cupón persistente para la sesión actual del usuario
+ * Valida de forma estricta si un sponsor y su beneficio digital están actualmente habilitados para emisión.
+ * Siempre consulta el estado vivo en memoria / Firestore para garantizar fidelidad 100%.
  */
+export function isSponsorCouponActive(sponsor) {
+  if (!sponsor) return false;
+  const live = getLiveSponsorById(sponsor.id) || sponsor;
+  return Boolean(
+    live &&
+    live.active !== false &&
+    live.hasCoupon !== false &&
+    live.coupon &&
+    live.coupon.active !== false &&
+    live.coupon.enabled !== false
+  );
+}
+
+/**
+ * Invalida y elimina cualquier cupón emitido en la sesión para el sponsor dado.
+ */
+export function clearSessionCoupon(sponsorId) {
+  if (!sponsorId || typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.removeItem(`cct_coupon_${sponsorId}`);
+  } catch (e) {}
+}
+
 /**
  * Obtiene la URL canónica del panel de canje para el cupón.
  * Fuerza siempre https://cuantacalletenes.ar (salvo en entorno de desarrollo local).
@@ -39,20 +64,13 @@ export function getCanonicalAdminUrl(uniqueId) {
 export function getOrCreateSessionCoupon(sponsor) {
   if (!sponsor) return null;
 
-  const storageKey = `cct_coupon_${sponsor.id}`;
+  // Resolver la versión viva más reciente del sponsor
+  const liveSponsor = getLiveSponsorById(sponsor.id) || sponsor;
+  const storageKey = `cct_coupon_${liveSponsor.id}`;
 
-  // Si el sponsor está deshabilitado o su promoción fue desactivada, limpiar y no emitir
-  const isCouponActive = sponsor.active !== false &&
-    sponsor.hasCoupon !== false &&
-    sponsor.coupon?.active !== false &&
-    sponsor.coupon?.enabled !== false;
-
-  if (!isCouponActive) {
-    if (typeof sessionStorage !== 'undefined') {
-      try {
-        sessionStorage.removeItem(storageKey);
-      } catch (e) {}
-    }
+  // Si el sponsor está deshabilitado o su promoción fue desactivada, limpiar de inmediato y no emitir
+  if (!isSponsorCouponActive(liveSponsor)) {
+    clearSessionCoupon(liveSponsor.id);
     return null;
   }
 
@@ -71,9 +89,9 @@ export function getOrCreateSessionCoupon(sponsor) {
   }
 
   const issuedAt = new Date();
-  const validityHours = sponsor.coupon?.validityHours || 48; // 48 horas por defecto
+  const validityHours = liveSponsor.coupon?.validityHours || 48; // 48 horas por defecto
   const expiresAt = new Date(issuedAt.getTime() + validityHours * 60 * 60 * 1000);
-  const uniqueId = generateUniqueCouponId(sponsor.id);
+  const uniqueId = generateUniqueCouponId(liveSponsor.id);
 
   // Deep Link canónico para validación directa en salón
   const redeemUrl = getCanonicalAdminUrl(uniqueId);
@@ -81,19 +99,19 @@ export function getOrCreateSessionCoupon(sponsor) {
   const newCouponData = {
     uniqueId,
     redeemUrl,
-    sponsorId: sponsor.id,
-    sponsorName: sponsor.name,
-    discount: sponsor.coupon?.discount || '15% OFF',
-    code: sponsor.coupon?.code || 'CALLE-DESCUENTO',
-    title: sponsor.coupon?.title || 'Cupón Oficial de Descuento',
-    scope: sponsor.coupon?.scope || 'individual',
-    scopeLabel: sponsor.coupon?.scopeLabel || 'Por persona / Comensal individual',
-    paymentMethods: sponsor.coupon?.paymentMethods || ['Efectivo', 'Transferencia'],
-    terms: sponsor.coupon?.terms || [
+    sponsorId: liveSponsor.id,
+    sponsorName: liveSponsor.name,
+    discount: liveSponsor.coupon?.discount || '15% OFF',
+    code: liveSponsor.coupon?.code || 'CALLE-DESCUENTO',
+    title: liveSponsor.coupon?.title || 'Cupón Oficial de Descuento',
+    scope: liveSponsor.coupon?.scope || 'individual',
+    scopeLabel: liveSponsor.coupon?.scopeLabel || 'Por persona / Comensal individual',
+    paymentMethods: liveSponsor.coupon?.paymentMethods || ['Efectivo', 'Transferencia'],
+    terms: liveSponsor.coupon?.terms || [
       'Presentar la captura con ID único y fecha/hora legible en caja.',
       'No acumulable con otras promociones vigentes.'
     ],
-    instructions: sponsor.coupon?.instructions || 'Mostrá esta pantalla o captura con tu ID único en caja.',
+    instructions: liveSponsor.coupon?.instructions || 'Mostrá esta pantalla o captura con tu ID único en caja.',
     issuedAt: issuedAt.toISOString(),
     expiresAt: expiresAt.toISOString(),
     formattedIssuedAt: issuedAt.toLocaleString('es-AR', {

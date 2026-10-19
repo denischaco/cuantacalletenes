@@ -823,6 +823,15 @@ export async function saveOrUpdateSponsor(sponsorData) {
     localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(list));
   } catch (e) {}
 
+  // Si el cupón o el sponsor fue desactivado, invalidar de inmediato cualquier cupón de sesión local
+  if (cleanSponsor.active === false || cleanSponsor.coupon?.active === false || cleanSponsor.coupon?.enabled === false) {
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.removeItem(`cct_coupon_${sponsorId}`);
+      } catch (e) {}
+    }
+  }
+
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('cct_sponsors_updated', { detail: { type: 'sponsor_saved', sponsor: cleanSponsor } }));
   }
@@ -912,6 +921,15 @@ export async function updateSponsorCoupon(sponsorId, couponUpdate, sponsorName =
     localStorage.setItem(LOCAL_SPONSORS_KEY, JSON.stringify(list));
   } catch (e) {
     console.warn('Error updating local sponsor coupon cache:', e);
+  }
+
+  // Si el cupón fue desactivado, invalidar de inmediato cualquier cupón de sesión local
+  if (couponUpdate?.active === false || couponUpdate?.enabled === false) {
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.removeItem(`cct_coupon_${sponsorId}`);
+      } catch (e) {}
+    }
   }
 
   // 3. Notificar a componentes en tiempo real

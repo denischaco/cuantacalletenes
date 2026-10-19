@@ -20,6 +20,16 @@ export function getLoadedSponsors() {
 }
 
 /**
+ * Obtiene un sponsor específico por su ID consultando el estado vivo en memoria / caché sincronizada.
+ */
+export function getLiveSponsorById(sponsorId) {
+  if (!sponsorId) return null;
+  const sponsors = getLoadedSponsors();
+  if (!Array.isArray(sponsors)) return null;
+  return sponsors.find((s) => s.id === sponsorId) || null;
+}
+
+/**
  * Resolves a street by ID, checking both regular streets and sponsor target streets.
  * Essential for 1v1 challenges where a sponsored street was in the round.
  */

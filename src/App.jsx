@@ -21,9 +21,9 @@ import landmarksData from './data/landmarks.json';
 import ranksData from './data/ranks.json';
 import streetsData from './data/resistenciaStreets.json';
 import sponsorsData from './data/sponsors.json';
-import { getRandomStreetRound, getRankForScore, generateRoundOptions, getStreetById, getLoadedSponsors } from './utils/streetRandomizer';
+import { getRandomStreetRound, getRankForScore, generateRoundOptions, getStreetById, getLoadedSponsors, getLiveSponsorById } from './utils/streetRandomizer';
 import { getRandomNonIntersectionPoint, validateStreetGuess } from './utils/geoUtils';
-import { saveScoreEntry, getChallenge } from './services/firebase';
+import { saveScoreEntry, getChallenge, fetchSponsorsFromDb } from './services/firebase';
 import {
   trackGameStart,
   trackOpenAdvertise,
@@ -143,10 +143,32 @@ export default function App() {
 
   const [sponsorsRevision, setSponsorsRevision] = useState(0);
 
+  // Sincronizar sponsors con Firestore en segundo plano al montar la app
+  useEffect(() => {
+    fetchSponsorsFromDb(sponsorsData).catch((err) => {
+      console.warn('Background sponsors sync notice:', err);
+    });
+  }, []);
+
   // Escuchar cambios en sponsors y cupones en tiempo real
   useEffect(() => {
     const handleSponsorsUpdate = () => {
       setSponsorsRevision((r) => r + 1);
+      // Sincronizar dinámicamente los datos de sponsors en las calles de la partida actual
+      setRoundStreets((prev) =>
+        prev.map((st) => {
+          if (st.isSponsored && st.sponsor?.id) {
+            const live = getLiveSponsorById(st.sponsor.id);
+            if (live) {
+              return {
+                ...st,
+                sponsor: live
+              };
+            }
+          }
+          return st;
+        })
+      );
     };
     window.addEventListener('cct_sponsors_updated', handleSponsorsUpdate);
     return () => {

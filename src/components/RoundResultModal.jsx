@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Award, ArrowRight, BookOpen, CheckCircle, XCircle, AlertTriangle, MapPin, ExternalLink, Download, Check, ShieldAlert, Clock } from 'lucide-react';
 import { trackSponsorClick, trackEvent } from '../services/analytics';
-import { getOrCreateSessionCoupon } from '../utils/couponGenerator';
+import { getOrCreateSessionCoupon, isSponsorCouponActive } from '../utils/couponGenerator';
+import { getLiveSponsorById } from '../utils/streetRandomizer';
 import { downloadCouponVoucher } from '../utils/voucherCanvas';
 import { findNearbySculpture, unlockSculpture } from '../utils/sculptureUtils';
 import SculptureUnlockCard from './SculptureUnlockCard';
@@ -43,6 +44,24 @@ export default function RoundResultModal({
   const [copiedCode, setCopiedCode] = useState(false);
   const nextButtonRef = useRef(null);
 
+  // Escuchar actualizaciones de sponsors en tiempo real (ej: cambios desde Root o Sponsor Dashboard)
+  const [sponsorsRev, setSponsorsRev] = useState(0);
+  useEffect(() => {
+    const handleUpdate = () => setSponsorsRev((r) => r + 1);
+    window.addEventListener('cct_sponsors_updated', handleUpdate);
+    return () => window.removeEventListener('cct_sponsors_updated', handleUpdate);
+  }, []);
+
+  // Obtener la instancia viva y actualizada del sponsor para garantizar fidelidad 100%
+  const liveSponsor = useMemo(() => {
+    if (!street?.isSponsored || !street?.sponsor?.id) return street?.sponsor || null;
+    return getLiveSponsorById(street.sponsor.id) || street.sponsor;
+  }, [street, sponsorsRev]);
+
+  const hasActiveCoupon = useMemo(() => {
+    return isSponsorCouponActive(liveSponsor);
+  }, [liveSponsor]);
+
   // Detección automática de la escultura más cercana a la calle de esta ronda
   const nearbySculpture = useMemo(() => {
     return findNearbySculpture(street, 250);
@@ -56,24 +75,24 @@ export default function RoundResultModal({
     return { isNewUnlock: false };
   });
 
-  // Track coupon unlock event
+  // Track coupon unlock event (solo si el cupón está activo)
   useEffect(() => {
-    if (street?.isSponsored && street?.sponsor?.id) {
+    if (street?.isSponsored && liveSponsor?.id && hasActiveCoupon) {
       trackEvent('coupon_unlocked', {
-        sponsor_id: street.sponsor.id,
-        sponsor_name: street.sponsor.name,
+        sponsor_id: liveSponsor.id,
+        sponsor_name: liveSponsor.name,
         round_number: currentRound
       });
     }
-  }, [street, currentRound]);
+  }, [street, liveSponsor, hasActiveCoupon, currentRound]);
 
-  // Cupón persistente de la sesión con ID único y timestamp
+  // Cupón persistente de la sesión con ID único y timestamp (solo si está activo)
   const sessionCoupon = useMemo(() => {
-    if (street?.isSponsored && street?.sponsor) {
-      return getOrCreateSessionCoupon(street.sponsor);
+    if (street?.isSponsored && liveSponsor && hasActiveCoupon) {
+      return getOrCreateSessionCoupon(liveSponsor);
     }
     return null;
-  }, [street]);
+  }, [street, liveSponsor, hasActiveCoupon]);
 
   // Auto-focus on button and listen for Enter key to advance immediately
   useEffect(() => {
@@ -202,30 +221,24 @@ export default function RoundResultModal({
         </div>
 
         {/* Geo-Activated Sponsor Card */}
-        {street?.isSponsored && street?.sponsor && street?.sponsor?.active !== false && (() => {
-          const hasActiveCoupon = Boolean(
-            street.sponsor.coupon &&
-            street.sponsor.hasCoupon !== false &&
-            street.sponsor.coupon.active !== false &&
-            street.sponsor.coupon.enabled !== false
-          );
-          const mapsUrl = street.sponsor.coupon?.googleMapsUrl ||
-            street.sponsor.googleMapsUrl ||
-            (street.sponsor.coordinates ? `https://www.google.com/maps/search/?api=1&query=${street.sponsor.coordinates[0]},${street.sponsor.coordinates[1]}` : null);
+        {street?.isSponsored && liveSponsor && liveSponsor.active !== false && (() => {
+          const mapsUrl = liveSponsor.coupon?.googleMapsUrl ||
+            liveSponsor.googleMapsUrl ||
+            (liveSponsor.coordinates ? `https://www.google.com/maps/search/?api=1&query=${liveSponsor.coordinates[0]},${liveSponsor.coordinates[1]}` : null);
 
           return (
             <div className="bg-gradient-to-br from-[#241105] via-slate-900 to-[#1a0c03] border-2 border-[#F48138] rounded-2xl p-4 shadow-xl text-left space-y-3 relative overflow-hidden animate-scale-up">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {renderBadge(street.sponsor.badge, street.sponsor.name, street.sponsor.logoBg)}
+                  {renderBadge(liveSponsor.badge, liveSponsor.name, liveSponsor.logoBg)}
                   <div>
                     <span className="text-[10px] uppercase font-bold text-[#FFA559] tracking-wider block">
-                      {hasActiveCoupon ? 'Beneficio Exclusivo • ' : 'Comercio Destacado • '}{street.sponsor.name}
+                      {hasActiveCoupon ? 'Beneficio Exclusivo • ' : 'Comercio Destacado • '}{liveSponsor.name}
                     </span>
                     <h4 className="font-heading font-black text-sm text-white">
                       {hasActiveCoupon
-                        ? (street.sponsor.coupon?.title || '15% OFF en tu Consumo')
-                        : (street.sponsor.rubro || street.sponsor.name)}
+                        ? (liveSponsor.coupon?.title || '15% OFF en tu Consumo')
+                        : (liveSponsor.rubro || liveSponsor.name)}
                     </h4>
                   </div>
                 </div>
@@ -273,12 +286,12 @@ export default function RoundResultModal({
                         type="button"
                         onClick={async () => {
                           trackEvent('coupon_download_voucher', {
-                            sponsor_id: street.sponsor.id,
-                            sponsor_name: street.sponsor.name,
+                            sponsor_id: liveSponsor.id,
+                            sponsor_name: liveSponsor.name,
                             coupon_id: sessionCoupon.uniqueId,
                             discount: sessionCoupon.discount
                           });
-                          await downloadCouponVoucher(street.sponsor, sessionCoupon);
+                          await downloadCouponVoucher(liveSponsor, sessionCoupon);
                           setCopiedCode(true);
                           setTimeout(() => setCopiedCode(false), 2500);
                         }}
@@ -293,7 +306,7 @@ export default function RoundResultModal({
                         type="button"
                         onClick={() => {
                           trackEvent('coupon_copy_code', {
-                            sponsor_id: street.sponsor.id,
+                            sponsor_id: liveSponsor.id,
                             coupon_code: sessionCoupon.code
                           });
                           navigator.clipboard.writeText(sessionCoupon.code);
@@ -311,7 +324,7 @@ export default function RoundResultModal({
                     {onOpenCouponModal && (
                       <button
                         type="button"
-                        onClick={() => onOpenCouponModal(street.sponsor)}
+                        onClick={() => onOpenCouponModal(liveSponsor)}
                         className="text-[11px] text-[#FFA559] hover:text-amber-200 font-semibold underline block mx-auto pt-1 cursor-pointer"
                       >
                         Ver cupón completo, alcance y condiciones
@@ -327,11 +340,12 @@ export default function RoundResultModal({
                   href={mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => trackSponsorClick(street.sponsor.name, 'round_result_how_to_get')}
+                  onClick={() => trackSponsorClick(liveSponsor.name, 'round_result_how_to_get')}
                   className="w-full py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 hover:text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                  title="Abrir mapa de ubicación oficial del auspiciante"
                 >
                   <MapPin className="w-3.5 h-3.5 text-[#F48138]" />
-                  <span>Cómo Llegar ({street.sponsor.address || 'Ver en Google Maps'})</span>
+                  <span>Cómo Llegar ({liveSponsor.address || 'Ver en Google Maps'})</span>
                   <ExternalLink className="w-3 h-3 text-slate-400" />
                 </a>
               )}
