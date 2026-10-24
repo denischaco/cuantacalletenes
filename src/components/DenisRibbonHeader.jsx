@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { ExternalLink, Heart, Zap, Shield, Menu, X, Trophy, HelpCircle, KeyRound } from 'lucide-react';
 import { useOnlineCount } from '../services/onlinePresence';
+import { trackEvent } from '../services/analytics';
+import InstagramIcon from './icons/InstagramIcon';
 
 export default function DenisRibbonHeader({
   onOpenHelp,
@@ -261,6 +263,36 @@ export default function DenisRibbonHeader({
                     </div>
                   </button>
                 )}
+
+                {/* Featured Instagram Follow Menu Item */}
+                <a
+                  href="https://www.instagram.com/cuantacalletenes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    trackEvent('social_follow_click', { platform: 'instagram', placement: 'hamburger_menu' });
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full p-2.5 rounded-xl bg-gradient-to-r from-pink-950/40 via-purple-950/25 to-slate-950/80 hover:from-pink-950/60 hover:to-purple-900/40 border border-pink-500/40 hover:border-pink-400 text-left flex items-center gap-3 transition-all cursor-pointer group shadow-sm shadow-pink-950/30"
+                >
+                  <div className="p-2 rounded-lg bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white shadow-md shadow-pink-500/25 shrink-0 group-hover:scale-105 transition-transform">
+                    <InstagramIcon className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-heading font-bold text-xs text-white block group-hover:text-pink-300 transition-colors">
+                        Seguinos en Instagram
+                      </span>
+                      <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.2 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/40">
+                        Comunidad
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-300 block truncate">
+                      Novedades y desafíos
+                    </span>
+                  </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-pink-300 transition-colors shrink-0" />
+                </a>
 
                 {onOpenAdvertise && (
                   <button

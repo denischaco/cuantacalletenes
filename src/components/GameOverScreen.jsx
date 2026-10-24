@@ -14,13 +14,16 @@ import {
   Heart,
   Clock,
   Download,
-  AlertCircle
+  AlertCircle,
+  ExternalLink,
+  Loader2
 } from 'lucide-react';
-import { trackShareScore, trackSaveScore, trackSponsorClick } from '../services/analytics';
+import { trackShareScore, trackSaveScore, trackSponsorClick, trackEvent } from '../services/analytics';
 import { createChallenge } from '../services/firebase';
 import { isSponsorCouponActive } from '../utils/couponGenerator';
 import { getLiveSponsorById } from '../utils/streetRandomizer';
-import { downloadChallengeCard } from '../utils/canvasCards';
+import { downloadChallengeCard, generateScoreCardBlob } from '../utils/canvasCards';
+import InstagramIcon from './icons/InstagramIcon';
 
 export default function GameOverScreen({
   totalScore,
@@ -40,6 +43,7 @@ export default function GameOverScreen({
   const [playerName, setPlayerName] = useState('');
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
   const [challengeUrl, setChallengeUrl] = useState('');
   const [challengeCopied, setChallengeCopied] = useState(false);
   const [isCreatingChallenge, setIsCreatingChallenge] = useState(false);
@@ -72,23 +76,60 @@ export default function GameOverScreen({
   };
 
   const handleShare = async () => {
-    trackShareScore({ totalScore, rankTitle: rank.title });
+    if (isSharing) return;
+    setIsSharing(true);
+    trackShareScore({ totalScore, rankTitle: rank?.title });
     const timeFormatted = totalTimeMs > 0 ? ` en ${(totalTimeMs / 1000).toFixed(1)}s` : '';
-    const text = `¡Hice ${totalScore} de 10 puntos${timeFormatted} en "¿Cuánta Calle Tenés?" (Resistencia, Chaco)! Rango: ${rank.title} ${rank.badge}. ¿Te animás a superarme?`;
-    if (navigator.share) {
+    const shareTitle = '¿Cuánta Calle Tenés? - Resistencia, Chaco';
+    const shareText = `¡Hice ${totalScore} de 10 puntos${timeFormatted} en "¿Cuánta Calle Tenés?"! Rango: ${rank?.title || ''} ${rank?.badge || ''}. ¿Querés ver los mejores récords? Seguinos en @cuantacalletenes. ¿Te animás a superarme?`;
+    const shareUrl = 'https://cuantacalletenes.ar/';
+
+    try {
+      let file = null;
       try {
-        await navigator.share({
-          title: '¿Cuánta Calle Tenés? - Resistencia, Chaco',
-          text,
-          url: 'https://cuantacalletenes.ar/'
+        const blob = await generateScoreCardBlob({
+          playerName: playerName.trim(),
+          totalScore,
+          totalTimeMs,
+          rank,
+          zoneName
         });
-      } catch {
-        // user cancelled or share failed
+        if (blob) {
+          file = new File([blob], 'record-cuanta-calle.png', { type: 'image/png' });
+        }
+      } catch (cardErr) {
+        console.warn('No se pudo generar la placa de puntaje:', cardErr);
       }
-    } else {
-      navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+
+      // 1. Web Share API nativa con placa automática (para Instagram Stories, WhatsApp, redes)
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+      } else if (navigator.share) {
+        // 2. Web Share API estándar (texto y enlace)
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl
+        });
+      } else {
+        // 3. Fallback para navegadores sin Web Share API (copiar al portapapeles)
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(`${shareText}\n\nJugá acá 👉 ${shareUrl}`);
+        }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error('Error al compartir puntaje:', err);
+      }
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -636,10 +677,15 @@ export default function GameOverScreen({
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={handleShare}
-              className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              disabled={isSharing}
+              className="py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-75"
             >
-              <Share2 className="w-4 h-4 text-[#F48138]" />
-              <span>{copied ? '¡Copiado!' : 'Compartir'}</span>
+              {isSharing ? (
+                <Loader2 className="w-4 h-4 text-[#F48138] animate-spin" />
+              ) : (
+                <Share2 className="w-4 h-4 text-[#F48138]" />
+              )}
+              <span>{isSharing ? 'Preparando...' : copied ? '¡Copiado!' : 'Compartir'}</span>
             </button>
             <button
               onClick={onPlayAgain}
@@ -649,6 +695,53 @@ export default function GameOverScreen({
               <span>{isDuelMode ? 'Volver al Inicio' : 'Jugar de Nuevo'}</span>
             </button>
           </div>
+        </div>
+
+        {/* Instagram Growth CTA Section (Placed right above institutional credits footer) */}
+        <div className="space-y-2 pt-1">
+          {/* Línea discreta con enlace directo */}
+          <p className="text-center text-[11px] text-slate-400">
+            ¿Querés ver los mejores récords?{' '}
+            <a
+              href="https://www.instagram.com/cuantacalletenes"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent('social_follow_click', { platform: 'instagram', placement: 'game_over_discrete_link' })}
+              className="text-pink-400 hover:text-pink-300 font-bold underline underline-offset-2 transition-colors inline-flex items-center gap-0.5"
+            >
+              <span>Seguinos en @cuantacalletenes</span>
+              <ExternalLink className="w-2.5 h-2.5 inline" />
+            </a>
+          </p>
+
+          {/* Botón de ancho completo con borde degradé de Instagram y fondo oscuro translúcido */}
+          <a
+            href="https://www.instagram.com/cuantacalletenes"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackEvent('social_follow_click', { platform: 'instagram', placement: 'game_over_featured_button' })}
+            className="block p-[1px] rounded-2xl bg-gradient-to-r from-[#f09433] via-[#dc2743] to-[#bc1888] shadow-md shadow-pink-950/20 hover:shadow-lg hover:shadow-pink-500/25 transition-all cursor-pointer group"
+          >
+            <div className="w-full py-2.5 px-3.5 rounded-[15px] bg-slate-950/80 hover:bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-2.5 transition-colors">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-1.5 rounded-xl bg-gradient-to-tr from-[#f09433] via-[#dc2743] to-[#bc1888] text-white shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                  <InstagramIcon className="w-4 h-4" />
+                </div>
+                <div className="text-left min-w-0">
+                  <span className="font-heading font-black text-xs sm:text-sm text-white block group-hover:text-pink-200 transition-colors truncate">
+                    📸 Seguinos en Instagram <span className="text-pink-400">@cuantacalletenes</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 block truncate">
+                    Desafíos semanales, sorteos y mejores marcas
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0 text-slate-400 group-hover:text-pink-300 transition-colors">
+                <span className="text-[11px] font-semibold hidden xs:inline">Seguir</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </div>
+            </div>
+          </a>
         </div>
 
         {/* Credits & Merchant Links in GameOver screen */}

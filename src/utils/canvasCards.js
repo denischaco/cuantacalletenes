@@ -309,3 +309,188 @@ function triggerDownload(canvas, filename) {
     console.error('Error generating image download:', err);
   }
 }
+
+/**
+ * Generates an individual Player Score Card (Placa para Instagram Stories/WhatsApp) as a PNG Blob
+ */
+export function generateScoreCardBlob({
+  creatorName = '',
+  playerName = '',
+  totalScore = 0,
+  totalTimeMs = 0,
+  rank = { title: 'Explorador Urbano', badge: '🏅' },
+  zoneName = 'Resistencia'
+}) {
+  return new Promise((resolve) => {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1350; // 4:5 Instagram feed/stories portrait format
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+
+      const activeName = (playerName || creatorName || 'Callejero Chaqueño').trim();
+
+      // Background gradient: Deep night slate with Chaco accents
+      const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1350);
+      bgGrad.addColorStop(0, '#070A12');
+      bgGrad.addColorStop(0.5, '#0B0F19');
+      bgGrad.addColorStop(1, '#1A0D05');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, 1080, 1350);
+
+      // Decorative ambient glow
+      const glowGrad1 = ctx.createRadialGradient(220, 220, 10, 220, 220, 480);
+      glowGrad1.addColorStop(0, 'rgba(51, 145, 54, 0.28)'); // #339136
+      glowGrad1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glowGrad1;
+      ctx.fillRect(0, 0, 1080, 700);
+
+      const glowGrad2 = ctx.createRadialGradient(860, 1150, 10, 860, 1150, 480);
+      glowGrad2.addColorStop(0, 'rgba(244, 129, 56, 0.26)'); // #F48138
+      glowGrad2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glowGrad2;
+      ctx.fillRect(0, 600, 1080, 750);
+
+      // Outer border with gold/orange touch
+      ctx.strokeStyle = 'rgba(244, 129, 56, 0.45)';
+      ctx.lineWidth = 12;
+      ctx.strokeRect(30, 30, 1020, 1290);
+
+      // Header Brand
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 48px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('¿CUÁNTA CALLE TENÉS?', 540, 125);
+
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = '700 28px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`Resistencia, Chaco • Zona: ${zoneName.toUpperCase()}`, 540, 175);
+
+      // Official Record Badge
+      ctx.fillStyle = 'rgba(244, 129, 56, 0.15)';
+      ctx.beginPath();
+      ctx.roundRect(330, 215, 420, 50, 25);
+      ctx.fill();
+      ctx.strokeStyle = '#F48138';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFA559';
+      ctx.font = '800 22px system-ui, -apple-system, sans-serif';
+      ctx.fillText('🏆 RÉCORD OFICIAL DE CALLE', 540, 248);
+
+      // Central Score Card
+      const cardX = 90;
+      const cardY = 300;
+      const cardW = 900;
+      const cardH = 620;
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.beginPath();
+      ctx.roundRect(cardX, cardY, cardW, cardH, 32);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(244, 129, 56, 0.5)';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      // Player Name
+      ctx.fillStyle = '#FFFFFF';
+      const nameFontSize = activeName.length > 15 ? 36 : 44;
+      ctx.font = `900 ${nameFontSize}px system-ui, -apple-system, sans-serif`;
+      const truncated = activeName.length > 22 ? activeName.slice(0, 21) + '…' : activeName;
+      ctx.fillText(truncated, 540, 380);
+
+      // Big Score
+      const scoreColor = totalScore >= 8 ? '#10B981' : totalScore >= 5 ? '#FBBF24' : '#F48138';
+      ctx.fillStyle = scoreColor;
+      ctx.font = '900 135px system-ui, -apple-system, sans-serif';
+      ctx.fillText(String(totalScore), 540, 520);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '800 28px system-ui, -apple-system, sans-serif';
+      ctx.fillText('DE 10 PUNTOS', 540, 570);
+
+      // Rank Ribbon inside card
+      const rankTitle = rank?.title ? rank.title.toUpperCase() : 'CALLEJERO';
+      const rankBadge = rank?.badge || '🏅';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.beginPath();
+      ctx.roundRect(140, 615, 800, 75, 20);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(253, 230, 138, 0.3)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FCD34D';
+      ctx.font = '800 32px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`${rankBadge} RANGO: ${rankTitle}`, 540, 664);
+
+      // Speed time tag
+      if (totalTimeMs > 0) {
+        ctx.fillStyle = '#38BDF8';
+        ctx.font = '700 26px system-ui, -apple-system, sans-serif';
+        ctx.fillText(`⏱️ Tiempo total: ${(totalTimeMs / 1000).toFixed(1)} segundos`, 540, 740);
+      }
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '600 22px system-ui, -apple-system, sans-serif';
+      ctx.fillText('5 preguntas de calles y alturas resueltas', 540, 785);
+
+      // Bottom Community / Instagram Banner
+      // Instagram pill with gradient style
+      ctx.fillStyle = 'rgba(225, 48, 108, 0.18)';
+      ctx.beginPath();
+      ctx.roundRect(160, 960, 760, 90, 24);
+      ctx.fill();
+      ctx.strokeStyle = '#E1306C';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '800 30px system-ui, -apple-system, sans-serif';
+      ctx.fillText('📸 Seguinos en @cuantacalletenes', 540, 1016);
+
+      // Web Call To Action
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.font = '600 26px system-ui, -apple-system, sans-serif';
+      ctx.fillText('¿Y vos cuánta calle tenés? Superá mi récord en:', 540, 1115);
+
+      ctx.fillStyle = '#F48138';
+      ctx.font = '900 38px system-ui, -apple-system, sans-serif';
+      ctx.fillText('cuantacalletenes.ar', 540, 1165);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.font = '500 20px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Desarrollado por Denis Giménez (@denischaco) • Resistencia, Chaco', 540, 1240);
+
+      canvas.toBlob((blob) => {
+        resolve(blob);
+      }, 'image/png');
+    } catch (err) {
+      console.error('Error generating score card blob:', err);
+      resolve(null);
+    }
+  });
+}
+
+/**
+ * Downloads the individual Player Score Card as PNG directly
+ */
+export async function downloadSoloScoreCard(params) {
+  const blob = await generateScoreCardBlob(params);
+  if (!blob) return;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const safeName = (params.playerName || 'callejero').toLowerCase().replace(/[^a-z0-9]/g, '-');
+  a.download = `record-cuanta-calle-${safeName}.png`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
