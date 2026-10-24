@@ -21,7 +21,8 @@ import {
   Plus,
   Edit3,
   Trash2,
-  X
+  X,
+  Trophy
 } from 'lucide-react';
 import {
   extendSponsorSubscription,
@@ -35,8 +36,10 @@ import {
   clearAllAdminNotifications
 } from '../../services/firebase';
 import SponsorModal from './SponsorModal';
+import LeaderboardModeration from './LeaderboardModeration';
 
 export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor, onRefreshSponsors }) {
+  const [activeTab, setActiveTab] = useState('sponsors'); // 'sponsors' | 'leaderboard'
   const [notifications, setNotifications] = useState([]);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [extendingId, setExtendingId] = useState(null);
@@ -195,26 +198,26 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-32">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans pb-32 w-full max-w-full overflow-x-hidden">
       {/* Header Maestro */}
-      <header className="bg-slate-900 border-b border-amber-500/30 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 px-4 py-3 shadow-lg shadow-black/40">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+      <header className="bg-slate-900 border-b border-amber-500/30 sticky top-0 z-40 backdrop-blur-md bg-opacity-95 px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg shadow-black/40">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-2 sm:gap-3">
           {/* Logo y Rol */}
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-[#F48138] p-2 flex items-center justify-center text-slate-950 shadow-md shadow-amber-950/40 shrink-0">
-              <Crown className="w-6 h-6" />
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-amber-400 to-[#F48138] p-2 flex items-center justify-center text-slate-950 shadow-md shadow-amber-950/40 shrink-0">
+              <Crown className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1 className="font-heading font-black text-white text-base sm:text-lg tracking-wide truncate">
-                  Panel Root • Denis Chaco
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h1 className="font-heading font-black text-white text-sm sm:text-lg tracking-wide truncate">
+                  Panel Root
                 </h1>
-                <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0">
+                <span className="text-[9px] sm:text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-1.5 sm:px-2 py-0.5 rounded-full font-black uppercase tracking-wider shrink-0">
                   Superadmin
                 </span>
               </div>
-              <p className="text-xs text-slate-400 truncate">
-                Gestión comercial & control de sponsors de Cuánta Calle
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+                Administración de Cuánta Calle
               </p>
             </div>
           </div>
@@ -300,15 +303,53 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
         </div>
       </header>
 
+      {/* Sub-header con Selector de Pestañas */}
+      <div className="bg-slate-900/90 border-b border-slate-800 sticky top-[57px] z-30 backdrop-blur-md px-4 py-2">
+        <div className="max-w-5xl mx-auto flex items-center gap-2 overflow-x-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab('sponsors')}
+            className={`py-2 px-4 rounded-xl text-xs font-heading font-black flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'sponsors'
+                ? 'bg-[#F48138] text-white shadow-md shadow-orange-950/40'
+                : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/60'
+            }`}
+          >
+            <Store className="w-4 h-4" />
+            <span>Sponsors & Comercios ({sponsors.length})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('leaderboard')}
+            className={`py-2 px-4 rounded-xl text-xs font-heading font-black flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'leaderboard'
+                ? 'bg-gradient-to-r from-amber-500 to-[#F48138] text-slate-950 shadow-md shadow-amber-500/20'
+                : 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/60'
+            }`}
+          >
+            <Trophy className="w-4 h-4" />
+            <span>Moderar Ranking</span>
+            <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+              En Vivo
+            </span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Body */}
       <main className="max-w-5xl mx-auto w-full px-4 pt-5 space-y-6">
-        {/* Banner de Éxito de Extensión */}
-        {extensionNotice && (
-          <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 flex items-center gap-3 animate-fade-in shadow-lg">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span className="font-bold text-sm">{extensionNotice}</span>
-          </div>
-        )}
+        {activeTab === 'leaderboard' ? (
+          <LeaderboardModeration />
+        ) : (
+          <>
+            {/* Banner de Éxito de Extensión */}
+            {extensionNotice && (
+              <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 flex items-center gap-3 animate-fade-in shadow-lg">
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span className="font-bold text-sm">{extensionNotice}</span>
+              </div>
+            )}
 
         {/* Métricas Globales de la Plataforma */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -572,6 +613,8 @@ export default function RootDashboard({ sponsors, onLogout, onImpersonateSponsor
             </div>
           )}
         </div>
+          </>
+        )}
       </main>
 
       {/* Modal para Crear y Editar Sponsors */}

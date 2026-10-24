@@ -232,6 +232,86 @@ export const saveScoreEntry = async ({ name, score, rankBadge, zone, zoneId, tot
 };
 
 /**
+ * Elimina un registro individual del ranking público (usado por Superadmin para moderar nombres ofensivos o trampas)
+ */
+export async function deleteLeaderboardEntry(recordId, playerName = '') {
+  const firestoreDb = getFirestoreInstance();
+
+  if (firestoreDb && recordId) {
+    try {
+      await deleteDoc(doc(firestoreDb, LEADERBOARD_COLLECTION, recordId));
+      console.log(`✅ Récord "${playerName}" (${recordId}) eliminado de Firestore.`);
+    } catch (err) {
+      console.error('Error deleting leaderboard entry in Firestore:', err);
+      return { success: false, error: err.message };
+    }
+  }
+
+  // Actualizar caché local de inmediato
+  try {
+    const current = getLocalLeaderboard();
+    const updated = current.filter((r) => r.id !== recordId && (recordId ? true : r.name !== playerName));
+    saveLocalLeaderboard(updated);
+  } catch (e) {
+    console.warn('Error updating local leaderboard cache:', e);
+  }
+
+  // Notificación administrativa para auditoría interna
+  try {
+    await addAdminNotification({
+      type: 'leaderboard_moderated',
+      sponsorId: 'admin',
+      sponsorName: 'Moderación de Ranking',
+      message: `Se eliminó el récord de "${playerName || 'Jugador'}" (${recordId}).`
+    });
+  } catch (e) {}
+
+  return { success: true };
+}
+
+/**
+ * Purgar registros del leaderboard (por zona o completo)
+ */
+export async function clearLeaderboard(zoneId = null) {
+  const firestoreDb = getFirestoreInstance();
+  if (!firestoreDb) return { success: false, error: 'Firestore no disponible' };
+
+  try {
+    const colRef = collection(firestoreDb, LEADERBOARD_COLLECTION);
+    const q = zoneId && zoneId !== 'all'
+      ? query(colRef, where('zoneId', '==', zoneId))
+      : query(colRef, limit(200));
+
+    const snap = await getDocs(q);
+    const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
+    await Promise.all(deletePromises);
+
+    // Limpiar caché local
+    if (!zoneId || zoneId === 'all') {
+      saveLocalLeaderboard([]);
+    } else {
+      const current = getLocalLeaderboard();
+      const filtered = current.filter(r => r.zoneId !== zoneId);
+      saveLocalLeaderboard(filtered);
+    }
+
+    try {
+      await addAdminNotification({
+        type: 'leaderboard_reset',
+        sponsorId: 'admin',
+        sponsorName: 'Moderación de Ranking',
+        message: `Se purgaron ${snap.docs.length} récords del ranking (${zoneId ? zoneId : 'Todas las zonas'}).`
+      });
+    } catch (e) {}
+
+    return { success: true, count: snap.docs.length };
+  } catch (err) {
+    console.error('Error clearing leaderboard:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Codifica los datos esenciales del reto en una cadena compacta URL-safe UTF-8
  */
 export function encodeChallengePayload(data) {

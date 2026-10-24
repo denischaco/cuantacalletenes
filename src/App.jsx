@@ -385,7 +385,7 @@ export default function App() {
   // Si el usuario ingresa al Portal de Sponsors o Gestión Admin
   if (isAdminOpen) {
     return (
-      <div className="w-full min-h-screen bg-slate-950 text-slate-100 select-text">
+      <div className="w-full max-w-full min-h-screen bg-slate-950 text-slate-100 select-text overflow-x-hidden">
         <Suspense
           fallback={
             <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white gap-3 font-sans">
