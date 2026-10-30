@@ -23,7 +23,7 @@ export default function LeaderboardModal({
   const [scores, setScores] = useState([]);
   const [userZoneTab, setUserZoneTab] = useState(null);
   const activeZoneTab = userZoneTab || (initialZoneId === 'toda_ciudad' ? 'toda_ciudad' : initialZoneId === 'all' ? 'all' : 'centro');
-  const [onlyBestPerPlayer, setOnlyBestPerPlayer] = useState(false);
+  const [onlyBestPerPlayer, setOnlyBestPerPlayer] = useState(true);
 
   // Level 3 Sponsors (Tier: sponsor_zona) - Solo activos
   const level3Sponsors = getLoadedSponsors().filter(
@@ -69,6 +69,113 @@ export default function LeaderboardModal({
     return true;
   };
 
+  // Compare two score entries: 1º higher score, 2º lower valid time, 3º most recent
+  const compareRecords = (a, b) => {
+    const scoreA = Number(a.score) || 0;
+    const scoreB = Number(b.score) || 0;
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+
+    const timeA = a.totalTimeMs && Number(a.totalTimeMs) > 0 ? Number(a.totalTimeMs) : Infinity;
+    const timeB = b.totalTimeMs && Number(b.totalTimeMs) > 0 ? Number(b.totalTimeMs) : Infinity;
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
+
+    const dateA = a.date || a.createdAt || '';
+    const dateB = b.date || b.createdAt || '';
+    return dateB.localeCompare(dateA);
+  };
+
+  // Consolidated General Ranking (best of 4 Avenidas + best of Gran Resi per player)
+  const generalRanking = useMemo(() => {
+    const playersMap = new Map();
+
+    for (const item of scores) {
+      const rawName = (item.name || 'Anónimo').trim() || 'Anónimo';
+      const key = rawName.toLowerCase();
+      const isGranResi = matchesZone(item, 'toda_ciudad') && !matchesZone(item, 'centro');
+      const zoneBucket = isGranResi || item.zoneId === 'toda_ciudad' ? 'toda_ciudad' : 'centro';
+
+      if (!playersMap.has(key)) {
+        playersMap.set(key, {
+          key,
+          name: rawName,
+          rankBadge: item.rankBadge || '🚕',
+          bestSingleRecord: item,
+          bestCentro: null,
+          bestTodaCiudad: null,
+          gamesCount: 0
+        });
+      }
+
+      const entry = playersMap.get(key);
+      entry.gamesCount += 1;
+
+      if (compareRecords(item, entry.bestSingleRecord) < 0) {
+        entry.bestSingleRecord = item;
+        entry.name = rawName;
+        if (item.rankBadge) entry.rankBadge = item.rankBadge;
+      }
+
+      if (zoneBucket === 'toda_ciudad') {
+        if (!entry.bestTodaCiudad || compareRecords(item, entry.bestTodaCiudad) < 0) {
+          entry.bestTodaCiudad = item;
+        }
+      } else {
+        if (!entry.bestCentro || compareRecords(item, entry.bestCentro) < 0) {
+          entry.bestCentro = item;
+        }
+      }
+    }
+
+    const aggregated = [];
+    for (const p of playersMap.values()) {
+      const centroScore = p.bestCentro ? Number(p.bestCentro.score) || 0 : 0;
+      const granScore = p.bestTodaCiudad ? Number(p.bestTodaCiudad.score) || 0 : 0;
+      const totalScore = centroScore + granScore;
+
+      const centroTime =
+        p.bestCentro?.totalTimeMs && Number(p.bestCentro.totalTimeMs) > 0
+          ? Number(p.bestCentro.totalTimeMs)
+          : 0;
+      const granTime =
+        p.bestTodaCiudad?.totalTimeMs && Number(p.bestTodaCiudad.totalTimeMs) > 0
+          ? Number(p.bestTodaCiudad.totalTimeMs)
+          : 0;
+      const totalTimeMs = centroTime + granTime;
+
+      const hasBothZones = Boolean(p.bestCentro && p.bestTodaCiudad);
+      const zoneLabel = hasBothZones
+        ? '4 Avenidas + Gran Resi'
+        : p.bestTodaCiudad
+        ? 'Gran Resi (1 zona)'
+        : '4 Avenidas (1 zona)';
+
+      aggregated.push({
+        id: `general-${p.key}`,
+        name: p.name,
+        rankBadge: p.rankBadge,
+        score: totalScore,
+        totalTimeMs,
+        zone: zoneLabel,
+        zonesCount: hasBothZones ? 2 : 1,
+        gamesCount: p.gamesCount
+      });
+    }
+
+    aggregated.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const timeA = a.totalTimeMs > 0 ? a.totalTimeMs : Infinity;
+      const timeB = b.totalTimeMs > 0 ? b.totalTimeMs : Infinity;
+      if (timeA !== timeB) return timeA - timeB;
+      return b.zonesCount - a.zonesCount;
+    });
+
+    return aggregated;
+  }, [scores]);
+
   // Counts per modality
   const counts = useMemo(() => {
     let centroCount = 0;
@@ -80,36 +187,23 @@ export default function LeaderboardModal({
     return {
       centro: centroCount,
       toda_ciudad: todaCiudadCount,
-      all: scores.length
+      all: generalRanking.length
     };
-  }, [scores]);
+  }, [scores, generalRanking]);
 
-  // Filtered and strictly sorted scores (score DESC, time ASC, date DESC)
+  // Filtered and strictly sorted scores (score DESC, time ASC)
   const displayScores = useMemo(() => {
+    if (activeZoneTab === 'all') {
+      return generalRanking;
+    }
+
     // 1. Filter by active zone tab
     const filtered = scores.filter((item) => matchesZone(item, activeZoneTab));
 
     // 2. Strict sorting:
-    //    - Highest score first
-    //    - Speed tiebreaker: lowest totalTimeMs first for identical score
-    //    - Date tiebreaker: most recent first
-    filtered.sort((a, b) => {
-      const scoreA = Number(a.score) || 0;
-      const scoreB = Number(b.score) || 0;
-      if (scoreB !== scoreA) {
-        return scoreB - scoreA;
-      }
-
-      const timeA = a.totalTimeMs && Number(a.totalTimeMs) > 0 ? Number(a.totalTimeMs) : Infinity;
-      const timeB = b.totalTimeMs && Number(b.totalTimeMs) > 0 ? Number(b.totalTimeMs) : Infinity;
-      if (timeA !== timeB) {
-        return timeA - timeB;
-      }
-
-      const dateA = a.date || a.createdAt || '';
-      const dateB = b.date || b.createdAt || '';
-      return dateB.localeCompare(dateA);
-    });
+    //    - 1º Highest score first (pts descending)
+    //    - 2º Speed tiebreaker: lowest totalTimeMs first (time ascending)
+    filtered.sort(compareRecords);
 
     // 3. Optional: Deduplicate by player name if "onlyBestPerPlayer" is toggled
     if (onlyBestPerPlayer) {
@@ -126,7 +220,7 @@ export default function LeaderboardModal({
     }
 
     return filtered;
-  }, [scores, activeZoneTab, onlyBestPerPlayer]);
+  }, [scores, activeZoneTab, onlyBestPerPlayer, generalRanking]);
 
   return (
     <div className="absolute inset-0 z-[2000] flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md pointer-events-auto">
@@ -147,12 +241,12 @@ export default function LeaderboardModal({
           </button>
         </div>
 
-        {/* Modalidad Tabs (4 Avenidas vs Gran Resistencia vs Todas) */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-2xl border border-slate-800">
+        {/* Modalidad Tabs (4 Avenidas vs Gran Resi vs General) */}
+        <div className="flex items-center gap-1 p-1 bg-slate-950/80 rounded-2xl border border-slate-800">
           <button
             type="button"
             onClick={() => setUserZoneTab('centro')}
-            className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`flex-1 py-1.5 px-1.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer min-w-0 ${
               activeZoneTab === 'centro'
                 ? 'bg-gradient-to-r from-[#339136] to-emerald-600 text-white shadow-md shadow-emerald-950/50'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -161,7 +255,7 @@ export default function LeaderboardModal({
             <Landmark className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">4 Avenidas</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${
                 activeZoneTab === 'centro' ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'
               }`}
             >
@@ -172,7 +266,7 @@ export default function LeaderboardModal({
           <button
             type="button"
             onClick={() => setUserZoneTab('toda_ciudad')}
-            className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+            className={`flex-1 py-1.5 px-1.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer min-w-0 ${
               activeZoneTab === 'toda_ciudad'
                 ? 'bg-gradient-to-r from-[#F48138] to-[#B95D0E] text-white shadow-md shadow-orange-950/50'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
@@ -181,7 +275,7 @@ export default function LeaderboardModal({
             <Flame className="w-3.5 h-3.5 shrink-0" />
             <span className="truncate">Gran Resi</span>
             <span
-              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${
                 activeZoneTab === 'toda_ciudad' ? 'bg-black/30 text-white' : 'bg-slate-800 text-slate-400'
               }`}
             >
@@ -192,34 +286,49 @@ export default function LeaderboardModal({
           <button
             type="button"
             onClick={() => setUserZoneTab('all')}
-            className={`py-1.5 px-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer ${
+            className={`flex-1 py-1.5 px-1.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1 transition-all cursor-pointer min-w-0 ${
               activeZoneTab === 'all'
-                ? 'bg-slate-700 text-white shadow-md'
+                ? 'bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 shadow-md shadow-amber-950/50'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
             }`}
-            title="Ver todas las modalidades combinadas"
+            title="Ranking General acumulado por jugador"
           >
-            <Globe className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden xs:inline">Todas</span>
+            <span className="text-xs shrink-0 leading-none">🏆</span>
+            <span className="truncate">General</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold shrink-0 ${
+                activeZoneTab === 'all' ? 'bg-black/25 text-slate-950' : 'bg-slate-800 text-slate-400'
+              }`}
+            >
+              {counts.all}
+            </span>
           </button>
         </div>
 
-        {/* Sorting notice and Best-per-player toggle */}
-        <div className="flex items-center justify-between px-1 text-[11px] text-slate-400">
-          <span className="flex items-center gap-1">
-            <Clock className="w-3 h-3 text-emerald-400 shrink-0" />
-            <span>Desempate por velocidad</span>
-          </span>
-          <label className="flex items-center gap-1.5 cursor-pointer select-none text-slate-400 hover:text-slate-200">
-            <input
-              type="checkbox"
-              checked={onlyBestPerPlayer}
-              onChange={(e) => setOnlyBestPerPlayer(e.target.checked)}
-              className="rounded bg-slate-800 border-slate-700 text-[#F48138] focus:ring-0 cursor-pointer accent-[#F48138]"
-            />
-            <span>1 por jugador</span>
-          </label>
-        </div>
+        {/* Sorting notice / General Ranking Banner & Best-per-player toggle */}
+        {activeZoneTab === 'all' ? (
+          <div className="px-3 py-2 rounded-xl bg-amber-950/30 border border-amber-500/30 text-[11px] text-amber-200/90 leading-snug">
+            👑 Suma tu mejor puntaje de cada zona usando el mismo nombre (a igual puntaje, desempata el menor tiempo total).
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-2 px-1 text-[11px] text-slate-400">
+            <span className="text-slate-300 leading-tight">
+              ⚡ En empate de puntos, gana quien tardó menos tiempo
+            </span>
+            <label
+              className="flex items-center gap-1.5 cursor-pointer select-none text-slate-300 hover:text-white shrink-0"
+              title="Muestra solo la mejor marca registrada de cada nombre"
+            >
+              <input
+                type="checkbox"
+                checked={onlyBestPerPlayer}
+                onChange={(e) => setOnlyBestPerPlayer(e.target.checked)}
+                className="rounded bg-slate-800 border-slate-700 text-[#F48138] focus:ring-0 cursor-pointer accent-[#F48138]"
+              />
+              <span className="font-medium">1 por jugador</span>
+            </label>
+          </div>
+        )}
 
         {/* Scores Table / Motivational Empty State */}
         <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
@@ -285,7 +394,8 @@ export default function LeaderboardModal({
               const isThird = idx === 2;
               const hasSpeed = item.totalTimeMs && item.totalTimeMs > 0;
               const seconds = hasSpeed ? (item.totalTimeMs / 1000).toFixed(1) : null;
-              const isVeryFast = hasSpeed && item.totalTimeMs < 50000;
+              const fastThreshold = item.zonesCount === 2 ? 100000 : 50000;
+              const isVeryFast = hasSpeed && item.totalTimeMs < fastThreshold;
 
               return (
                 <div
@@ -330,8 +440,6 @@ export default function LeaderboardModal({
                         <span className="truncate">
                           {item.zone || (item.zoneId === 'toda_ciudad' ? 'Gran Resistencia' : '4 Avenidas')}
                         </span>
-                        <span className="text-slate-600">•</span>
-                        <span>{item.date}</span>
                         {hasSpeed && (
                           <>
                             <span className="text-slate-600">•</span>
